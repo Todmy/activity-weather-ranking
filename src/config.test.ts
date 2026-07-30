@@ -16,6 +16,7 @@ describe('parseConfig', () => {
       MONGODB_URI: 'mongodb://localhost:27017',
       MONGODB_DB: 'activity_weather',
       REFRESH_INTERVAL_MS: 600_000,
+      GIT_SHA: 'unknown',
     })
   })
 

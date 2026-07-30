@@ -32,7 +32,11 @@ import type { GeocodedLocation } from '../providers/openmeteo/geocoding.ts'
  * would be a way to bypass the very thing the brief asks for. Production wires
  * the real ones in `server.ts`; tests wire fixtures.
  */
-export type GraphQLContext = { deps: AppDeps }
+export type GraphQLContext = {
+  deps: AppDeps
+  /** The commit this process is running, or `unknown` when nothing stamped it. */
+  release: string
+}
 
 const builder = new SchemaBuilder<{ Context: GraphQLContext }>({})
 
@@ -313,6 +317,12 @@ builder.queryType({
     health: t.string({
       description: 'Returns "ok" when the service is running.',
       resolve: () => 'ok',
+    }),
+    release: t.string({
+      description:
+        'The git commit this process is running, or "unknown" when nothing stamped the build. ' +
+        'The deploy log says what was sent; this says what is answering.',
+      resolve: (_root, _args, ctx) => ctx.release,
     }),
     searchLocations: t.field({
       type: [LocationRef],

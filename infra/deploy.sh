@@ -26,8 +26,9 @@ else
 fi
 
 cd "$DIR"
-echo "deploying \$(git rev-parse --short HEAD)"
-docker compose up -d --build
+SHA=\$(git rev-parse --short HEAD)
+echo "deploying \$SHA"
+GIT_SHA="\$SHA" docker compose up -d --build
 docker image prune -f >/dev/null
 EOF
 

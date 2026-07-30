@@ -23,6 +23,12 @@ const schema = z.object({
    * refresher, and neither does a test.
    */
   REFRESH_INTERVAL_MS: z.coerce.number().int().nonnegative().default(600_000),
+  /**
+   * The commit this process is running, stamped into the image at build time.
+   * Defaults to `unknown` rather than to anything plausible: `pnpm dev` has no
+   * image and no build argument, and a made-up answer here is worse than none.
+   */
+  GIT_SHA: z.string().min(1).default('unknown'),
 })
 
 export type Config = z.infer<typeof schema>

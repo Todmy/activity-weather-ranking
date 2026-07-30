@@ -6,6 +6,12 @@ FROM node:24-alpine
 ENV NODE_ENV=production
 WORKDIR /app
 
+# Which commit this image is. Passed by docker-compose from the deploy script, so
+# the running service can answer "what code is this" without anyone reading a
+# deploy log — the log says what was sent, not what is answering.
+ARG GIT_SHA=unknown
+ENV GIT_SHA=$GIT_SHA
+
 RUN corepack enable
 
 COPY package.json pnpm-lock.yaml ./

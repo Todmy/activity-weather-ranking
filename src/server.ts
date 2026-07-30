@@ -34,6 +34,7 @@ export const startServer = async ({
   mongodbUri,
   mongodbDatabase,
   refreshIntervalMs,
+  release,
   shutdownGraceMs = SHUTDOWN_GRACE_MS,
 }: {
   port: number
@@ -41,12 +42,14 @@ export const startServer = async ({
   mongodbDatabase: string
   /** Zero runs no background refresher at all. Required, so no caller starts one by accident. */
   refreshIntervalMs: number
+  /** The commit this process is running, reported by the `release` query field. */
+  release: string
   /** How long a request already in flight has to finish before it is forced. */
   shutdownGraceMs?: number
 }): Promise<RunningServer> => {
   const store = await connectDatabase({ uri: mongodbUri, database: mongodbDatabase })
   const deps = liveDepsFor(store.db)
-  const server = createServer(createApp({ deps }))
+  const server = createServer(createApp({ deps, release }))
 
   // The refresher shares the process rather than running as its own service.
   // The lease is what makes that safe — it is the same lease the read path

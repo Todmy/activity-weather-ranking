@@ -20,6 +20,7 @@ const cambridge = toLocations(parseGeocoding(fixture('geocoding-cambridge.json')
 const innsbruck = parseForecast(fixture('forecast-innsbruck-past3.json'))
 
 const contextValue: GraphQLContext = {
+  release: 'test',
   deps: {
     resolve: async () => ({ location: cambridge[0]!, alternatives: cambridge.slice(1) }),
     search: async () => cambridge,

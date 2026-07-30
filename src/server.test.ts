@@ -24,6 +24,7 @@ const start = (refreshIntervalMs = 0, shutdownGraceMs?: number) =>
     mongodbUri: inject('mongoUri'),
     mongodbDatabase: databaseNameFor(import.meta.url),
     refreshIntervalMs,
+    release: 'test',
     ...(shutdownGraceMs === undefined ? {} : { shutdownGraceMs }),
   })
 
@@ -155,6 +156,7 @@ describe('startServer', () => {
         mongodbUri: 'mongodb://127.0.0.1:1/',
         mongodbDatabase: 'nope',
         refreshIntervalMs: 0,
+        release: 'test',
       }),
     ).rejects.toThrow()
   }, 20_000)

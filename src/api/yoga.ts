@@ -13,10 +13,13 @@ import type { GraphQLContext } from './schema.ts'
  * schema test and still reach a reviewer as a blank 500. It did, until this
  * file existed.
  */
-export const createApp = (context: GraphQLContext) =>
+export const createApp = ({
+  deps,
+  release = 'unknown',
+}: Omit<GraphQLContext, 'release'> & Partial<Pick<GraphQLContext, 'release'>>) =>
   createYoga({
     schema,
     graphqlEndpoint: '/graphql',
     graphiql: { title: 'Activity weather ranking', defaultQuery },
-    context: () => context,
+    context: () => ({ deps, release }),
   })

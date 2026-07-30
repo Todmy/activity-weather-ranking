@@ -49,6 +49,24 @@ const post = async (app: ReturnType<typeof createApp>, query: string): Promise<a
  * this file exists to stop.
  */
 describe('the app over HTTP', () => {
+  it('reports the commit it is running, so an incident starts against the right code', async () => {
+    // Factor V of the twelve: a release has to be identifiable from outside.
+    // "Which code is on the box" is the first question of every incident and the
+    // deploy log is not an answer — it says what was sent, not what is running.
+    const body = await post(createApp({ deps: deps(), release: 'a1b2c3d' }), '{ release }')
+
+    expect(body.errors).toBeUndefined()
+    expect(body.data.release).toBe('a1b2c3d')
+  })
+
+  it('says "unknown" rather than guessing when nothing stamped the build', async () => {
+    // `pnpm dev` has no image and no build argument. An empty string or a
+    // plausible-looking default would both read as a real answer.
+    const body = await post(createApp({ deps: deps() }), '{ release }')
+
+    expect(body.data.release).toBe('unknown')
+  })
+
   it('answers a forecast', async () => {
     const body = await post(
       createApp({ deps: deps() }),

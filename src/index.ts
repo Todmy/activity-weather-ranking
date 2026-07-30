@@ -12,6 +12,7 @@ const server = await startServer({
   mongodbUri: config.MONGODB_URI,
   mongodbDatabase: config.MONGODB_DB,
   refreshIntervalMs: config.REFRESH_INTERVAL_MS,
+  release: config.GIT_SHA,
 })
 
 console.log(`GraphQL ready at http://localhost:${server.port}/graphql`)

@@ -161,6 +161,11 @@ type Query {
   health: String
 
   """
+  The git commit this process is running, or "unknown" when nothing stamped the build. The deploy log says what was sent; this says what is answering.
+  """
+  release: String
+
+  """
   Every place matching an ambiguous name, in upstream order, choosing none of them. Use this when the caller must pick — activityForecast(query:) picks for them and says which. The ids returned here are usable with activityForecastAt.
   """
   searchLocations(limit: Int = 5, query: String!): [Location!]

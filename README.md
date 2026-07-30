@@ -106,6 +106,14 @@ curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
   -d '{"query":"{ activityForecast(query: \"Nowhereinparticular\") { location { name } } }"}'
 ```
 
+**Ask which code is answering.** The deploy log says what was sent; this says what is running. It
+reports `unknown` when nothing stamped the build, rather than inventing a plausible answer.
+
+```bash
+curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
+  -d '{"query":"{ release health }"}'
+```
+
 ## Run it yourself
 
 ```bash
