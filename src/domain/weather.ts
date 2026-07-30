@@ -25,6 +25,12 @@ export type WeatherInputs = {
   uvIndexMax?: number | null
   sunshineDuration?: number | null
   daylightDuration?: number | null
+
+  /**
+   * Derived, not upstream: snowfall over this day and the two before it.
+   * Computed by `withDerivedInputs` once per issuance — see decision #39.
+   */
+  snowfall3d?: number | null
 }
 
 /**

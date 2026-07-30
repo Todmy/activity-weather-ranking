@@ -14,9 +14,13 @@ import {
  * network: the free tier is 10,000 calls a day, and a test suite that spends
  * quota is a test suite people stop running.
  */
-const innsbruck = JSON.parse(
-  readFileSync(new URL('../../../docs/probes/forecast-innsbruck.json', import.meta.url), 'utf8'),
-) as unknown
+const fixture = (name: string): unknown =>
+  JSON.parse(readFileSync(new URL(`../../../docs/probes/${name}`, import.meta.url), 'utf8'))
+
+/** The original recon capture: seven days, no history. */
+const innsbruck = fixture('forecast-innsbruck.json')
+/** What the service actually requests now: three past days plus seven. */
+const innsbruckPast3 = fixture('forecast-innsbruck-past3.json')
 
 describe('parseForecast', () => {
   it('accepts the captured Innsbruck response', () => {
@@ -115,6 +119,12 @@ describe('buildForecastUrl', () => {
     expect(new URL(url).searchParams.get('timezone')).toBe('auto')
     expect(new URL(url).searchParams.get('forecast_days')).toBe('7')
   })
+
+  it('asks for three past days, because fresh snow is a window', () => {
+    // Costs no extra call. Without it the first forecast day reads as though
+    // the mountain had never seen snow (decision #39).
+    expect(new URL(url).searchParams.get('past_days')).toBe('3')
+  })
 })
 
 describe('fetchForecast', () => {
@@ -159,5 +169,22 @@ describe('fetchForecast', () => {
     await expect(fetchForecast({ latitude: 47.26, longitude: 11.39 })).rejects.not.toBeInstanceOf(
       OpenMeteoError,
     )
+  })
+})
+
+describe('the past_days capture', () => {
+  it('parses and maps ten days: three of history and the seven forecast', () => {
+    const days = toDailyWeather(parseForecast(innsbruckPast3))
+
+    expect(days).toHaveLength(10)
+    expect(days[0]?.date).toBe('2026-07-27')
+    expect(days[9]?.date).toBe('2026-08-05')
+  })
+
+  it('is the same schema as the capture without history', () => {
+    // The schema must not become coupled to a request parameter: the original
+    // seven-day recon capture still parses, and both are real responses.
+    expect(() => parseForecast(innsbruck)).not.toThrow()
+    expect(() => parseForecast(innsbruckPast3)).not.toThrow()
   })
 })

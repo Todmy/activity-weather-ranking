@@ -39,6 +39,10 @@ export const DAILY_VARIABLES = [
   'daylight_duration',
 ] as const
 
+/** The seven days that get scored, and the history that informs them. */
+export const FORECAST_DAYS = 7
+export const PAST_DAYS = 3
+
 const nullableNumbers = z.array(z.number().nullable())
 
 const forecastResponse = z
@@ -89,7 +93,11 @@ export const buildForecastUrl = ({ latitude, longitude }: Coordinates): string =
   // Local calendar dates in the location's own timezone. "Tuesday" in a travel
   // forecast means Tuesday where the traveller is.
   url.searchParams.set('timezone', 'auto')
-  url.searchParams.set('forecast_days', '7')
+  url.searchParams.set('forecast_days', String(FORECAST_DAYS))
+  // Fresh snow is a window, not a day. Three days of history cost no extra
+  // call and stop the first forecast day reading as though the mountain had
+  // never seen snow. See decision #39.
+  url.searchParams.set('past_days', String(PAST_DAYS))
   return url.toString()
 }
 

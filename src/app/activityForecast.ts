@@ -1,8 +1,9 @@
+import { withDerivedInputs } from '../domain/derive.ts'
 import { outdoorSightseeing } from '../domain/profiles/outdoorSightseeing.ts'
 import { scoreProfile } from '../domain/score.ts'
 import type { ProfileScore } from '../domain/score.ts'
 import type { DayWeather } from '../domain/weather.ts'
-import { fetchForecast, toDailyWeather } from '../providers/openmeteo/forecast.ts'
+import { FORECAST_DAYS, fetchForecast, toDailyWeather } from '../providers/openmeteo/forecast.ts'
 import type { Coordinates, ForecastResponse } from '../providers/openmeteo/forecast.ts'
 import { searchLocations } from '../providers/openmeteo/geocoding.ts'
 import type { GeocodedLocation } from '../providers/openmeteo/geocoding.ts'
@@ -35,6 +36,8 @@ export type ScoredActivity = ProfileScore & { activity: string }
 
 export type ScoredDay = {
   date: string
+  /** The weather the scores were computed from, derived inputs included. */
+  inputs: DayWeather
   activities: ScoredActivity[]
 }
 
@@ -74,12 +77,18 @@ export const getActivityForecast = async (
     longitude: location.longitude,
   })
 
+  // Derive across the whole issuance, history included, then score only the
+  // days a traveller asked about. The three past days exist to give the first
+  // forecast day a real fresh-snow window, not to be ranked.
+  const days = withDerivedInputs(toDailyWeather(response)).slice(-FORECAST_DAYS)
+
   return {
     location,
     alternatives,
     issuedAt: deps.now().toISOString(),
-    days: toDailyWeather(response).map((day) => ({
+    days: days.map((day) => ({
       date: day.date,
+      inputs: day,
       activities: scoreDay(day),
     })),
   }

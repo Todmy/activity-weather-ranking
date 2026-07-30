@@ -8,7 +8,7 @@ import { parseGeocoding, toLocations } from '../providers/openmeteo/geocoding.ts
 const fixture = (name: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../docs/probes/${name}`, import.meta.url), 'utf8'))
 
-const innsbruck = parseForecast(fixture('forecast-innsbruck.json'))
+const innsbruck = parseForecast(fixture('forecast-innsbruck-past3.json'))
 const cambridge = toLocations(parseGeocoding(fixture('geocoding-cambridge.json')))
 
 const deps = (overrides: Partial<ActivityForecastDeps> = {}): ActivityForecastDeps => ({
@@ -19,12 +19,23 @@ const deps = (overrides: Partial<ActivityForecastDeps> = {}): ActivityForecastDe
 })
 
 describe('getActivityForecast', () => {
-  it('scores all seven days of the issuance', async () => {
+  it('scores the seven forecast days and not the history behind them', async () => {
     const forecast = await getActivityForecast('Cambridge', deps())
 
+    // The response carries ten days: three of history for the fresh-snow
+    // window, then the seven a traveller is actually asking about.
     expect(forecast.days).toHaveLength(7)
-    expect(forecast.days[0]?.date).toBe('2026-07-29')
+    expect(forecast.days[0]?.date).toBe('2026-07-30')
+    expect(forecast.days[6]?.date).toBe('2026-08-05')
     expect(forecast.days[0]?.activities[0]?.score).toBeTypeOf('number')
+  })
+
+  it('derives the three-day snow window before scoring', async () => {
+    const forecast = await getActivityForecast('Cambridge', deps())
+
+    // Zero in a Tyrolean July, and present rather than absent, which is the
+    // part that matters: the ski profile can read it.
+    expect(forecast.days[0]?.inputs.snowfall3d).toBe(0)
   })
 
   it('names the place it scored and keeps the other candidates visible', async () => {
@@ -54,10 +65,10 @@ describe('getActivityForecast', () => {
   })
 
   it('scores a real Innsbruck heatwave day as merely walkable', async () => {
-    // 2026-07-30 in the captured probe: 35.7 °C air, 36.0 apparent, no rain,
-    // 5% cloud. Hot enough that the comfort factor is the whole story.
+    // 2026-07-30 in the captured probe: 35.5 apparent, no rain, 9% cloud.
+    // Hot enough that the comfort factor is the whole story.
     const forecast = await getActivityForecast('Innsbruck', deps())
-    const day = forecast.days[1]?.activities[0]
+    const day = forecast.days[0]?.activities[0]
 
     expect(day?.score).toBe(55)
     expect(day?.factors[0]?.curveValue).toBe(0)
