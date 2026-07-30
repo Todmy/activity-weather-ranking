@@ -1,7 +1,9 @@
+import { evaluateActivity } from '../domain/activityResult.ts'
+import type { ActivityResult, Geography } from '../domain/activityResult.ts'
 import { withDerivedInputs } from '../domain/derive.ts'
-import { outdoorSightseeing } from '../domain/profiles/outdoorSightseeing.ts'
-import { scoreProfile } from '../domain/score.ts'
-import type { ProfileScore } from '../domain/score.ts'
+import { MODEL_VERSION, PROFILES } from '../domain/modelVersion.ts'
+import { rankActivitiesWithinDay, rankDaysWithinActivity } from '../domain/rank.ts'
+import type { RankedDay } from '../domain/rank.ts'
 import type { DayWeather } from '../domain/weather.ts'
 import { FORECAST_DAYS, fetchForecast, toDailyWeather } from '../providers/openmeteo/forecast.ts'
 import type { Coordinates, ForecastResponse } from '../providers/openmeteo/forecast.ts'
@@ -32,13 +34,18 @@ const liveDeps: ActivityForecastDeps = {
   now: () => new Date(),
 }
 
-export type ScoredActivity = ProfileScore & { activity: string }
-
 export type ScoredDay = {
   date: string
   /** The weather the scores were computed from, derived inputs included. */
   inputs: DayWeather
-  activities: ScoredActivity[]
+  /** Every activity, ranked best first within this day. */
+  activities: ActivityResult[]
+}
+
+/** One activity's days, ranked best first. The other reading of "ranks". */
+export type ActivityRanking = {
+  activity: string
+  days: RankedDay[]
 }
 
 export type ActivityForecast = {
@@ -47,7 +54,10 @@ export type ActivityForecast = {
   /** Other candidates for an ambiguous name, in upstream's order. */
   alternatives: GeocodedLocation[]
   issuedAt: string
+  /** Pinned, so an identical issuance and version reproduce this exactly. */
+  modelVersion: string
   days: ScoredDay[]
+  rankings: ActivityRanking[]
 }
 
 export class LocationNotFound extends Error {
@@ -57,10 +67,18 @@ export class LocationNotFound extends Error {
   }
 }
 
-/** Slice 1 scores one activity. The array shape is what slice 2 fills in. */
-const scoreDay = (day: DayWeather): ScoredActivity[] => [
-  { activity: 'outdoorSightseeing', ...scoreProfile(outdoorSightseeing, day) },
-]
+/**
+ * Geography is not weather and is not fetched yet: slice 3 samples the terrain
+ * around a city and asks the Marine API what it covers. Until then both are
+ * null, which reads as `unavailable` with a reason rather than as an absence
+ * this service has established.
+ */
+const UNASSESSED: Geography = { hasTerrain: null, hasMarineCoverage: null }
+
+const evaluateDay = (day: DayWeather, dayIndex: number): ActivityResult[] =>
+  rankActivitiesWithinDay(
+    PROFILES.map((profile) => evaluateActivity(profile, day, { dayIndex, geography: UNASSESSED })),
+  )
 
 export const getActivityForecast = async (
   query: string,
@@ -82,14 +100,23 @@ export const getActivityForecast = async (
   // forecast day a real fresh-snow window, not to be ranked.
   const days = withDerivedInputs(toDailyWeather(response)).slice(-FORECAST_DAYS)
 
+  const scored: ScoredDay[] = days.map((day, index) => ({
+    date: day.date,
+    inputs: day,
+    activities: evaluateDay(day, index),
+  }))
+
   return {
     location,
     alternatives,
     issuedAt: deps.now().toISOString(),
-    days: days.map((day) => ({
-      date: day.date,
-      inputs: day,
-      activities: scoreDay(day),
+    modelVersion: MODEL_VERSION,
+    days: scored,
+    // Both readings of the brief's "ranks", from the same computation. Neither
+    // re-scores anything.
+    rankings: PROFILES.map((profile) => ({
+      activity: profile.activity,
+      days: rankDaysWithinActivity(scored, profile.activity),
     })),
   }
 }

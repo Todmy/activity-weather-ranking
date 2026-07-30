@@ -22,17 +22,22 @@ describe('the GraphiQL examples', () => {
     )
 
     expect(names).toEqual([
-      'OutdoorSightseeing',
+      'BestDaysPerActivity',
+      'BestActivityPerDay',
       'WhyThatScore',
       'FiveCambridges',
       'NoSuchPlace',
     ])
   })
 
-  it('include the two states a reviewer would otherwise never see', () => {
-    // The per-factor breakdown and a deliberate failure. Without these the
-    // happy path is the only thing anyone runs.
+  it('include the states a reviewer would otherwise never see', () => {
+    // Both ranking axes, the per-factor breakdown, the gates, all three members
+    // of the union, and a deliberate failure. Without these the happy path is
+    // the only thing anyone runs.
     expect(defaultQuery).toContain('factors { name weight rawValue curveValue contribution }')
+    expect(defaultQuery).toContain('gates { name rawValue multiplier }')
+    expect(defaultQuery).toContain('... on NotApplicableActivity')
+    expect(defaultQuery).toContain('... on UnavailableActivity')
     expect(defaultQuery).toContain('Nowhereinparticular')
   })
 })

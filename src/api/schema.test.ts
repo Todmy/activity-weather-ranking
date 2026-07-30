@@ -17,7 +17,7 @@ const fixture = (name: string): unknown =>
 const contextValue: GraphQLContext = {
   deps: {
     search: async () => toLocations(parseGeocoding(fixture('geocoding-cambridge.json'))),
-    weather: async () => parseForecast(fixture('forecast-innsbruck.json')),
+    weather: async () => parseForecast(fixture('forecast-innsbruck-past3.json')),
     now: () => new Date('2026-07-29T12:00:00.000Z'),
   },
 }
@@ -38,13 +38,21 @@ describe('schema', () => {
         activityForecast(query: "Innsbruck") {
           location { name country admin1 }
           issuedAt
+          modelVersion
+          rankings { activity days { date score confidence } }
           days {
             date
             activities {
-              activity
-              score
-              completeness
-              factors { name weight rawValue curveValue contribution }
+              ... on ScoredActivity {
+                activity
+                score
+                confidence
+                completeness
+                factors { name weight rawValue curveValue contribution }
+                gates { name rawValue multiplier }
+              }
+              ... on UnavailableActivity { activity reason }
+              ... on NotApplicableActivity { activity reason }
             }
           }
         }
@@ -55,13 +63,38 @@ describe('schema', () => {
 
     const forecast = (result.data as { activityForecast: {
       location: { name: string }
-      days: { date: string; activities: { score: number; factors: unknown[] }[] }[]
+      modelVersion: string
+      rankings: { activity: string; days: { date: string; score: number }[] }[]
+      days: {
+        date: string
+        activities: { activity: string; score?: number; reason?: string; factors?: unknown[] }[]
+      }[]
     } }).activityForecast
+
+    const outdoor = forecast.days[0]?.activities.find(
+      (activity) => activity.activity === 'outdoorSightseeing',
+    )
 
     expect(forecast.location.name).toBe('Cambridge')
     expect(forecast.days).toHaveLength(7)
-    expect(forecast.days[1]?.activities[0]?.score).toBe(55)
-    expect(forecast.days[1]?.activities[0]?.factors).toHaveLength(4)
+    expect(forecast.modelVersion).toMatch(/^\d+\.\d+\.\d+$/)
+    expect(outdoor?.score).toBe(55)
+    expect(outdoor?.factors).toHaveLength(4)
+
+    // The union comes back as three different shapes in one list, which is the
+    // whole point of it being a union.
+    const skiing = forecast.days[0]?.activities.find(
+      (activity) => activity.activity === 'skiing',
+    )
+    expect(skiing?.score).toBeUndefined()
+    expect(skiing?.reason).toMatch(/not been assessed/i)
+
+    expect(forecast.rankings.map((ranking) => ranking.activity).sort()).toEqual([
+      'indoorSightseeing',
+      'outdoorSightseeing',
+      'skiing',
+      'surfing',
+    ])
   })
 
   it('reports a query that matched nothing as an error naming the query', async () => {

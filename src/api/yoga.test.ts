@@ -10,7 +10,7 @@ const fixture = (name: string): unknown =>
 
 const deps = (overrides: Partial<ActivityForecastDeps> = {}): ActivityForecastDeps => ({
   search: async () => toLocations(parseGeocoding(fixture('geocoding-cambridge.json'))),
-  weather: async () => parseForecast(fixture('forecast-innsbruck.json')),
+  weather: async () => parseForecast(fixture('forecast-innsbruck-past3.json')),
   now: () => new Date('2026-07-29T12:00:00.000Z'),
   ...overrides,
 })
@@ -35,7 +35,7 @@ describe('the app over HTTP', () => {
   it('answers a forecast', async () => {
     const body = await post(
       createApp({ deps: deps() }),
-      '{ activityForecast(query: "Innsbruck") { days { date activities { score } } } }',
+      '{ activityForecast(query: "Innsbruck") { days { date activities { ... on ScoredActivity { score } } } } }',
     )
 
     expect(body.errors).toBeUndefined()
