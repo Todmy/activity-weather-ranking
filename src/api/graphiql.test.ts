@@ -27,6 +27,8 @@ describe('the GraphiQL examples', () => {
       'WhyThatScore',
       'FiveCambridges',
       'NoSuchPlace',
+      'WhereSkiingWasAssessed',
+      'NoMountainNoOcean',
     ])
   })
 
@@ -39,5 +41,19 @@ describe('the GraphiQL examples', () => {
     expect(defaultQuery).toContain('... on NotApplicableActivity')
     expect(defaultQuery).toContain('... on UnavailableActivity')
     expect(defaultQuery).toContain('Nowhereinparticular')
+  })
+
+  it('show where a ski score was assessed, not just the number', () => {
+    // The modelling point most easily missed: "Grenoble 78" is a claim about a
+    // point 3204 m up and 44 km away, and a reviewer has to be able to see that
+    // without reading the source.
+    expect(defaultQuery).toContain('terrain { elevation distanceKm gridVersion latitude longitude }')
+  })
+
+  it('show measured absence as well as measured presence', () => {
+    // notApplicable next to a real score in the same response, for two cities
+    // that fail for two different reasons.
+    expect(defaultQuery).toContain('Amsterdam')
+    expect(defaultQuery).toContain('Vienna')
   })
 })

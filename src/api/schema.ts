@@ -5,6 +5,7 @@ import type {
   ActivityForecast,
   ActivityForecastDeps,
   ActivityRanking,
+  Assessment,
   ScoredDay,
 } from '../app/activityForecast.ts'
 import type { ActivityResult } from '../domain/activityResult.ts'
@@ -162,12 +163,54 @@ const RankingRef = builder.objectRef<ActivityRanking>('ActivityRanking').impleme
   }),
 })
 
+const TerrainAssessmentRef = builder
+  .objectRef<NonNullable<Assessment['terrain']>>('TerrainAssessment')
+  .implement({
+    description:
+      'Where skiing was actually assessed. A ski score is a claim about this point, not ' +
+      'about the city centre — Grenoble is 214 m in town and 3204 m within 45 km.',
+    fields: (t) => ({
+      elevation: t.exposeFloat('elevation', { description: 'Metres, the sampled high point.' }),
+      distanceKm: t.exposeFloat('distanceKm', { description: 'How far that point is from the city.' }),
+      gridVersion: t.exposeString('gridVersion', {
+        description:
+          'The sampling parameters. Changing them is a versioned event rather than a silent ' +
+          'drift in historical answers.',
+      }),
+      latitude: t.float({ resolve: (terrain) => terrain.point.latitude }),
+      longitude: t.float({ resolve: (terrain) => terrain.point.longitude }),
+    }),
+  })
+
+const AssessmentRef = builder.objectRef<Assessment>('Assessment').implement({
+  description:
+    'What was measured about this place, as opposed to forecast for it. Geography is sampled ' +
+    'once per location and kept, because a coastline does not move.',
+  fields: (t) => ({
+    terrain: t.expose('terrain', {
+      type: TerrainAssessmentRef,
+      nullable: true,
+      description: 'Null when the terrain has not been sampled yet.',
+    }),
+    marineCoverage: t.exposeString('marineCoverage', {
+      nullable: true,
+      description:
+        '"present" or "none", learned from whether the wave model returns data at this ' +
+        'coordinate. Null when it has not been asked yet.',
+    }),
+  }),
+})
+
 const ForecastResultRef = builder.objectRef<ActivityForecast>('ForecastResult').implement({
   fields: (t) => ({
     location: t.expose('location', { type: LocationRef }),
     alternatives: t.expose('alternatives', {
       type: [LocationRef],
       description: 'Other places that matched the query, so a substitution is never silent.',
+    }),
+    assessment: t.expose('assessment', {
+      type: AssessmentRef,
+      description: 'The geography behind the applicability answers, so they can be checked.',
     }),
     issuedAt: t.exposeString('issuedAt', {
       description: 'When this forecast was fetched upstream.',

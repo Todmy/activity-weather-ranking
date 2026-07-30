@@ -7,7 +7,11 @@ import { startServer } from './server.ts'
  * because a test that installs a SIGTERM handler in its own process is a test
  * that shuts down the test runner.
  */
-const server = await startServer(config.PORT)
+const server = await startServer({
+  port: config.PORT,
+  mongodbUri: config.MONGODB_URI,
+  mongodbDatabase: config.MONGODB_DB,
+})
 
 console.log(`GraphQL ready at http://localhost:${server.port}/graphql`)
 

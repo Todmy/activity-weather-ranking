@@ -8,12 +8,13 @@
  *
  * GraphiQL lists these in its operation picker; pick one and press play.
  */
-export const defaultQuery = `# Five queries. Pick an operation from the dropdown next to the play button.
+export const defaultQuery = `# Seven queries. Pick an operation from the dropdown next to the play button.
 #
-# Milestone M3 scores all four activities. Skiing and surfing come back as
-# UnavailableActivity for now: both need geography this service has not fetched
-# yet, and "we have not looked" is deliberately not the same answer as "there is
-# no mountain here". Terrain and ocean coverage arrive in M4, storage in M5.
+# Milestone M4 measures geography, so all four activities now answer for real.
+# Skiing is scored at a sampled high point rather than at the city coordinate —
+# Grenoble is 214 m in town and 3204 m within 45 km — and query 6 shows where.
+# Query 7 shows the other outcome: measured absence, which is notApplicable and
+# deliberately not a score of zero. Storage arrives in M5.
 
 # 1. Best days for each activity. One of the two readings of "ranks the next
 #    seven days"; days an activity cannot be scored on are left out.
@@ -80,6 +81,48 @@ query FiveCambridges {
 query NoSuchPlace {
   activityForecast(query: "Nowhereinparticular") {
     location { name }
+  }
+}
+
+# 6. Where skiing was actually assessed. The city sits at 214 m and the score
+#    belongs to a point 3204 m up and 44 km away, so the answer says so rather
+#    than letting "Grenoble 78" read as a claim about the city centre.
+query WhereSkiingWasAssessed {
+  activityForecast(query: "Grenoble") {
+    location { name elevation }
+    assessment {
+      marineCoverage
+      terrain { elevation distanceKm gridVersion latitude longitude }
+    }
+    rankings {
+      activity
+      days { date score confidence }
+    }
+  }
+}
+
+# 7. Measured absence. Amsterdam's sampled grid maxes at 51 m and Vienna's
+#    coordinate has no water, so skiing and surfing come back notApplicable with
+#    a reason — not scored zero, and not from any list naming those cities.
+query NoMountainNoOcean {
+  amsterdam: activityForecast(query: "Amsterdam") {
+    assessment { terrain { elevation distanceKm } marineCoverage }
+    days {
+      date
+      activities {
+        ... on NotApplicableActivity { activity reason }
+        ... on ScoredActivity { activity score }
+      }
+    }
+  }
+  vienna: activityForecast(query: "Vienna") {
+    assessment { terrain { elevation } marineCoverage }
+    days {
+      date
+      activities {
+        ... on NotApplicableActivity { activity reason }
+      }
+    }
   }
 }
 `
