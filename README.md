@@ -21,7 +21,8 @@ history is incremental.
 
 | Document | What it holds |
 |---|---|
-| [`docs/decisions.md`](docs/decisions.md) | **Start here.** Every decision and assumption, one line each, linking to the full argument |
+| [`docs/milestones.md`](docs/milestones.md) | The high-level map. Nine milestones, M0 to M8, each with an observable done-condition and a status |
+| [`docs/decisions.md`](docs/decisions.md) | **Start here for the reasoning.** Every decision and assumption, one line each, linking to the full argument |
 | [`docs/worklog.md`](docs/worklog.md) | The sequence as it happened, including two designed mechanisms that died on contact with the real API |
 | [`docs/open-questions.md`](docs/open-questions.md) | The eight questions that would go to a product manager, and the assumption committed to instead |
 | [`docs/cut.md`](docs/cut.md) | What was considered and not built, with the test each item had to pass |
