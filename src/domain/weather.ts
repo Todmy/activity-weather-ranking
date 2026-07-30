@@ -17,6 +17,14 @@ export type WeatherInputs = {
   precipitationSum?: number | null
   rainSum?: number | null
   snowfallSum?: number | null
+  /**
+   * Snow on the ground, centimetres, folded from the hourly block at the
+   * provider boundary. Distinct from `snowfallSum`, which is what fell: a
+   * mountain can have two metres of base and no new snow for a fortnight, and
+   * a model that cannot tell those apart scores a bare summer summit as
+   * skiable. [S10] in the sanity table.
+   */
+  snowDepth?: number | null
   precipitationProbabilityMax?: number | null
   precipitationHours?: number | null
   windSpeedMax?: number | null

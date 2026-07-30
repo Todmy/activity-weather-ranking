@@ -10,7 +10,7 @@ import {
 
 /**
  * Every test here runs against a response captured from the live API on
- * 2026-07-29 and committed as a fixture. Nothing in this suite touches the
+ * 2026-07-30 and committed as a fixture. Nothing in this suite touches the
  * network: the free tier is 10,000 calls a day, and a test suite that spends
  * quota is a test suite people stop running.
  */
@@ -21,13 +21,15 @@ const fixture = (name: string): unknown =>
 const innsbruck = fixture('forecast-innsbruck.json')
 /** What the service actually requests now: three past days plus seven. */
 const innsbruckPast3 = fixture('forecast-innsbruck-past3.json')
+const portillo = fixture('forecast-portillo-snow-past3.json')
+const grenobleSummit = fixture('forecast-grenoble-summit-past3.json')
 
 describe('parseForecast', () => {
   it('accepts the captured Innsbruck response', () => {
     const parsed = parseForecast(innsbruck)
 
     expect(parsed.timezone).toBe('Europe/Vienna')
-    expect(parsed.elevation).toBe(580)
+    expect(parsed.elevation).toBe(584)
     expect(parsed.daily.time).toHaveLength(7)
   })
 
@@ -58,15 +60,16 @@ describe('toDailyWeather', () => {
 
     expect(days).toHaveLength(7)
     expect(days[0]).toMatchObject({
-      date: '2026-07-29',
-      temperatureMax: 33.3,
-      apparentTemperatureMax: 33.9,
-      precipitationSum: 0.3,
+      date: '2026-07-30',
+      temperatureMax: 35,
+      apparentTemperatureMax: 35.5,
+      precipitationSum: 0,
       snowfallSum: 0,
-      windSpeedMax: 12.3,
-      windGustsMax: 34.2,
-      cloudCoverMean: 41,
-      uvIndexMax: 6.9,
+      snowDepth: 0,
+      windSpeedMax: 9.2,
+      windGustsMax: 19.1,
+      cloudCoverMean: 5,
+      uvIndexMax: 7.1,
     })
   })
 
@@ -90,13 +93,13 @@ describe('toDailyWeather', () => {
     const days = toDailyWeather(parseForecast(innsbruck))
 
     expect(days.map((day) => day.date)).toEqual([
-      '2026-07-29',
       '2026-07-30',
       '2026-07-31',
       '2026-08-01',
       '2026-08-02',
       '2026-08-03',
       '2026-08-04',
+      '2026-08-05',
     ])
   })
 })
@@ -124,6 +127,57 @@ describe('buildForecastUrl', () => {
     // Costs no extra call. Without it the first forecast day reads as though
     // the mountain had never seen snow (decision #39).
     expect(new URL(url).searchParams.get('past_days')).toBe('3')
+  })
+})
+
+describe('snow depth', () => {
+  it('asks for snow depth every six hours, not every hour', () => {
+    // The only variable skiing needs that has no daily aggregate, so it has to
+    // come from the hourly block. Six-hourly is 40 values over the ten days
+    // instead of 240: snow depth is a state variable that moves centimetres
+    // across a day — Portillo's probe swings 3 cm between its four samples —
+    // so a finer resolution would buy nothing and cost quota that is already
+    // the binding limit on this service.
+    const url = new URL(buildForecastUrl({ latitude: 47.26, longitude: 11.39 }))
+
+    expect(url.searchParams.get('hourly')).toBe('snow_depth')
+    expect(url.searchParams.get('temporal_resolution')).toBe('hourly_6')
+  })
+
+  it('reports the deepest of the day\'s samples, in centimetres', () => {
+    // Upstream reports metres; every other depth in this model is centimetres
+    // and the sanity table's threshold is 30 cm, so the conversion belongs at
+    // the boundary rather than in four profiles. The daily maximum is the
+    // cover the mountain had available that day; with a 3 cm intra-day spread
+    // the choice between max, mean and min is close to arbitrary, and stating
+    // which one it is matters more than which one it was.
+    const days = toDailyWeather(parseForecast(portillo))
+
+    expect(days).toHaveLength(10)
+    expect(days[0]?.snowDepth).toBeCloseTo(201, 0)
+    expect(days.at(-1)?.snowDepth).toBeCloseTo(228, 0)
+  })
+
+  it('reads a bare summer summit as no snow rather than as no data', () => {
+    // Grenoble's summit point, 3204 m, captured 30 July. Zero is a measurement
+    // and null is an absence, and a gate must be able to tell them apart: one
+    // shuts, the other leaves the gate open rather than vetoing on ignorance.
+    const days = toDailyWeather(parseForecast(grenobleSummit))
+
+    expect(days.every((day) => day.snowDepth === 0)).toBe(true)
+  })
+
+  it('refuses an hourly block that does not divide into the daily one', () => {
+    // Misalignment here would put Friday's depth on Tuesday, and the answer
+    // would still look like weather — the same failure the daily refine exists
+    // for.
+    const good = parseForecast(portillo)
+    const broken = {
+      ...good,
+      hourly: { ...good.hourly, time: good.hourly.time.slice(4), snow_depth: good.hourly.snow_depth.slice(4) },
+    }
+
+    expect(() => parseForecast(broken)).toThrow()
   })
 })
 

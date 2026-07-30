@@ -40,6 +40,16 @@ export const DAILY_VARIABLES = [
 ] as const
 
 /** The seven days that get scored, and the history that informs them. */
+/**
+ * Snow depth has no daily aggregate upstream, so it comes from the hourly
+ * block at six-hourly resolution: 40 values over the ten days instead of 240.
+ * It is a state variable that moves centimetres across a day — the Portillo
+ * probe swings 3 cm between its four samples — so a finer resolution would buy
+ * nothing and cost quota, which is the binding limit on this service.
+ */
+export const TEMPORAL_RESOLUTION = 'hourly_6'
+export const SAMPLES_PER_DAY = 4
+
 export const FORECAST_DAYS = 7
 export const PAST_DAYS = 3
 
@@ -71,12 +81,28 @@ const forecastResponse = z
       sunshine_duration: nullableNumbers,
       daylight_duration: nullableNumbers,
     }),
+    // Snow depth is the one variable skiing needs that Open-Meteo publishes no
+    // daily aggregate for, so it arrives here and is folded into the day.
+    hourly: z.object({
+      time: z.array(z.string()),
+      snow_depth: nullableNumbers,
+    }),
   })
   .refine(
     ({ daily }) => Object.values(daily).every((series) => series.length === daily.time.length),
     // A short array does not fail loudly on its own: it shifts every later
     // value onto the wrong date and the output still looks like weather.
     { message: 'every daily series must have the same length as daily.time' },
+  )
+  .refine(
+    ({ hourly }) => hourly.snow_depth.length === hourly.time.length,
+    { message: 'hourly.snow_depth must have the same length as hourly.time' },
+  )
+  .refine(
+    // Same failure as above, one axis over: a short hourly block would put
+    // Friday's depth on Tuesday and the answer would still look like weather.
+    ({ daily, hourly }) => hourly.time.length === daily.time.length * SAMPLES_PER_DAY,
+    { message: `hourly must carry exactly ${SAMPLES_PER_DAY} samples for every daily row` },
   )
 
 export type ForecastResponse = z.infer<typeof forecastResponse>
@@ -90,6 +116,8 @@ export const buildForecastUrl = ({ latitude, longitude }: Coordinates): string =
   url.searchParams.set('latitude', String(latitude))
   url.searchParams.set('longitude', String(longitude))
   url.searchParams.set('daily', DAILY_VARIABLES.join(','))
+  url.searchParams.set('hourly', 'snow_depth')
+  url.searchParams.set('temporal_resolution', TEMPORAL_RESOLUTION)
   // Local calendar dates in the location's own timezone. "Tuesday" in a travel
   // forecast means Tuesday where the traveller is.
   url.searchParams.set('timezone', 'auto')
@@ -108,10 +136,24 @@ export const buildForecastUrl = ({ latitude, longitude }: Coordinates): string =
  * coastline orientation this service does not have (decision #23, cut).
  */
 export const toDailyWeather = (response: ForecastResponse): DayWeather[] => {
-  const { daily } = response
+  const { daily, hourly } = response
+
+  // Metres upstream, centimetres here. Every other depth in this model is
+  // centimetres and the sanity table's threshold is 30, so the conversion
+  // belongs at the boundary rather than in the profiles. The daily maximum is
+  // the cover the mountain had available that day; all-null stays null,
+  // because zero is a measurement and absence is not.
+  const depthFor = (index: number): number | null => {
+    const samples = hourly.snow_depth
+      .slice(index * SAMPLES_PER_DAY, (index + 1) * SAMPLES_PER_DAY)
+      .filter((metres): metres is number => metres !== null)
+
+    return samples.length === 0 ? null : Math.max(...samples) * 100
+  }
 
   return daily.time.map((date, index) => ({
     date: date!,
+    snowDepth: depthFor(index),
     temperatureMax: daily.temperature_2m_max[index] ?? null,
     temperatureMin: daily.temperature_2m_min[index] ?? null,
     apparentTemperatureMax: daily.apparent_temperature_max[index] ?? null,
