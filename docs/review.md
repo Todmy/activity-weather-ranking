@@ -62,9 +62,53 @@ All three are fixed; the four *scope* items the same audit turned up are in
 than estimated — [`capacity.md`](./capacity.md) — which turned R1's neighbour, "how far does this
 scale", into a number with conditions attached.
 
-Two figures in this file are from the day it was written and are now behind: the test count was 319
-and is 326. Left as they were, because a stage artifact that quietly updates itself is no longer
-evidence of when it ran.
+Three figures above this line are from the day it was written and are now behind: the test count was
+319 and is 334, the commit count said eight and was already fourteen, and "every source file except
+five has a sibling test" is now six. Left as they were, because a stage artifact that quietly updates
+itself is no longer evidence of when it ran — but named in full, because a staleness note that misses
+a third of what is stale reads as precision it does not have. That omission was itself a finding of
+the audit below.
+
+## The independent review that was missing — 30 July, evening
+
+The top of this file records that stage 7 skipped its own most important step: the reviewer was the
+author. That has now been fixed, and it is the reason this section is longer than the original
+review. Three reviewers with no context on the work and no memory of writing it were given the
+repository cold — one on the code, one auditing every claim in `docs/` against the code and the git
+history, and one told to read it as a Collinson hiring engineer with an hour and a recommendation to
+make. Their briefs are in the git history of this commit range; the findings below are the ones that
+survived being checked against the code by hand, because a reviewer's report is a claim too.
+
+**Twenty-six findings, of which two were critical.** Neither was reachable from any test that
+existed. The distribution is the point: the self-review found three findings and none of them was a
+defect.
+
+### Fixed
+
+| Severity | Finding | Commit |
+|---|---|---|
+| **Critical** | An issuance stored as `marine: { status: 'ok', days: [] }` made every request for that city throw for the whole freshness hour, surfacing as a bare "Unexpected error." `[]` is not nullish, so it survived the `??` and reached `mergeMarine`'s length check. Fixed at both layers, because the gateway fix cannot heal issuances already stored | `2df69cb` |
+| Important | The refresher's per-tick limit was a cap, not a window. Ordered by `lastRequestedAt` descending, it picked the twenty locations the read path had just refreshed; past twenty warm cities the rest were never refreshed at all. Inverting the sort does not help — refreshing does not move that field. Locations gained `lastConsideredAt` and the queue now rotates | `5f74b9f` |
+| Important | Three of the four upstream clients took no `AbortSignal`, and two of them run *ahead* of the gateway. Node's fetch has no default request timeout, so a hung geocoder held a socket for five minutes | `01829e5` |
+| Important | `SHUTDOWN_GRACE_MS` was 8 s while a cold-start request can legitimately wait 10 s, so SIGTERM severed exactly the request the grace exists to protect. The chain now runs 8 s upstream < 10 s wait < 12 s grace < 30 s Docker, and a test asserts the order | `af5a3a0` |
+| Important | A throw from the lease release, running in a `finally`, replaced a successfully stored issuance with a request error | `34a35fd` |
+| Important | **"No scoring number without a named published source" was not literally true.** Skiing's lift-hold gate is `rampDown(56, 72)` and 72 is in no citation; the outdoor table states air temperature while the profile scores apparent; one constant has no publication at all. All three are defensible and none was disclosed. Now marked, with the reasoning — and the four tests that claimed to enforce the rule asserted `source.length > 20`, which prose passes | `8d08dff` |
+| Important | Eight figures a reader can check in one command were wrong: Grenoble at 218 m/3354 m against a probe that says 214/3204 and a GraphQL schema that says the same, eight milestones against nine, 54 decision rows against 53, an index claiming completeness while missing two cut items, a pointer to a file deleted in `c0507c5` | `2d29d60` |
+
+### Open, and the author's call rather than a defect
+
+| Finding | Why it is not fixed here |
+|---|---|
+| **Skiing scores 35/100 on a bare 14 °C summit with no snow, and ranks it the best ski day of the week.** Zero temperature and zero fresh snow surrender only their own share of the weight; wind and rain carry 7 of 20. There is no snow gate | The fix needs a threshold, and this project's hardest rule is that a human writes the sanity rows before a curve is fitted to them. All five ski rows presuppose a base — rows 2 and 5 say so out loud — so the fitting procedure had no way to fail this case. **That is the real finding: the table has no negative examples.** Raised with the author with the four candidate fixes costed; `snow_depth` is the only signal that is not a proxy, and it is hourly-only, so it is not a three-line change |
+| The API returns a bare integer where the sanity table defines POOR/FAIR/GOOD/EXCELLENT bands | A feature, not a defect. Raised |
+| Terrain is sampled over 50 km, marine at the single city coordinate — so Amsterdam is `noMarineCoverage` with Zandvoort 25 km away. The argument that justifies the Grenoble summit invalidates the marine treatment | Real asymmetry, and no document notices it. It needs an answer written down more than it needs code |
+| Seven minor code findings: a stale issuance discarded on the degrade path, a `removeListener` that removes nothing, a schedule left running on bind failure, the summit series joined by index without the date check marine has, the refresher planning from an unassessed document, `issuedAt` taken before the fetch rather than after, and `localeCompare` without an explicit locale | Recorded, not fixed. Each is small; none changes an answer today; and the author's instruction was to stop and analyse before adding, not to close every open box before a deadline |
+
+**What the hiring reviewer said, since it is the only outside read of this submission that exists:**
+*hire*, not strong hire — "the persistence model is the real thing, not a cache with a TTL bolted
+on", "geography is measured, so there is no hardcoded city list anywhere, and that is the single best
+piece of product judgement in the submission" — with the snow bug and 3,683 lines of markdown against
+4,106 of source named as what holds it back. Both are recorded here rather than argued with.
 
 ## What I would not change
 
