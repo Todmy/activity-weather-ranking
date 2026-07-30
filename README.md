@@ -52,6 +52,23 @@ curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
   -d '{"query":"{ activityForecast(query: \"Cambridge\") { location { name country admin1 } alternatives { name country admin1 } } }"}'
 ```
 
+**Ask where a ski score was actually assessed.** The city is at 218 m and the score belongs to a
+point 3354 m up, so the answer says so rather than letting the number stand as a claim about the
+city centre.
+
+```bash
+curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
+  -d '{"query":"{ activityForecast(query: \"Grenoble\") { location { name elevation } assessment { marineCoverage terrain { elevation distanceKm gridVersion latitude longitude } } rankings { activity days { date score } } } }"}'
+```
+
+**Ask about a city with no mountain and no ocean.** Amsterdam samples 38 m and its coordinate has no
+water, so both answers are `notApplicable` with a reason — measured, not read off a list.
+
+```bash
+curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
+  -d '{"query":"{ activityForecast(query: \"Amsterdam\") { assessment { terrain { elevation } marineCoverage } days { activities { ... on ScoredActivity { activity score } ... on NotApplicableActivity { activity reason } } } } }"}'
+```
+
 **Ask for somewhere that does not exist.** The error names the query and carries
 `LOCATION_NOT_FOUND`, rather than being an empty forecast or a made-up location.
 
@@ -62,7 +79,7 @@ curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
 
 ## Current state
 
-**Milestone M3 of M8 done, 22 points of 40.** Progress is tracked in
+**Milestone M4 of M8 done, 26 points of 41.** Progress is tracked in
 [`docs/milestones.md`](docs/milestones.md).
 
 What works today: a city name resolves to a place, and the next seven days come back ranked on both
@@ -70,10 +87,14 @@ axes for all four activities, with every score explained by the factors and gate
 a confidence that decays with the forecast horizon, and a pinned model version. All twenty rows of
 [`docs/sanity-table.md`](docs/sanity-table.md) pass.
 
-Skiing and surfing answer `UnavailableActivity` rather than a number, because both need geography
-this service has not fetched yet. That is deliberately not `NotApplicableActivity`: "we have not
-looked" and "there is no mountain here" are different claims, and the API keeps them apart. Terrain
-and ocean coverage arrive in M4.
+Geography is measured rather than looked up. Terrain comes from 81 elevation samples on a circular
+50 km mask around the city, paid once per city and then kept, and ocean coverage comes from whether
+the wave model returns data at that coordinate. There is no list of cities anywhere.
+
+That is what makes skiing answerable. Grenoble reports its city elevation as 218 m and its ski scores
+as belonging to a point at 3354 m, 44.7 km away — scoring the city coordinate would answer
+confidently about a place nobody skis, for exactly the cities a traveller would ask about. Amsterdam
+samples 38 m and answers `notApplicable/noTerrain`, which is deliberately not a score of zero.
 
 Not here yet: persistence, which is the part of the brief this service most obviously owes and which
 arrives in M5. Until then every request goes upstream.

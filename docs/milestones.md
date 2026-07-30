@@ -16,7 +16,7 @@ Status: **done** · **in progress** · **not started**
 | **M1** | Skeleton deployed | A URL that answers GraphQL | 1 | **done** |
 | **M2** | Tracer bullet | One city, one activity, scored live | 3 | **done** |
 | **M3** | Scoring model | All four activities, sanity table passing | 5 | **done** |
-| **M4** | Geography | Terrain and ocean decide applicability | 4 | not started |
+| **M4** | Geography | Terrain and ocean decide applicability | 4 | **done** |
 | **M5** | Persistence and refresh | Weather stored, not re-fetched | 5 | not started |
 | **M6** | API surface | Both ranking axes, ambiguity handled | 2 | not started |
 | **M7** | Background refresher | Scheduled pull, visibly running | 3 | not started |
@@ -24,7 +24,7 @@ Status: **done** · **in progress** · **not started**
 
 **About the points.** Fibonacci, relative to each other rather than to a clock. 1 is trivial, 3 is a
 normal unit of work, 5 carries real uncertainty, and 13 is the two days of design that preceded any
-code. Forty-one points in total, twenty-two of them delivered.
+code. Forty-one points in total, twenty-six of them delivered.
 
 The total moved from 40 to 41 on 30 July, after M3 shipped. M4 was re-estimated from 3 to 4 because a
 review of the plan against the design found that it needs the `locations` collection, which the plan
@@ -196,7 +196,35 @@ needs no gateway, no lease and no TTL, so moving it here is a vertical slice rat
 piece of the next one. The read-through it introduces is also the first thing on the critical path
 that persists anything, which pulls the brief's named requirement one milestone earlier.
 
-**4 points**, re-estimated from 3 when that dependency surfaced. Plan: [slice 3](./plan.md).
+**Status: done, 30 July. 4 points**, re-estimated from 3 when the `locations` dependency surfaced.
+Plan: [slice 3](./plan.md).
+
+Verified on the deployed URL rather than in a test: Grenoble reports its city elevation as 218 m and
+its ski scores as belonging to a point at 3354 m, 44.7 km away, under `gridVersion` `circ-50km-11x11`.
+Amsterdam samples 38 m and answers `notApplicable/noTerrain`; its coordinate has no water either, so
+surfing is `notApplicable/noMarineCoverage`. Neither answer comes from a list naming those cities.
+
+**What it turned up.** Three things, in order of how much they changed:
+
+- **The fixtures did not cover the config that ships.** The calibration probes are square grids at
+  3×3, 5×5 and 9×9 — the grids the config was chosen *against* — and there was no forecast at a
+  sampled high point at all, which design.md §2 had required since it was written. Since no test may
+  call the live API, three probes had to be captured before the first red run. The circular mask then
+  found Grenoble's high point at 3204 m and 44.7 km where the 9×9 square found 3158 m at 62.5 km:
+  higher and closer, because the square's extra reach is diagonal and the mountains are not.
+- **Two independent endpoints agree on the terrain.** The forecast at the sampled high point reports
+  `elevation: 3204.0`, the same figure the Elevation API gave for that coordinate. That was not
+  designed; it is a free cross-check that the summit series is being fetched for the place the grid
+  actually found.
+- **Vienna has terrain.** 1092 m within 50 km, so skiing is asked rather than refused, and it scores
+  26 in August. That is the 300 m gate behaving as specified rather than a misclassification: it is a
+  cost gate, and a false "applicable" costs one request and then scores badly on its own merits.
+
+One defect was caught by writing a test rather than in review. The first read-through sampled terrain
+and marine coverage under a single `Promise.all`, so a failure in the one-request marine call
+discarded a successful 81-coordinate grid — the most expensive thing the service does, re-spent on
+the next request. The two samples are independent now, and each is asked for only when its own answer
+is missing.
 
 ---
 

@@ -334,6 +334,56 @@ written. Tests may not call the live API, so that fixture has to be captured bef
 slice 3 exists. Ten minutes, and it would have been ten minutes of confusion in the middle of a red
 run instead.
 
+### Geography, and the fixtures that were not evidence
+
+M4 started by reading the plan back and finding two things missing, both of the same kind: the
+fixtures did not cover what the service was about to send.
+
+The elevation probes are square grids at 3×3, 5×5 and 9×9. Those are the grids the config was chosen
+*against* — the square sample is the thing recon falsified, because corners reach 70.7 km where edges
+reach 50 km and Grenoble's maximum came from a corner. There was no probe for the circular config that
+actually ships, and no forecast at a sampled high point at all, which design.md has needed since it
+was written. No test may call the live API, so both had to be captured before the first red run.
+
+Worth it for one number. The circular mask found Grenoble's high point at 3204 m and 44.7 km, where
+the 9×9 square found 3158 m at 62.5 km. Higher and closer — the square's extra reach is diagonal and
+the mountains here are not, which is the clearest statement of the non-monotonicity recon had measured
+but not explained.
+
+Then a free cross-check I did not design. The forecast at that coordinate reports `elevation: 3204.0`,
+the same figure the Elevation API gave. Two independent endpoints agreeing means the summit series is
+being fetched for the place the grid actually found, and I would not have known that without asking
+both.
+
+### The Promise.all that would have cost 81 coordinates
+
+The read-through sampled terrain and marine coverage together, under one `Promise.all`. It reads
+fine. It is also wrong in one direction: terrain is 81 metered coordinates and marine is one request,
+so a failure in the cheap call discarded the expensive result and the next request paid for the grid
+again.
+
+I found it writing the test, not reading the code. The test I was writing was "keeps the expensive
+terrain sample when the cheap marine call fails", and I wrote it because the two costs are not
+comparable and it seemed worth stating. It went red immediately.
+
+### Vienna skis
+
+1092 m within 50 km of Vienna, so the gate opens and skiing scores 26 in August. My first reaction
+was that this is a misclassification. It is not: 300 m is a cost gate, and the whole reason it sits
+that low is that a false `notApplicable` is permanent and invisible while a false "applicable" costs
+one request and then scores badly on its own merits. Vienna scoring 26 is the mechanism working, and
+the alternative — tuning the threshold until Vienna is excluded — is how you get a number that fits
+the cities you happened to test.
+
+### A test that had never failed
+
+Three of the schema tests for the assessment fields were written after the schema. I noticed because
+they passed on the first run, which for a new capability is a warning rather than good news.
+
+Proven by mutation instead of pretending: removing the `assessment` field kills two of them, and
+swapping the `latitude` resolver for `longitude` kills the third. Both restored afterwards. The rule
+is constitution 6 and it is not decoration — a test that has never failed is a claim.
+
 ---
 
 ## To be filled in during implementation
