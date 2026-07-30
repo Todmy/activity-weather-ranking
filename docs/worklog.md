@@ -384,6 +384,55 @@ Proven by mutation instead of pretending: removing the `assessment` field kills 
 swapping the `latitude` resolver for `longitude` kills the third. Both restored afterwards. The rule
 is constitution 6 and it is not decoration — a test that has never failed is a claim.
 
+### The single flight that wasn't, and the test that noticed
+
+The concurrency test failed on its first run: two cold callers, two upstream fetches. The lease was
+working exactly as designed, and that was the problem.
+
+What happens is that the two callers do not overlap. Caller A reads "nothing stored", takes the
+lease, fetches, writes, releases — all before caller B gets as far as asking for the lease. B then
+acquires it cleanly, and refetches, because it is still acting on a read it took before A's write
+existed. The lease serialises the fetchers without telling the second one that its question has
+already been answered.
+
+The fix is one extra document read: check again *after* winning the lease. Cheap, and obvious once
+seen. What I want to record is that I would not have seen it. A test written to prove "the lease
+works" would have run two genuinely simultaneous callers, passed, and shipped this. It only surfaced
+because the fake upstream resolved instantly, which is the *un*realistic case — and the unrealistic
+case is what exposed the assumption that concurrent callers are the only callers who race.
+
+### Stale needs a name, not a shape
+
+I started to model staleness as a third member of the result union, alongside the forecast and the
+not-found error. It is the wrong shape. A stale forecast is structurally identical to a fresh one —
+same days, same scores, same everything — and what differs is its provenance. A union member would
+force every caller to write a second branch for data they would then handle identically.
+
+So it is two fields, `stale` and `staleReason`, and the reason travels with it. The rule underneath:
+serving old data unlabelled is worse than refusing, because nothing downstream can tell it apart from
+current data. `NoDataYet` genuinely is a different shape and stays an error with its own code.
+
+### An 8-second timeout that was decoration for about an hour
+
+The design has said "hard timeout per upstream call: 8 s" since it was written, and the argument for
+the 30-second lease rests on it: a lease shorter than the fetch it guards silently admits a second
+fetcher. I wrote the constant into the gateway and moved on.
+
+Then the type checker accepted `weather: fetchForecast` against a signature taking `(coordinates,
+signal)`, because a function that ignores an argument is assignable to one that takes it. The cap was
+a number in a module that nothing received. Threading an `AbortSignal` into `fetch` itself is both
+the honest fix and the better one: a promise race abandons the promise and leaves the socket open, so
+a hung upstream keeps a connection while the lease guarding it expires underneath. Two provider tests
+now assert the signal reaches `fetch`.
+
+### One unexplained failure
+
+A full run mid-slice reported `1 failed | 258 passed` and printed no failure detail. Eight subsequent
+runs — three full, five targeted at the concurrency-sensitive suites — were green. I could not
+reproduce it and could not identify which test it was, so it is recorded here rather than declared
+fixed. The suspicion is a stale transform immediately after a file rewrite, and the reason it is
+worth writing down is that "it went away" is not a diagnosis.
+
 ---
 
 ## To be filled in during implementation

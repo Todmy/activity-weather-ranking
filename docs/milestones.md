@@ -17,14 +17,14 @@ Status: **done** · **in progress** · **not started**
 | **M2** | Tracer bullet | One city, one activity, scored live | 3 | **done** |
 | **M3** | Scoring model | All four activities, sanity table passing | 5 | **done** |
 | **M4** | Geography | Terrain and ocean decide applicability | 4 | **done** |
-| **M5** | Persistence and refresh | Weather stored, not re-fetched | 5 | not started |
+| **M5** | Persistence and refresh | Weather stored, not re-fetched | 5 | **done** |
 | **M6** | API surface | Both ranking axes, ambiguity handled | 2 | not started |
 | **M7** | Background refresher | Scheduled pull, visibly running | 3 | not started |
 | **M8** | Submission | README, worklog, verify, review | 5 | not started |
 
 **About the points.** Fibonacci, relative to each other rather than to a clock. 1 is trivial, 3 is a
 normal unit of work, 5 carries real uncertainty, and 13 is the two days of design that preceded any
-code. Forty-one points in total, twenty-six of them delivered.
+code. Forty-one points in total, thirty-one of them delivered.
 
 The total moved from 40 to 41 on 30 July, after M3 shipped. M4 was re-estimated from 3 to 4 because a
 review of the plan against the design found that it needs the `locations` collection, which the plan
@@ -246,7 +246,31 @@ answers correctly with Open-Meteo unreachable, flagging the data as stale.
 milestone where the design is least negotiable, because "how you model, store, and refresh it" is
 quoted from the brief.
 
-**5 points.** Plan: [slice 4](./plan.md).
+**Status: done, 30 July. 5 points.** Plan: [slice 4](./plan.md).
+
+Verified on the deployed URL rather than in a test. Two concurrent requests for Ljubljana, a city the
+service had never seen, plus a third immediately after, all returned
+`issuedAt: 2026-07-30T14:44:27.050Z` — the same instant to the millisecond. The database holds one
+issuance for that location and no lease document, so three requests cost one upstream fetch and the
+lease was released behind it.
+
+**What it turned up.** Two things:
+
+- **The lease alone does not produce a single flight.** The concurrency test failed on its first run
+  with two fetches, and the reason was not a race the lease lost: the two callers had not overlapped
+  at all. The first finished and released before the second acquired, and the second then refetched
+  what was already stored, because it was still acting on a read taken before the write existed. The
+  fix is a second read *after* winning the lease (decision #42). A test that only ran two truly
+  simultaneous callers would have passed and shipped this.
+- **Stale needed a name, not a shape.** Serving old data unlabelled is worse than refusing, since
+  nothing downstream can tell it from current data. It is reported as `stale` + `staleReason` on the
+  result rather than as a separate union member, because the data is structurally identical and only
+  its provenance differs (decision #43). `NoDataYet` genuinely is a different shape, and that one is
+  an error with its own code.
+
+One thing was proved by mutation rather than by a red run. The `NoDataYet` path was written while the
+gateway was being wired and its tests came afterwards, so the typed throw was replaced with a bare
+`Error` to confirm both the app-level and HTTP-level tests fail; both were restored.
 
 ---
 

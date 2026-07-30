@@ -69,6 +69,16 @@ curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
   -d '{"query":"{ activityForecast(query: \"Amsterdam\") { assessment { terrain { elevation } marineCoverage } days { activities { ... on ScoredActivity { activity score } ... on NotApplicableActivity { activity reason } } } } }"}'
 ```
 
+**Prove the weather is stored, not fetched.** Run this twice; `issuedAt` will not move, because the
+second answer is read from the issuance the first one wrote. Run it three times at once for a city
+nobody has asked about yet and you still get one timestamp — the lease admits one fetcher and the
+others read what it wrote.
+
+```bash
+curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
+  -d '{"query":"{ activityForecast(query: \"Ljubljana\") { location { name } issuedAt stale staleReason } }"}'
+```
+
 **Ask for somewhere that does not exist.** The error names the query and carries
 `LOCATION_NOT_FOUND`, rather than being an empty forecast or a made-up location.
 
@@ -79,7 +89,7 @@ curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
 
 ## Current state
 
-**Milestone M4 of M8 done, 26 points of 41.** Progress is tracked in
+**Milestone M5 of M8 done, 31 points of 41.** Progress is tracked in
 [`docs/milestones.md`](docs/milestones.md).
 
 What works today: a city name resolves to a place, and the next seven days come back ranked on both
@@ -96,8 +106,19 @@ as belonging to a point at 3354 m, 44.7 km away — scoring the city coordinate 
 confidently about a place nobody skis, for exactly the cities a traveller would ask about. Amsterdam
 samples 38 m and answers `notApplicable/noTerrain`, which is deliberately not a score of zero.
 
-Not here yet: persistence, which is the part of the brief this service most obviously owes and which
-arrives in M5. Until then every request goes upstream.
+Weather is stored rather than re-fetched. Each fetch is written as one **issuance** — city, summit
+and wave series together, because they are one unit of consistency — and reads go through a gateway
+with a one-hour freshness window, a single-flight lease so a hundred simultaneous misses cause one
+upstream call, and stale-if-error so an outage degrades the answer instead of removing it. Issuances
+are kept rather than upserted, so "what did we think on Tuesday that Friday would be" survives.
+
+You can see that from outside: run `HowFreshIsThisAnswer` in GraphiQL twice inside an hour and
+`issuedAt` does not move. On the deployed URL, two concurrent requests for a city the service had
+never seen, plus a third immediately after, returned one identical `issuedAt` and left exactly one
+document in `forecasts`.
+
+Not here yet: the second ranking entry point for ambiguous names (M6) and the background refresher
+(M7).
 
 Two days of design came before any code, and that was deliberate rather than incidental. The brief
 grades how the work happened above the service itself, so the thinking is written down and committed.

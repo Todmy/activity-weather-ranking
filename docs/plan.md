@@ -115,6 +115,11 @@ city performs no elevation call at all.
 
 **Done when** two concurrent requests for a cold location produce exactly one upstream fetch.
 
+**Done, 30 July.** Five commits: `forecasts`, the lease, `resolutions`, the gateway, and the wiring
+that makes the application layer unable to reach a provider directly. Verified on the deployed URL
+with two concurrent requests plus a third for Ljubljana: one issuance, one fetch, no lease left
+behind. 266 tests.
+
 ## Slice 5 — Full API — 2 points (M6)
 
 1. `searchLocations`, `activityForecastAt`, `forecastHistory`.
