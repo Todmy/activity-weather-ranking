@@ -1,6 +1,6 @@
 # Constitution: activity-weather-ranking
 
-Version: 3.0.0 | Ratified: 2026-07-29 | Last amended: 2026-07-30
+Version: 4.0.0 | Ratified: 2026-07-29 | Last amended: 2026-07-30
 
 The principles every design in this project is checked against before it is built, and re-checked
 against the code afterwards.
@@ -46,7 +46,10 @@ turns out to be the wrong call, that goes in the worklog rather than being quiet
    the code that satisfies it, and MUST run that test and watch it fail for the intended reason
    before writing the code. This binds every layer, not only the domain: providers are tested
    against captured fixtures, and the API through the transport a caller actually uses. No test may
-   reach the live upstream.
+   reach the live upstream. **A red run that only reports a missing module is not that evidence — it
+   proves the import path, not that any assertion can detect its subject. Where the first red is a
+   missing module, the test MUST then be checked by flipping the one line it exists for, and exactly
+   one test MUST fail.**
    *A test that has never failed is not evidence, it is a claim. The red run is the only thing that
    proves a test can detect its own subject, and skipping it has cost this project twice in one
    afternoon. In the domain, where the run was honoured, it caught `rampUp(5, 5)` returning 0 at the
@@ -56,6 +59,10 @@ turns out to be the wrong call, that goes in the worklog rather than being quiet
    INTERNAL_SERVER_ERROR, and what found it was a curl. The risk weighting was not wrong about where
    the interesting thinking lives; it was wrong to conclude that the rest could be checked by
    attention.*
+   *The mutation clause came from M7, where the rule as written was satisfied and still let two
+   worthless tests through. Both were written first, both went red, and the red said only "module not
+   found" — so both survived deleting the exact line they existed for. Flipping that line is two
+   minutes and it is the only check that separates a test from a claim.*
 
 7. **Scope earns its place** — MUST build a feature beyond the literal brief only if it answers a
    question the brief itself poses (how the data is modelled, stored or refreshed) or defends the
@@ -123,3 +130,8 @@ turns out to be the wrong call, that goes in the worklog rather than being quiet
   where the red run happened, caught a real bug with it; the API layer, where it did not, shipped a
   masked error that its own green test could not see. Decision #29 is corrected to match (from
   feature: activity-weather-ranking)
+- 4.0.0 (2026-07-30) — principle 6 again, and for the same reason one layer down: the rule was
+  satisfied and still let two worthless tests through in M7. A red run whose only message is "module
+  not found" proves the import path, so the principle now requires the test to be checked by flipping
+  the line it exists for. Major rather than minor because it makes previously-compliant tests
+  non-compliant, which is what a version number is for (from feature: activity-weather-ranking)

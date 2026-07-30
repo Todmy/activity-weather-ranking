@@ -9,6 +9,11 @@ The design's own compliance table ([`design.md` §7](./design.md)) is the check 
 existed, against constitution v1.0.0. This file is the check made after, against v3.0.0. Both are
 kept: one is a prediction, the other is evidence, and collapsing them would hide which was which.
 
+**The constitution moved to v4.0.0 after this stage ran**, as a direct result of what stage 7 found:
+principle 6 now requires a new test to be checked by mutation, not only by a red run. Under that
+stricter rule the verdict below is unchanged but narrower — the mutation check covered two branches,
+not the suite, and the "what this stage did not check" section says so.
+
 ## Evidence
 
 Every claim below was produced by running the command, in this order, on 30 July.

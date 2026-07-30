@@ -97,7 +97,7 @@ documents in `docs/` are the primary deliverable, not overhead.
 | File | What it holds |
 |---|---|
 | `docs/decisions.md` | **Start here.** Every decision and assumption, one line each, linking to the full argument |
-| `docs/principles.md` | 12 principles, v3.0.0. Every design is checked against them before it is built, and the code afterwards |
+| `docs/principles.md` | 12 principles, v4.0.0. Every design is checked against them before it is built, and the code afterwards |
 | `docs/milestones.md` | M0 to M8, each with a done-condition observable from outside and a story-point size |
 | `docs/design.md` | Data model, gateway read path, scoring, determinism |
 | `docs/plan.md` | Eight vertical slices, what blocks what |
