@@ -2,8 +2,8 @@
 
 Version: 2.0.0 | Ratified: 2026-07-29 | Last amended: 2026-07-30
 
-The principles every design in this project is checked against (krukit stage 3) and re-checked in code
-against (stage 6).
+The principles every design in this project is checked against before it is built, and re-checked
+against the code afterwards.
 
 **There is no cap, and there is a bar.** The cap was ten at ratification, and it was dropped on
 30 July when two rules arrived that both cleared the bar. Holding the number would have meant merging

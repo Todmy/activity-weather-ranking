@@ -134,7 +134,7 @@ only party that can.
 
 Settled by measurement, not argument: 16 cities sampled at 3×3, 5×5 and 9×9 over the same ±50 km
 box, then re-sampled at 25/50/80 km radius. Raw data in
-`docs/krukit/activity-weather-ranking/probes/elevation-calibration-16-cities.json`.
+`docs/probes/elevation-calibration-16-cities.json`.
 
 **What the measurement showed.**
 

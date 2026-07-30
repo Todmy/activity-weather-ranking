@@ -1,10 +1,10 @@
 # Design: activity-weather-ranking
 
-Stage 3 of 7. Date: 2026-07-30. Constitution: v1.0.0.
+2026-07-30. Checked against [`principles.md`](./principles.md), v1.0.0 at the time of writing.
 
-Inputs: [`context.md`](./context.md) (recon), [`design-questions.md`](./design-questions.md)
-(engineering decisions), [`../../open-questions.md`](../../open-questions.md) (product assumptions),
-[`../../decisions.md`](../../decisions.md) (index of both).
+Inputs: [`recon.md`](./recon.md) (recon), [`design-questions.md`](./design-questions.md)
+(engineering decisions), [`../../open-questions.md`](./open-questions.md) (product assumptions),
+[`./decisions.md`](./decisions.md) (index of both).
 
 This document records the shape and the reasons for it. Where a number is not yet defensible it says
 so rather than inventing one — the scoring constants are marked TBD and are fitted against a
@@ -111,7 +111,7 @@ Index: `{ lastRequestedAt: -1 }`.
 A separate collection rather than an array on the location, because the binding runs
 query → location and the same location can answer to several queries. Once "cambridge" has resolved
 once, it is pinned: a change in Open-Meteo's relevance ranking cannot silently change what this
-service answers. That is risk 10 in `context.md`, and this is the whole of its mitigation.
+service answers. That is risk 10 in `recon.md`, and this is the whole of its mitigation.
 
 *Known limitation, stated rather than fixed:* the binding is first-writer-wins and global, not
 per-caller. A user who wants Cambridge, Massachusetts must go through `searchLocations` +
@@ -153,7 +153,7 @@ Index: `{ locationId: 1, issuedAt: -1 }`. TTL index on `expiresAt`.
 
 ### Retention — and why TTL alone is wrong
 
-Risk 7 in `context.md`: a TTL index cannot express "keep at least one". If it expires the last
+Risk 7 in `recon.md`: a TTL index cannot express "keep at least one". If it expires the last
 surviving issuance during an upstream outage, stale-if-error has nothing to serve and the service
 fails at exactly the moment the mechanism existed for.
 
@@ -200,7 +200,7 @@ Two numbers, and the relationship between them is the point:
   fetch is ~8 s plus write time.
 - Lease TTL: **30 s**, comfortably longer.
 
-Risk 8 in `context.md` is a lease shorter than the fetch it guards, which silently admits a second
+Risk 8 in `recon.md` is a lease shorter than the fetch it guards, which silently admits a second
 fetcher. The margin here is deliberate rather than round.
 
 **Trap worth naming:** Mongo's TTL monitor runs roughly every 60 s, so an expired lease document can
@@ -215,7 +215,7 @@ path — the single-flight mechanism already covers both.
 
 It is built last, after scoring calibration, because it is additive: same gateway, same lease, no
 schema change and no API change. If the schedule bites, it gives way by plan. Its scope justification
-is in [`cut.md`](../../cut.md) under "Scope audit".
+is in [`cut.md`](./cut.md) under "Scope audit".
 
 Testability follows from principle 9: the tick is a function taking an injected clock and is called
 directly by tests. No test waits on a timer.
@@ -323,7 +323,7 @@ version. Seven ways that could be false, and where each is closed:
 Persistence is not incidental to this — it is the mechanism. Without it every request hits a live API
 and two identical queries a minute apart can legitimately differ.
 
-## 7. Constitution check (v1.0.0)
+## 7. Check against the principles (v1.0.0)
 
 | # | Principle | Where honoured |
 |---|---|---|
@@ -336,9 +336,20 @@ and two identical queries a minute apart can legitimately differ.
 | 7 | Scope earns its place | Scope audit in `cut.md`; five cut items recorded with what each would take |
 | 8 | Docs carry what code cannot | This document records rejected alternatives and measured limits, not the module list |
 | 9 | Deterministic by construction | Section 6 |
-| 10 | History is the narrative | **Not yet honoured** — no repository exists. Recorded as open decision #32 |
+| 10 | History is the narrative | **Not honoured when this was written** — no repository existed. Closed 2026-07-30, and the deferral's cost is recorded as decision #32 |
 
-Nine of ten. The tenth is a live, known gap with its cost written down rather than an oversight.
+Nine of ten at the time, with the tenth a live gap whose cost was written down rather than an
+oversight.
+
+**Two principles arrived after this document, and neither changed the design.** Principle 11, one
+change per commit sliced vertically, governs how the design is built rather than what it is; the plan
+was already organised as vertical slices, so the two agree. Principle 12, exercisable by a human, did
+change one thing: it widened what the API has to demonstrate, so the example queries must reach
+`notApplicable`, staleness and the per-factor breakdown rather than only the happy path. That lands in
+the API surface (§5) and in M6's done-condition, not in the data model.
+
+Recording this rather than silently re-checking the whole document against v2.0.0: a design checked
+against principles that did not exist when it was written would be a claim nobody could verify.
 
 ## 8. What could still go wrong
 

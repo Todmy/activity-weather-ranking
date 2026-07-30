@@ -23,7 +23,7 @@ Salesforce all day.
 ### Probing the APIs before designing against them
 
 I didn't want to design from the documentation, so I called all four Open-Meteo endpoints live and
-saved the raw responses as fixtures (`docs/krukit/activity-weather-ranking/probes/`, 11 files). Two
+saved the raw responses as fixtures (`docs/probes/`, 11 files). Two
 mechanisms I'd designed died in the process, both before I wrote a line of them.
 
 **Falsification 1: the haversine applicability check.**

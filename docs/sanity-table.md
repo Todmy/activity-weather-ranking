@@ -44,7 +44,7 @@ Assessed at the sampled high point, not the city.
 
 Modelled for a competent general traveller rather than an expert. This assumption has real
 consequences — row 3 would be EXCELLENT under an expert reading — and it is recorded in
-`../../decisions.md` #33 rather than buried here.
+`./decisions.md` #33 rather than buried here.
 
 | # | Conditions | Band | Basis |
 |---|---|---|---|
@@ -68,7 +68,7 @@ better thing for it to do and was not the original claim.
 
 **Known missing factor:** wind *direction* relative to the coast. Offshore wind grooms a wave,
 onshore wind of identical speed ruins it, and rows 4 and 5 treat speed alone. Cut with its reasoning
-in `../../cut.md`.
+in `./cut.md`.
 
 ## Outdoor sightseeing
 

@@ -59,7 +59,7 @@ weather series that can fail on its own introduces a third:
 | score `0` | Applicable, data present, conditions are bad | Skiing in Innsbruck in July |
 
 Collapsing `unavailable` into either of the others is the same dishonesty principle 4 exists to
-prevent, one level down. This likely earns a principle-4 amendment at stage 7 (krukit-rules close),
+prevent, one level down. This likely earns a principle-4 amendment once the feature closes,
 where the constitution allows exactly one.
 
 ---
@@ -125,7 +125,7 @@ Three to five scenarios per activity, each a set of conditions and the rating ba
 in, written **before** any curve exists. Curves are then fitted to pass the table; once it is green,
 the model is done.
 
-The order is inverted on purpose. Risks 5 and 6 in `context.md` are two failure modes of the same
+The order is inverted on purpose. Risks 5 and 6 in `recon.md` are two failure modes of the same
 gap — calibration has no ground truth, so it has no natural stopping point, and an AI asked to
 supply thresholds will produce authoritative-sounding numbers nobody can challenge. Human judgement
 setting the target first fixes both: it bounds the work and it makes the numbers arguable.

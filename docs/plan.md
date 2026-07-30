@@ -1,12 +1,12 @@
 # Plan: activity-weather-ranking
 
-Stage 4 of 7. Date: 2026-07-30. Design: [`design.md`](./design.md).
+2026-07-30. Derived from [`design.md`](./design.md).
 
 Ordered as vertical slices, not layers. Each slice ends with something that runs, so a slice
 abandoned mid-project still leaves a working service rather than three finished layers and no
 product. Sizes are story points on a Fibonacci scale, relative to each other rather than to a
 clock, and stated per slice rather than per task. The mapping to milestone codes M0 to M8 is in
-[`../../milestones.md`](../../milestones.md).
+[`../../milestones.md`](./milestones.md).
 
 The ordering rule: **unpredictable work first, predictable work last.** Slices 1 and 3 carry the
 schedule risk; slice 7 is the one that gives way if anything overruns.

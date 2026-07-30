@@ -96,24 +96,25 @@ documents in `docs/` are the primary deliverable, not overhead.
 
 | File | What it holds |
 |---|---|
-| `docs/decisions.md` | **Start here.** All 32 decisions and assumptions, one line each, linking to the full argument |
-| `docs/krukit/constitution.md` | 10 principles. Designs are checked against them at stage 3, code at stage 6 |
-| `docs/krukit/activity-weather-ranking/design.md` | Data model, gateway read path, scoring, determinism |
-| `docs/krukit/activity-weather-ranking/plan.md` | Seven vertical slices, what blocks what |
+| `docs/decisions.md` | **Start here.** All 35 decisions and assumptions, one line each, linking to the full argument |
+| `docs/principles.md` | 12 principles. Every design is checked against them before it is built, and the code afterwards |
+| `docs/milestones.md` | M0 to M8, each with a done-condition observable from outside and a story-point size |
+| `docs/design.md` | Data model, gateway read path, scoring, determinism |
+| `docs/plan.md` | Eight vertical slices, what blocks what |
 | `docs/open-questions.md` | The eight product questions and the assumption taken for each |
 | `docs/cut.md` | What was considered and not built, and the scope test each item had to pass |
 
-`docs/krukit/activity-weather-ranking/flow-state.md` holds the pipeline state. Resume at the first
-unticked stage.
+`.local/flow-state.md` holds the pipeline state and is deliberately untracked: stage checkboxes carry
+no signal for a reader. Resume at the first unticked slice in its stage-5 table.
 
 ## Hard rules specific to this project
 
 - **Never invent a scoring threshold.** Every number in a profile cites a named source, and the
   curves are fitted to a hand-written sanity table that a human writes first. If the table is
-  missing, stop and ask for it — do not generate one. This is constitution risk 6 and the single
+  missing, stop and ask for it — do not generate one. This is risk 6 in `docs/recon.md` and the single
   easiest way to ruin this submission.
 - **Never call Open-Meteo from a test.** Fixtures live in
-  `docs/krukit/activity-weather-ranking/probes/`. They are real captured responses.
+  `docs/probes/`. They are real captured responses.
 - **Never push to a remote without explicit permission.**
 - **One change per commit, sliced vertically** (constitution 11). A commit must be revertable on its
   own without breaking the build, and its message must name everything it contains. Never commit a
@@ -128,8 +129,9 @@ unticked stage.
 
 - Node 24.15.0, pnpm available. TypeScript strict.
 - MongoDB via `docker-compose` — the same file the reviewer runs.
-- Deploy target: an existing Hetzner box the author already runs, provisioned through their own
-  infrastructure-as-code. Same `docker-compose.yml` the reviewer runs locally — no platform-specific
-  build step, so nothing about the deployment is unreproducible.
+- Deploy: `./infra/deploy.sh` pushes to a dedicated Hetzner cx23 (`ssh collinson-box`, live at
+  `http://2.28.24.132:4000/graphql`). The box pulls `origin/main` itself; it never receives an rsync
+  of the working tree. Host described in `infra/cloud-init.yaml`, API token in
+  `~/.config/hetzner/collinson.env`.
 - Open-Meteo free tier: 600/min, 10k/day. Requests over 10 variables count as more than one call.
   The Elevation API meters **per coordinate** and caps a request at **100 coordinates**.

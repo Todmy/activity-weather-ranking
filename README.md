@@ -41,10 +41,10 @@ that commit on.
 | [`docs/worklog.md`](docs/worklog.md) | The sequence as it happened, including two designed mechanisms that died on contact with the real API |
 | [`docs/open-questions.md`](docs/open-questions.md) | The eight questions that would go to a product manager, and the assumption committed to instead |
 | [`docs/cut.md`](docs/cut.md) | What was considered and not built, with the test each item had to pass |
-| [`docs/krukit/activity-weather-ranking/design.md`](docs/krukit/activity-weather-ranking/design.md) | Data model, refresh gateway, scoring, determinism |
-| [`docs/krukit/activity-weather-ranking/sanity-table.md`](docs/krukit/activity-weather-ranking/sanity-table.md) | Twenty scenarios the scoring model must reproduce, written before any curve exists |
+| [`docs/design.md`](docs/design.md) | Data model, refresh gateway, scoring, determinism |
+| [`docs/sanity-table.md`](docs/sanity-table.md) | Twenty scenarios the scoring model must reproduce, written before any curve exists |
 
-`docs/krukit/activity-weather-ranking/probes/` holds raw captured Open-Meteo responses. They are the
+`docs/probes/` holds raw captured Open-Meteo responses. They are the
 evidence behind the design claims and they become the test fixtures, so no test ever calls the live
 API.
 

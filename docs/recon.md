@@ -1,6 +1,9 @@
-# Recon: activity-weather-ranking
+# Reconnaissance
 
-Stage 1 of 7. Date: 2026-07-29. Constitution: v1.0.0 (10 principles).
+2026-07-29. Written before any design, against [`principles.md`](./principles.md) v1.0.0.
+
+This project is greenfield, so there was no codebase to map. The territory worth reconnoitring was
+external: the Open-Meteo APIs the whole design rests on, probed live rather than read about.
 
 ## Goal
 

@@ -14,3 +14,7 @@ coverage/
 .claude/
 .cursorrules
 AGENTS.md
+
+# Pipeline bookkeeping: stage checkboxes and route telemetry. Useful to resume a
+# session, no signal for a reader.
+.local/

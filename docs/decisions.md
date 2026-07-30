@@ -11,10 +11,10 @@ the question recorded), **cut** (considered, not built), or **open**.
 always stated where the decision is argued:
 
 - **Measured here** — from a live API probe, with the raw response kept as a fixture in
-  `krukit/activity-weather-ranking/probes/`. The terrain and quota figures are all of this kind.
+  `probes/`. The terrain and quota figures are all of this kind.
 - **Cited** — from a published source, linked at the point of use. All scoring thresholds are of
   this kind; the sources are listed in
-  [`sanity-table.md`](./krukit/activity-weather-ranking/sanity-table.md).
+  [`sanity-table.md`](./sanity-table.md).
 - **Judged** — no source decides, so a position was taken and flagged as arguable. Six rows of the
   sanity table and several product assumptions are of this kind.
 
@@ -47,20 +47,20 @@ assumption taken in its place; all eight are recorded in full, with rejected alt
 |---|---|---|---|
 | 9 | MongoDB over Postgres | Matches the team's primary store; the document shape fits a forecast issuance naturally | ADR pending |
 | 10 | GraphQL Yoga + Pothos, code-first | No codegen step to explain or to break; the schema is TypeScript the reviewer can read | ADR pending |
-| 35 | No Express and no NestJS. Yoga runs directly on `node:http` | There is one POST endpoint and no REST routes, so Express would be a layer nothing passes through. NestJS was rejected harder: its modules and DI container coordinate large teams across large codebases, and `domain/` is pure functions with no dependencies to inject. Matching Collinson's stack drove the MongoDB choice, but nothing indicates they run NestJS, so copying it would be a guess rather than a match | [constitution](./krukit/constitution.md) §1 simplicity |
-| 11 | Persist raw facts, compute scores at read time. Never store a score | The model is an opinion and will change; the upstream facts will not. Re-scoring must never require re-ingesting | [constitution](./krukit/constitution.md) §1 |
+| 35 | No Express and no NestJS. Yoga runs directly on `node:http` | There is one POST endpoint and no REST routes, so Express would be a layer nothing passes through. NestJS was rejected harder: its modules and DI container coordinate large teams across large codebases, and `domain/` is pure functions with no dependencies to inject. Matching Collinson's stack drove the MongoDB choice, but nothing indicates they run NestJS, so copying it would be a guess rather than a match | [principles](./principles.md) §1 simplicity |
+| 11 | Persist raw facts, compute scores at read time. Never store a score | The model is an opinion and will change; the upstream facts will not. Re-scoring must never require re-ingesting | [principles](./principles.md) §1 |
 | 12 | One document per forecast **issuance**, with the 7-day array embedded — not an upsert per (location, date) | Preserves how a forecast evolved, which an upsert destroys | — |
 | 13 | Two collections, two lifecycles: `locations` immutable, `forecasts` volatile with TTL | They differ by orders of magnitude in write rate and retention; one policy cannot serve both | — |
-| 14 | Cache-aside gateway: 1 h TTL + single-flight lease + stale-if-error | Three facets of one mechanism, answering the brief's "how do you refresh it" | [constitution](./krukit/constitution.md) §3 |
+| 14 | Cache-aside gateway: 1 h TTL + single-flight lease + stale-if-error | Three facets of one mechanism, answering the brief's "how do you refresh it" | [principles](./principles.md) §3 |
 | 15 | Build the background refresher rather than cut it | A scheduled pull from an upstream system of record is the shape of this team's actual problem. Challenged twice, kept both times | [cut.md](./cut.md) scope audit |
-| 16 | The summit weather series lives inside the city's issuance document | An issuance is the unit of consistency; separate documents would let city and summit drift to different TTLs and be compared anyway | [design-questions.md](./krukit/activity-weather-ranking/design-questions.md) Q1+2 |
+| 16 | The summit weather series lives inside the city's issuance document | An issuance is the unit of consistency; separate documents would let city and summit drift to different TTLs and be compared anyway | [design-questions.md](./design-questions.md) Q1+2 |
 | 17 | Absence has three states: `notApplicable`, `unavailable`, score `0` | "No ocean here", "the fetch failed" and "conditions are bad" are three different claims | design-questions.md Q1+2 |
-| 18 | Scoring is declarative data — weighted factors over named curves — never branching code, and every score returns its per-factor contributions | A number nobody can interrogate is not a ranking, it is a guess | [constitution](./krukit/constitution.md) §2 |
+| 18 | Scoring is declarative data — weighted factors over named curves — never branching code, and every score returns its per-factor contributions | A number nobody can interrogate is not a ranking, it is a guess | [principles](./principles.md) §2 |
 | 19 | Store local dates plus the location's IANA timezone, never UTC instants | "Tuesday" in a travel forecast means Tuesday where the traveller is | context.md invariants |
-| 20 | Confidence decays with forecast horizon and is returned alongside every score | A day-7 number presented like a day-1 number is a product bug | [constitution](./krukit/constitution.md) §5 |
+| 20 | Confidence decays with forecast horizon and is returned alongside every score | A day-7 number presented like a day-1 number is a product bug | [principles](./principles.md) §5 |
 | 21 | `modelVersion` is a global semver covering everything that can change a score, enforced by a snapshot test over the serialised domain config | A hash cannot be forgotten but tells a reviewer nothing; a semver is readable but relies on memory. The test removes the reliance | design-questions.md Q4 |
 | 22 | Docker Compose on a dedicated Hetzner box, bootstrapped by [`infra/cloud-init.yaml`](../infra/cloud-init.yaml) and deployed by pulling `origin/main`; the reviewer runs the same compose file locally | Deploy on day one on infrastructure that is described in the repository rather than configured by hand. A deployment discovered on the last day is a deployment that fails on the last day, and a novel platform learned under deadline is the usual way that happens. *Corrected from "an existing box the author already runs" — the box did not exist and had to be created, which made the original justification untrue* | — |
-| 34 | No city list exists anywhere. Applicability is measured per location, never enumerated | The recurring cities in these documents are tests chosen to break assumptions, not the supported set. A city nobody anticipated gets the same treatment as one that was tested | [design.md](./krukit/activity-weather-ranking/design.md) §1 coverage |
+| 34 | No city list exists anywhere. Applicability is measured per location, never enumerated | The recurring cities in these documents are tests chosen to break assumptions, not the supported set. A city nobody anticipated gets the same treatment as one that was tested | [design.md](./design.md) §1 coverage |
 
 ## Scope calls
 
@@ -79,9 +79,9 @@ Considered and not built. Full reasoning and what each would take in [`cut.md`](
 | # | Decision | Reason | Status |
 |---|---|---|---|
 | 28 | Run the full seven-stage pipeline and commit its artifacts | The brief grades how the work happened above the service itself, so the stage chain is itself a deliverable | decided |
-| 29 | TDD mandatory in the pure domain layer; other layers get integration tests weighted by risk | The scoring model is the part under judgement; the plumbing is not, and a four-day budget should be spent accordingly | [constitution](./krukit/constitution.md) §6 |
-| 30 | No volume cap on documentation — only the test that a line must carry what code cannot | Verified against how this team actually works rather than assumed | [constitution](./krukit/constitution.md) §8 |
-| 31 | The scoring sanity table is written **before** any curve exists, and every band is justified against a **published convention** rather than against intuition | The original plan — human intuition first — failed honestly: nobody on this project skis or surfs. Conventions are weaker than lived expertise but stronger in one way that matters here, since a reader can check them. Six rows where no convention decides are flagged arguable | [sanity-table.md](./krukit/activity-weather-ranking/sanity-table.md) |
+| 29 | TDD mandatory in the pure domain layer; other layers get integration tests weighted by risk | The scoring model is the part under judgement; the plumbing is not, and a four-day budget should be spent accordingly | [principles](./principles.md) §6 |
+| 30 | No volume cap on documentation — only the test that a line must carry what code cannot | Verified against how this team actually works rather than assumed | [principles](./principles.md) §8 |
+| 31 | The scoring sanity table is written **before** any curve exists, and every band is justified against a **published convention** rather than against intuition | The original plan — human intuition first — failed honestly: nobody on this project skis or surfs. Conventions are weaker than lived expertise but stronger in one way that matters here, since a reader can check them. Six rows where no convention decides are flagged arguable | [sanity-table.md](./sanity-table.md) |
 | 33 | Surfing is modelled for a competent general traveller, not an expert | Changes the answer: 2.5 m clean swell is EXCELLENT for an expert and merely GOOD for the population this service serves | sanity-table.md, surfing row 3 |
 | 32 | Version control deferred at the start, then opened on day 2 with a single batch commit | Deliberate, and the cost was paid rather than hidden: everything written on 29-30 July lands as one commit, forfeiting principle 10 for that stretch. The commit message says so plainly instead of imitating gradual work. Incremental from there | decided |
 

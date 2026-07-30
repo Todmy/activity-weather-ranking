@@ -2,7 +2,7 @@
 
 The high-level map. Nine milestones, each with a code, so a conversation can point at **M5** instead
 of describing it. Step-by-step work lives in
-[`plan.md`](./krukit/activity-weather-ranking/plan.md); this file sits above it and shows the shape.
+[`plan.md`](./plan.md); this file sits above it and shows the shape.
 
 Every milestone has a **Done when** line that is observable from outside. Not "the module is
 written", but "the deployed URL answers this query with this". A milestone I can talk my way into
@@ -90,7 +90,7 @@ no compiled output can drift from the source, and `tsc --noEmit` does the typech
 no Express and no NestJS, because the service has one endpoint and a domain layer of pure functions
 with nothing to inject. Both are recorded as decisions #35 and #22.
 
-Plan: [slice 0](./krukit/activity-weather-ranking/plan.md).
+Plan: [slice 0](./plan.md).
 
 ---
 
@@ -108,7 +108,7 @@ a breakdown of what produced it.
 **Why here:** it's the thinnest possible cut through every layer. After this, no layer is
 hypothetical, and everything that follows is widening a path that already runs end to end.
 
-**3 points.** Plan: [slice 1](./krukit/activity-weather-ranking/plan.md).
+**3 points.** Plan: [slice 1](./plan.md).
 
 ---
 
@@ -122,7 +122,7 @@ than as the inverse of outdoor, because it isn't one: a museum is a good answer 
 bad one in a storm that stops you reaching it.
 
 **Done when:** all twenty rows of
-[`sanity-table.md`](./krukit/activity-weather-ranking/sanity-table.md) land in their expected bands,
+[`sanity-table.md`](./sanity-table.md) land in their expected bands,
 and every constant in every profile cites the source it came from.
 
 **Why here, and why it carries the risk:** scoring calibration has no ground truth. Nothing tells me
@@ -134,7 +134,7 @@ If the table turns out to be unsatisfiable, that's the interesting result rather
 rows would then encode incompatible beliefs about how factors trade off, and the row that gives way
 gets recorded with the reason.
 
-**5 points.** Plan: [slice 2](./krukit/activity-weather-ranking/plan.md).
+**5 points.** Plan: [slice 2](./plan.md).
 
 ---
 
@@ -154,7 +154,7 @@ elevation and distance stated. Amsterdam returns `notApplicable` for skiing and 
 activities that need it need different geography. Scoring a city coordinate for skiing gives
 confidently wrong answers for exactly the cities a traveller would ask about.
 
-**3 points.** Plan: [slice 3](./krukit/activity-weather-ranking/plan.md).
+**3 points.** Plan: [slice 3](./plan.md).
 
 ---
 
@@ -176,7 +176,7 @@ answers correctly with Open-Meteo unreachable, flagging the data as stale.
 milestone where the design is least negotiable, because "how you model, store, and refresh it" is
 quoted from the brief.
 
-**5 points.** Plan: [slice 4](./krukit/activity-weather-ranking/plan.md).
+**5 points.** Plan: [slice 4](./plan.md).
 
 ---
 
@@ -199,7 +199,7 @@ Constitution 12 is what widened this: a capability reachable only from a test do
 delivered, because a reviewer who has to invent a query will exercise the happy path and miss the
 parts that took longest to get right.
 
-**2 points.** Plan: [slice 5](./krukit/activity-weather-ranking/plan.md).
+**2 points.** Plan: [slice 5](./plan.md).
 
 ---
 
@@ -219,7 +219,7 @@ schema change and no API change. If the schedule bites, it gives way by plan rat
 
 The full argument, including the case for cutting it, is in [`cut.md`](./cut.md).
 
-**3 points.** Plan: [slice 6](./krukit/activity-weather-ranking/plan.md).
+**3 points.** Plan: [slice 6](./plan.md).
 
 ---
 
@@ -237,7 +237,7 @@ Postgres, and the input-type shape I rejected.
 without asking me a question.
 
 **5 points**, including the verify and review stages of the pipeline. Plan:
-[slice 7](./krukit/activity-weather-ranking/plan.md).
+[slice 7](./plan.md).
 
 ---
 
