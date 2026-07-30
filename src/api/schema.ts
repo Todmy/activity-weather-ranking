@@ -1,6 +1,6 @@
 import SchemaBuilder from '@pothos/core'
 import { GraphQLError } from 'graphql'
-import { getActivityForecast, LocationNotFound } from '../app/activityForecast.ts'
+import { getActivityForecast, LocationNotFound, NoDataYet } from '../app/activityForecast.ts'
 import type {
   ActivityForecast,
   ActivityForecastDeps,
@@ -18,12 +18,13 @@ import type { GeocodedLocation } from '../providers/openmeteo/geocoding.ts'
  * Code-first schema. The SDL is derived from this file rather than the other way
  * round, so there is no generated artifact to keep in step with the resolvers.
  *
- * The context carries an optional dependency bundle. Production never sets it
- * and gets the live providers; the tests set it to fixtures, which is how the
- * whole path can be exercised without spending API quota. Slice 4 puts the
- * refresh gateway through the same door.
+ * The context carries the dependency bundle, and carries it always. There is no
+ * live default any more: since slice 4 a forecast comes from the refresh
+ * gateway over a database, so a resolver that could fall back to bare providers
+ * would be a way to bypass the very thing the brief asks for. Production wires
+ * the real ones in `server.ts`; tests wire fixtures.
  */
-export type GraphQLContext = { deps?: ActivityForecastDeps }
+export type GraphQLContext = { deps: ActivityForecastDeps }
 
 const builder = new SchemaBuilder<{ Context: GraphQLContext }>({})
 
@@ -213,7 +214,16 @@ const ForecastResultRef = builder.objectRef<ActivityForecast>('ForecastResult').
       description: 'The geography behind the applicability answers, so they can be checked.',
     }),
     issuedAt: t.exposeString('issuedAt', {
-      description: 'When this forecast was fetched upstream.',
+      description: 'When this forecast was fetched upstream, not when it was served.',
+    }),
+    stale: t.exposeBoolean('stale', {
+      description:
+        'True when the stored issuance could not be refreshed and is being served anyway. ' +
+        'The answer still arrives; it just says so.',
+    }),
+    staleReason: t.exposeString('staleReason', {
+      nullable: true,
+      description: 'What stopped the refresh, or null when nothing did.',
     }),
     modelVersion: t.exposeString('modelVersion', {
       description:
@@ -235,7 +245,8 @@ builder.queryType({
       type: ForecastResultRef,
       description:
         'Resolve a city or town by name and rank the next seven days for skiing, surfing, ' +
-        'outdoor sightseeing and indoor sightseeing. Nothing is persisted yet: that is M5.',
+        'outdoor sightseeing and indoor sightseeing. The weather is read from storage and ' +
+        'refreshed at most once an hour per location.',
       args: { query: t.arg.string({ required: true }) },
       resolve: async (_root, args, ctx) => {
         try {
@@ -251,11 +262,17 @@ builder.queryType({
             })
           }
 
-          // Upstream having a bad five minutes is not a bug in this service,
-          // and a masked 500 makes it look like one. There is nothing to serve
-          // instead until the cache lands in M5, and stale-if-error is exactly
-          // the mechanism that will turn this into an answer rather than an
-          // apology.
+          // Cold start, someone else already fetching, and the bounded wait ran
+          // out. The one place the service does not answer, and it says which
+          // one rather than returning a masked 500.
+          if (error instanceof NoDataYet) {
+            throw new GraphQLError(error.message, { extensions: { code: 'NO_DATA_YET' } })
+          }
+
+          // Upstream having a bad five minutes is not a bug in this service, and
+          // a masked 500 makes it look like one. With anything stored this no
+          // longer fires at all: stale-if-error turns the outage into a flagged
+          // answer instead of an apology.
           if (error instanceof OpenMeteoError) {
             throw new GraphQLError(`Open-Meteo is unavailable: ${error.message}`, {
               extensions: { code: 'UPSTREAM_UNAVAILABLE', upstreamStatus: error.status },

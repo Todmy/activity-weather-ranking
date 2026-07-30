@@ -6,20 +6,23 @@ import { MODEL_VERSION, PROFILES } from '../domain/modelVersion.ts'
 import { rankActivitiesWithinDay, rankDaysWithinActivity } from '../domain/rank.ts'
 import type { RankedDay } from '../domain/rank.ts'
 import type { DayWeather } from '../domain/weather.ts'
-import { FORECAST_DAYS, fetchForecast, toDailyWeather } from '../providers/openmeteo/forecast.ts'
-import type { Coordinates, ForecastResponse } from '../providers/openmeteo/forecast.ts'
-import { searchLocations } from '../providers/openmeteo/geocoding.ts'
+import { locationIdFor } from '../persistence/locations.ts'
+import type { Resolved } from '../persistence/resolutions.ts'
+import { FORECAST_DAYS } from '../providers/openmeteo/forecast.ts'
+import type { Coordinates } from '../providers/openmeteo/forecast.ts'
 import type { GeocodedLocation } from '../providers/openmeteo/geocoding.ts'
-import { fetchMarine } from '../providers/openmeteo/marine.ts'
 import type { MarineCoverage, MarineDay } from '../providers/openmeteo/marine.ts'
+import type { EnsureFreshResult, FetchPlan, SeriesPlan } from './forecastGateway.ts'
 
 /**
- * The application service: resolve a name, get the weather, score every day.
+ * The application service: resolve a name, read the stored weather, score every
+ * day.
  *
- * This is the seam the refresh gateway drops into in slice 4. Today `weather`
- * goes straight to the provider and nothing is persisted, which is exactly the
- * thing the brief says not to ship — the point of the tracer bullet is that the
- * whole path exists before any one part of it is finished.
+ * Weather now arrives as an issuance from the refresh gateway rather than as a
+ * fetch, and this layer cannot tell whether answering it cost an upstream call.
+ * That is the point: the brief asks for weather that is stored and refreshed
+ * rather than re-fetched, and the only way to keep that true is for the caller
+ * of the gateway to have no way of bypassing it.
  *
  * Dependencies are injected because a test must never call Open-Meteo, and
  * because `now` has to come from outside: `domain/` cannot reach a clock, and
@@ -39,27 +42,24 @@ export type GeographySample = {
 }
 
 export type ActivityForecastDeps = {
-  search: (query: string, limit: number) => Promise<GeocodedLocation[]>
-  weather: (coordinates: Coordinates) => Promise<ForecastResponse>
-  marine: (coordinates: Coordinates) => Promise<{ coverage: MarineCoverage; days: MarineDay[] }>
+  /**
+   * Geocoding plus the resolution pin, so upstream reordering five Cambridges
+   * cannot change which one this service answers about.
+   */
+  resolve: (query: string, now: Date) => Promise<Resolved | null>
   /**
    * Read-through over the `locations` collection. Injected rather than imported
    * so this layer never learns what a database is, and so a test can assess a
    * city without one.
    */
   geography: (location: GeocodedLocation, now: Date) => Promise<GeographySample>
+  /**
+   * The refresh gateway. Weather arrives as a stored issuance rather than a
+   * fetch, which is the whole of M5: this layer asks for the newest issuance and
+   * has no idea whether one was fetched to answer it.
+   */
+  issuance: (plan: FetchPlan) => Promise<EnsureFreshResult>
   now: () => Date
-}
-
-/** Geography with nowhere to persist it would be re-sampled per request. */
-const unassessed = async (): Promise<GeographySample> => ({})
-
-const liveDeps: ActivityForecastDeps = {
-  search: searchLocations,
-  weather: fetchForecast,
-  marine: fetchMarine,
-  geography: unassessed,
-  now: () => new Date(),
 }
 
 export type ScoredDay = {
@@ -100,6 +100,15 @@ export type ActivityForecast = {
   alternatives: GeocodedLocation[]
   assessment: Assessment
   issuedAt: string
+  /**
+   * True when this answer is served from an issuance the gateway could not
+   * refresh. The answer still arrives — an unlabelled stale answer would be
+   * worse than none, because nothing downstream could tell it from a current
+   * one.
+   */
+  stale: boolean
+  /** What stopped the refresh, or null when nothing did. */
+  staleReason: string | null
   /** Pinned, so an identical issuance and version reproduce this exactly. */
   modelVersion: string
   days: ScoredDay[]
@@ -110,6 +119,18 @@ export class LocationNotFound extends Error {
   constructor(query: string) {
     super(`No location matched "${query}"`)
     this.name = 'LocationNotFound'
+  }
+}
+
+/**
+ * Cold start, someone else fetching, and the wait ran out. The one place the
+ * service does not answer — and it says so by name rather than inventing a
+ * forecast or returning a 500.
+ */
+export class NoDataYet extends Error {
+  constructor(place: string, reason: string) {
+    super(`No forecast stored for ${place} yet: ${reason}`)
+    this.name = 'NoDataYet'
   }
 }
 
@@ -137,48 +158,72 @@ const mergeMarine = (days: DayWeather[], marine: MarineDay[]): DayWeather[] => {
   })
 }
 
+/**
+ * The geography verdict turned into an instruction for the gateway.
+ *
+ * `false` is a measurement — no mountain, no water — and skipping the call is
+ * the cost gate working. `null` is our own failure to look, and recording that
+ * as `notApplicable` would turn a transient outage into a permanent claim about
+ * the place.
+ */
+const seriesPlanFor = (
+  verdict: boolean | null,
+  point: Coordinates | undefined,
+  reason: string,
+): SeriesPlan => {
+  if (verdict === true && point !== undefined) return { point }
+  if (verdict === null) return { skip: { status: 'unavailable', reason: 'geographyNotAssessed' } }
+  return { skip: { status: 'notApplicable', reason } }
+}
+
 export const getActivityForecast = async (
   query: string,
-  deps: ActivityForecastDeps = liveDeps,
+  deps: ActivityForecastDeps,
 ): Promise<ActivityForecast> => {
   const now = deps.now()
-  const [location, ...alternatives] = await deps.search(query, 5)
+  const resolved = await deps.resolve(query, now)
 
-  if (!location) {
+  if (resolved === null) {
     throw new LocationNotFound(query)
   }
 
+  const { location, alternatives } = resolved
   const coordinates = { latitude: location.latitude, longitude: location.longitude }
   const sample = await deps.geography(location, now)
   const geography = geographyFrom(sample.terrain, sample.marineCoverage)
 
-  const cityResponse = await deps.weather(coordinates)
+  // The cost gate. A second forecast is worth fetching only where there is
+  // terrain to make it about; below 300 m skiing is answered rather than
+  // scored, and Amsterdam costs one request instead of two.
+  const result = await deps.issuance({
+    locationId: locationIdFor(location.geonameId),
+    city: coordinates,
+    summit: seriesPlanFor(geography.hasTerrain, sample.terrain?.point, 'noTerrain'),
+    // Nothing is asked of the marine model once it has answered "no water
+    // here". Coverage is learned once and kept, so an inland city stops paying.
+    marine: seriesPlanFor(geography.hasMarineCoverage, coordinates, 'noMarineCoverage'),
+  })
 
-  // The cost gate. A second forecast request is worth making only where there is
-  // terrain to make it about; below 300 m skiing is answered rather than scored,
-  // and Amsterdam costs one request instead of two.
-  const summitResponse =
-    geography.hasTerrain === true && sample.terrain !== undefined
-      ? await deps.weather(sample.terrain.point)
-      : null
+  if (result.status === 'noDataYet') {
+    throw new NoDataYet(location.name, result.reason)
+  }
 
-  // Nothing is asked of the marine model once it has answered "no water here".
-  // Coverage is learned once and kept, so an inland city stops paying for it.
-  const marine = geography.hasMarineCoverage === true ? await deps.marine(coordinates) : null
+  const { issuance } = result
+  const marineDays = issuance.marine.status === 'ok' ? (issuance.marine.days ?? null) : null
 
   // Derive across the whole issuance, history included, then score only the
   // days a traveller asked about. The three past days exist to give the first
   // forecast day a real fresh-snow window, not to be ranked.
-  const cityDays = toDailyWeather(cityResponse)
+  const cityDays = issuance.city.days ?? []
   const city = withDerivedInputs(
-    marine === null ? cityDays : mergeMarine(cityDays, marine.days),
+    marineDays === null ? cityDays : mergeMarine(cityDays, marineDays),
   ).slice(-FORECAST_DAYS)
 
   // Skiing is the one profile that does not score the city it was asked about.
   const summit =
-    summitResponse === null
-      ? null
-      : withDerivedInputs(toDailyWeather(summitResponse)).slice(-FORECAST_DAYS)
+    issuance.summit.status === 'ok'
+      ? withDerivedInputs(issuance.summit.days ?? []).slice(-FORECAST_DAYS)
+      : null
 
   const evaluateDay = (dayIndex: number): ActivityResult[] =>
     rankActivitiesWithinDay(
@@ -215,7 +260,9 @@ export const getActivityForecast = async (
           }),
       ...(sample.marineCoverage === undefined ? {} : { marineCoverage: sample.marineCoverage }),
     },
-    issuedAt: now.toISOString(),
+    issuedAt: issuance.issuedAt.toISOString(),
+    stale: result.status === 'stale',
+    staleReason: result.status === 'stale' ? result.reason : null,
     modelVersion: MODEL_VERSION,
     days: scored,
     // Both readings of the brief's "ranks", from the same computation. Neither

@@ -1,38 +1,47 @@
+import { randomUUID } from 'node:crypto'
 import type { Db } from 'mongodb'
+import { forecastRepository } from '../persistence/forecasts.ts'
+import { leaseRepository } from '../persistence/leases.ts'
 import { ensureLocation, locationRepository } from '../persistence/locations.ts'
+import { resolutionRepository, resolveLocation } from '../persistence/resolutions.ts'
 import { fetchForecast } from '../providers/openmeteo/forecast.ts'
 import { searchLocations } from '../providers/openmeteo/geocoding.ts'
 import { fetchTerrain } from '../providers/openmeteo/elevation.ts'
 import { fetchMarine } from '../providers/openmeteo/marine.ts'
 import type { ActivityForecastDeps } from './activityForecast.ts'
+import { ensureFresh } from './forecastGateway.ts'
 
 /**
  * The production wiring, in one place a reader can check against the diagram in
  * design.md §1. Everything above this file takes its collaborators as arguments,
  * which is what lets the whole path be exercised on fixtures.
  */
-export const liveDepsFor = (db: Db): ActivityForecastDeps => {
+export const liveDepsFor = (db: Db, instanceId: string = randomUUID()): ActivityForecastDeps => {
   const locations = locationRepository(db)
+  const resolutions = resolutionRepository(db)
+  const forecasts = forecastRepository(db)
+  const leases = leaseRepository(db)
+  const now = () => new Date()
 
   return {
-    search: searchLocations,
-    weather: fetchForecast,
-    marine: fetchMarine,
-    geography: async (location, now) => {
+    resolve: async (query, at) =>
+      await resolveLocation({ resolutions, locations }, searchLocations, query, at),
+
+    geography: async (location, at) => {
       const stored = await ensureLocation(
         locations,
         {
           sampleTerrain: fetchTerrain,
           // Costs one duplicated marine request on the very first sighting of a
-          // coastal city, because the per-issuance fetch below asks again. One
-          // request, once per city ever, against a 10,000-a-day allowance — the
+          // coastal city, because the issuance below asks again. One request,
+          // once per city ever, against a 10,000-a-day allowance — the
           // alternative is threading the first response through the read-through
           // and that is more machinery than the call is worth.
           sampleMarineCoverage: async (latitude, longitude) =>
             (await fetchMarine({ latitude, longitude })).coverage,
         },
         location,
-        now,
+        at,
       )
 
       return {
@@ -42,6 +51,24 @@ export const liveDepsFor = (db: Db): ActivityForecastDeps => {
           : { marineCoverage: stored.marineCoverage }),
       }
     },
-    now: () => new Date(),
+
+    issuance: async (plan) =>
+      await ensureFresh(
+        {
+          forecasts,
+          leases,
+          weather: fetchForecast,
+          marine: fetchMarine,
+          // Identifies this process as a lease holder. A restart gets a new id,
+          // which is correct: the old process's lease should expire rather than
+          // be inherited by whatever starts next.
+          instanceId,
+          now,
+          sleep: async (ms) => await new Promise((wake) => setTimeout(wake, ms)),
+        },
+        plan,
+      ),
+
+    now,
   }
 }

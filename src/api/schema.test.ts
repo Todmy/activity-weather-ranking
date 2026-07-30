@@ -5,22 +5,26 @@ import { schema } from './schema.ts'
 import type { GraphQLContext } from './schema.ts'
 import { parseForecast } from '../providers/openmeteo/forecast.ts'
 import { parseGeocoding, toLocations } from '../providers/openmeteo/geocoding.ts'
+import { DEFAULT_ISSUED_AT, freshIssuance } from '../testing/issuance.ts'
 
 const fixture = (name: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../docs/probes/${name}`, import.meta.url), 'utf8'))
 
 /**
- * The whole path through GraphQL, on fixtures. Nothing here reaches the network:
- * the providers arrive through the context, which is the same door the refresh
- * gateway will use in slice 4.
+ * The whole path through GraphQL, on fixtures. Nothing here reaches the network
+ * and nothing reaches a database: the resolved location and the stored issuance
+ * both arrive through the context, which is the same door production wires the
+ * refresh gateway into.
  */
+const cambridge = toLocations(parseGeocoding(fixture('geocoding-cambridge.json')))
+const innsbruck = parseForecast(fixture('forecast-innsbruck-past3.json'))
+
 const contextValue: GraphQLContext = {
   deps: {
-    search: async () => toLocations(parseGeocoding(fixture('geocoding-cambridge.json'))),
-    weather: async () => parseForecast(fixture('forecast-innsbruck-past3.json')),
-    marine: async () => ({ coverage: 'none', days: [] }),
+    resolve: async () => ({ location: cambridge[0]!, alternatives: cambridge.slice(1) }),
     geography: async () => ({}),
-    now: () => new Date('2026-07-29T12:00:00.000Z'),
+    issuance: async (plan) => freshIssuance(plan, { city: innsbruck }),
+    now: () => DEFAULT_ISSUED_AT,
   },
 }
 
@@ -102,7 +106,7 @@ describe('schema', () => {
   it('reports a query that matched nothing as an error naming the query', async () => {
     const result = await graphql({
       schema,
-      contextValue: { deps: { ...contextValue.deps!, search: async () => [] } },
+      contextValue: { deps: { ...contextValue.deps, resolve: async () => null } },
       source: '{ activityForecast(query: "Nowhereinparticular") { issuedAt } }',
     })
 

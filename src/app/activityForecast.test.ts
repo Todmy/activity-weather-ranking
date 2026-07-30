@@ -1,10 +1,13 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { getActivityForecast, LocationNotFound } from './activityForecast.ts'
+import { getActivityForecast, LocationNotFound, NoDataYet } from './activityForecast.ts'
 import type { ActivityForecastDeps } from './activityForecast.ts'
+import type { FetchPlan } from './forecastGateway.ts'
+import { DEFAULT_ISSUED_AT, freshIssuance, issuanceFrom } from '../testing/issuance.ts'
 import { parseForecast } from '../providers/openmeteo/forecast.ts'
 import { parseGeocoding, toLocations } from '../providers/openmeteo/geocoding.ts'
-import { coverageOf, parseMarine, toDailyMarine } from '../providers/openmeteo/marine.ts'
+import { parseMarine, toDailyMarine } from '../providers/openmeteo/marine.ts'
+import type { MarineDay } from '../providers/openmeteo/marine.ts'
 
 const fixture = (name: string): unknown =>
   JSON.parse(readFileSync(new URL(`../../docs/probes/${name}`, import.meta.url), 'utf8'))
@@ -14,7 +17,6 @@ const cambridge = toLocations(parseGeocoding(fixture('geocoding-cambridge.json')
 
 const summit = parseForecast(fixture('forecast-grenoble-summit-past3.json'))
 const lisbonMarine = parseMarine(fixture('marine-lisbon-past3.json'))
-const viennaMarine = parseMarine(fixture('marine-vienna-past3.json'))
 
 const grenobleTerrain = {
   gridVersion: 'circ-50km-11x11',
@@ -24,14 +26,26 @@ const grenobleTerrain = {
   sampledAt: new Date('2026-07-30T10:00:00.000Z'),
 }
 
+/** Records the plans the gateway was handed, so a skipped call is provable. */
+const spyIssuance = (marineDays: MarineDay[] = toDailyMarine(lisbonMarine)) => {
+  const plans: FetchPlan[] = []
+  return {
+    plans,
+    issuance: async (plan: FetchPlan) => {
+      plans.push(plan)
+      return freshIssuance(plan, { city: innsbruck, summit, marine: marineDays })
+    },
+  }
+}
+
 const deps = (overrides: Partial<ActivityForecastDeps> = {}): ActivityForecastDeps => ({
-  search: async () => cambridge,
-  weather: async () => innsbruck,
+  resolve: async () => ({ location: cambridge[0]!, alternatives: cambridge.slice(1) }),
   // Unassessed by default, which is what a geography sampling failure looks
   // like. The block below covers the assessed cases.
   geography: async () => ({}),
-  marine: async () => ({ coverage: 'none', days: [] }),
-  now: () => new Date('2026-07-29T12:00:00.000Z'),
+  issuance: async (plan) =>
+    freshIssuance(plan, { city: innsbruck, summit, marine: toDailyMarine(lisbonMarine) }),
+  now: () => DEFAULT_ISSUED_AT,
   ...overrides,
 })
 
@@ -96,9 +110,50 @@ describe('getActivityForecast', () => {
     expect(outdoor?.kind === 'scored' && outdoor.factors[0]?.curveValue).toBe(0)
   })
 
+  it('reports a fresh answer as fresh, with nothing to explain', async () => {
+    const forecast = await getActivityForecast('Cambridge', deps())
+
+    expect(forecast.stale).toBe(false)
+    expect(forecast.staleReason).toBeNull()
+  })
+
+  it('flags a stale answer and names what made it stale', async () => {
+    // stale-if-error, seen from the caller's side: the answer still arrives,
+    // and it arrives labelled. An unlabelled stale answer is worse than none,
+    // because nothing downstream can tell it apart from a current one.
+    const forecast = await getActivityForecast(
+      'Cambridge',
+      deps({
+        issuance: async (plan) => ({
+          status: 'stale',
+          issuance: issuanceFrom(plan, { city: innsbruck }),
+          reason: 'Open-Meteo answered 503',
+        }),
+      }),
+    )
+
+    expect(forecast.stale).toBe(true)
+    expect(forecast.staleReason).toBe('Open-Meteo answered 503')
+    // Still a real answer, not a placeholder.
+    expect(forecast.days).toHaveLength(7)
+  })
+
+  it('refuses by name when there is no issuance at all', async () => {
+    // Cold start, someone else fetching, bounded wait exhausted. The one place
+    // the service does not answer.
+    await expect(
+      getActivityForecast(
+        'Cambridge',
+        deps({
+          issuance: async () => ({ status: 'noDataYet', reason: 'no issuance arrived within 10 s' }),
+        }),
+      ),
+    ).rejects.toThrow(NoDataYet)
+  })
+
   it('rejects a query nothing matched rather than inventing a location', async () => {
     await expect(
-      getActivityForecast('Nowhereinparticular', deps({ search: async () => [] })),
+      getActivityForecast('Nowhereinparticular', deps({ resolve: async () => null })),
     ).rejects.toThrow(LocationNotFound)
   })
 })
@@ -167,46 +222,33 @@ describe('all four activities', () => {
 })
 
 describe('geography decides what is answerable', () => {
-  /** Records which coordinates were asked for, so a saved call is provable. */
-  const spyWeather = () => {
-    const asked: { latitude: number; longitude: number }[] = []
-    return {
-      asked,
-      weather: async (coordinates: { latitude: number; longitude: number }) => {
-        asked.push(coordinates)
-        return coordinates.latitude === grenobleTerrain.point.latitude ? summit : innsbruck
-      },
-    }
-  }
-
   it('scores skiing against the summit series, not the city the traveller named', async () => {
     // Grenoble is the case the grid exists for: 214 m in the city, 3204 m within
     // 45 km. Scoring the city coordinate would confidently answer about a place
     // nobody skis.
-    const { asked, weather } = spyWeather()
+    const { plans, issuance } = spyIssuance()
 
     const forecast = await getActivityForecast(
       'Grenoble',
-      deps({ weather, geography: async () => ({ terrain: grenobleTerrain }) }),
+      deps({ issuance, geography: async () => ({ terrain: grenobleTerrain }) }),
     )
     const skiing = forecast.days[0]?.activities.find((result) => result.activity === 'skiing')
 
     expect(skiing?.kind).toBe('scored')
-    // The city first, then the high point. Coordinates read from the geocoding
-    // fixture, not from the example document in design.md, which rounds
-    // differently.
-    expect(asked).toEqual([
-      { latitude: cambridge[0]!.latitude, longitude: cambridge[0]!.longitude },
-      grenobleTerrain.point,
-    ])
+    // The city and the high point, in one issuance. Coordinates read from the
+    // geocoding fixture, not from the example document in design.md, which
+    // rounds differently.
+    expect(plans[0]?.city).toEqual({
+      latitude: cambridge[0]!.latitude,
+      longitude: cambridge[0]!.longitude,
+    })
+    expect(plans[0]?.summit).toEqual({ point: grenobleTerrain.point })
   })
 
   it('reports the assessment point, so a ski score cannot be read as a claim about the city', async () => {
-    const { weather } = spyWeather()
-
     const forecast = await getActivityForecast(
       'Grenoble',
-      deps({ weather, geography: async () => ({ terrain: grenobleTerrain }) }),
+      deps({ geography: async () => ({ terrain: grenobleTerrain }) }),
     )
 
     expect(forecast.assessment?.terrain).toEqual({
@@ -221,12 +263,12 @@ describe('geography decides what is answerable', () => {
     // Amsterdam, 51 m over the shipped grid. This is the whole purpose of the
     // 300 m gate: one forecast request instead of two, and an answer rather
     // than a score.
-    const { asked, weather } = spyWeather()
+    const { plans, issuance } = spyIssuance()
 
     const forecast = await getActivityForecast(
       'Amsterdam',
       deps({
-        weather,
+        issuance,
         geography: async () => ({ terrain: { ...grenobleTerrain, maxElevation: 51 } }),
       }),
     )
@@ -237,19 +279,13 @@ describe('geography decides what is answerable', () => {
       activity: 'skiing',
       reason: 'noTerrain',
     })
-    expect(asked).toHaveLength(1)
+    expect(plans[0]?.summit).toEqual({ skip: { status: 'notApplicable', reason: 'noTerrain' } })
   })
 
   it('scores surfing from the marine series when the model has water there', async () => {
     const forecast = await getActivityForecast(
       'Lisbon',
-      deps({
-        geography: async () => ({ marineCoverage: 'present' }),
-        marine: async () => ({
-          coverage: coverageOf(lisbonMarine),
-          days: toDailyMarine(lisbonMarine),
-        }),
-      }),
+      deps({ geography: async () => ({ marineCoverage: 'present' }) }),
     )
     const surfing = forecast.days[0]?.activities.find((result) => result.activity === 'surfing')
 
@@ -261,17 +297,11 @@ describe('geography decides what is answerable', () => {
   it('asks the marine model nothing once it has answered "no water here"', async () => {
     // Vienna. Coverage is learned once and never re-asked, so an inland city
     // costs one forecast request per issuance and nothing else.
-    let marineCalls = 0
+    const { plans, issuance } = spyIssuance()
 
     const forecast = await getActivityForecast(
       'Vienna',
-      deps({
-        geography: async () => ({ marineCoverage: 'none' }),
-        marine: async () => {
-          marineCalls += 1
-          return { coverage: coverageOf(viennaMarine), days: toDailyMarine(viennaMarine) }
-        },
-      }),
+      deps({ issuance, geography: async () => ({ marineCoverage: 'none' }) }),
     )
     const surfing = forecast.days[0]?.activities.find((result) => result.activity === 'surfing')
 
@@ -280,7 +310,9 @@ describe('geography decides what is answerable', () => {
       activity: 'surfing',
       reason: 'noMarineCoverage',
     })
-    expect(marineCalls).toBe(0)
+    expect(plans[0]?.marine).toEqual({
+      skip: { status: 'notApplicable', reason: 'noMarineCoverage' },
+    })
   })
 
   it('refuses to merge marine days that do not line up with the forecast days', async () => {
@@ -292,10 +324,7 @@ describe('geography decides what is answerable', () => {
         'Lisbon',
         deps({
           geography: async () => ({ marineCoverage: 'present' }),
-          marine: async () => ({
-            coverage: 'present',
-            days: toDailyMarine(lisbonMarine).slice(2),
-          }),
+          issuance: spyIssuance(toDailyMarine(lisbonMarine).slice(2)).issuance,
         }),
       ),
     ).rejects.toThrow(/marine/i)
@@ -313,11 +342,9 @@ describe('geography decides what is answerable', () => {
   })
 
   it('ranks ski days once the summit series exists', async () => {
-    const { weather } = spyWeather()
-
     const forecast = await getActivityForecast(
       'Grenoble',
-      deps({ weather, geography: async () => ({ terrain: grenobleTerrain }) }),
+      deps({ geography: async () => ({ terrain: grenobleTerrain }) }),
     )
     const skiing = forecast.rankings.find((entry) => entry.activity === 'skiing')
 

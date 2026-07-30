@@ -29,6 +29,7 @@ describe('the GraphiQL examples', () => {
       'NoSuchPlace',
       'WhereSkiingWasAssessed',
       'NoMountainNoOcean',
+      'HowFreshIsThisAnswer',
     ])
   })
 
@@ -48,6 +49,15 @@ describe('the GraphiQL examples', () => {
     // point 3204 m up and 44 km away, and a reviewer has to be able to see that
     // without reading the source.
     expect(defaultQuery).toContain('terrain { elevation distanceKm gridVersion latitude longitude }')
+  })
+
+  it('show how old the answer is and whether a refresh failed', () => {
+    // The milestone the brief names by title. A reviewer must be able to see
+    // that a forecast is stored rather than fetched — and that a stale one says
+    // so — without reading the source.
+    expect(defaultQuery).toContain('issuedAt')
+    expect(defaultQuery).toContain('stale')
+    expect(defaultQuery).toContain('staleReason')
   })
 
   it('show measured absence as well as measured presence', () => {

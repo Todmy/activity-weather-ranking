@@ -1,5 +1,7 @@
 import type { Db } from 'mongodb'
 import { MongoClient } from 'mongodb'
+import { forecastRepository } from './forecasts.ts'
+import { leaseRepository } from './leases.ts'
 import { locationRepository } from './locations.ts'
 
 export type Store = { db: Db; close: () => Promise<void> }
@@ -33,7 +35,11 @@ export const connectDatabase = async ({
     // Proves the server is actually there. `connect()` alone can resolve
     // against a driver that has not reached a node yet.
     await db.command({ ping: 1 })
-    await locationRepository(db).ensureIndexes()
+    await Promise.all([
+      locationRepository(db).ensureIndexes(),
+      forecastRepository(db).ensureIndexes(),
+      leaseRepository(db).ensureIndexes(),
+    ])
     return { db, close: () => client.close() }
   } catch (error) {
     await client.close().catch(() => undefined)

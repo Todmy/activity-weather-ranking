@@ -125,4 +125,19 @@ query NoMountainNoOcean {
     }
   }
 }
+
+# 8. Storage, seen from outside. issuedAt is when the forecast was FETCHED, not
+#    when it was served, so running this twice inside an hour returns the same
+#    timestamp: the second answer cost no upstream call at all. stale turns true
+#    when Open-Meteo could not be reached and the stored issuance was served
+#    anyway, with staleReason naming what failed.
+query HowFreshIsThisAnswer {
+  activityForecast(query: "Innsbruck") {
+    location { name }
+    issuedAt
+    stale
+    staleReason
+    days { date }
+  }
+}
 `

@@ -23,8 +23,15 @@ describe('connectDatabase', () => {
   it('creates the indexes the collections need, so startup never runs unindexed', async () => {
     const store = await connectDatabase({ uri: mongod.getUri(), database: 'indexed' })
 
-    const indexes = await store.db.collection('locations').indexes()
-    expect(indexes.map((index) => index.key)).toContainEqual({ lastRequestedAt: -1 })
+    const keysOf = async (collection: string) =>
+      (await store.db.collection(collection).indexes()).map((index) => index.key)
+
+    expect(await keysOf('locations')).toContainEqual({ lastRequestedAt: -1 })
+    // The gateway's read is `locationId` equality plus a descending sort, and
+    // both collections expire documents they no longer need.
+    expect(await keysOf('forecasts')).toContainEqual({ locationId: 1, issuedAt: -1 })
+    expect(await keysOf('forecasts')).toContainEqual({ expiresAt: 1 })
+    expect(await keysOf('leases')).toContainEqual({ expiresAt: 1 })
     await store.close()
   })
 
