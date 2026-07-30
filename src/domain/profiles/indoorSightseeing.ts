@@ -80,9 +80,13 @@ export const indoorSightseeing: Profile = {
       // Enough snow to make indoors appealing, not enough to strand anyone.
       curve: rampUp(1, 10),
       source:
-        'Snowfall depth reported in cm; 1 cm is the point where a day reads as snowy at all and ' +
-        '10 cm is a substantial city snowfall. The travel side of heavy snow is not modelled ' +
-        'here — the gate is on wind, and this gap is named rather than implied.',
+        'NOT CITED. The one constant in this model with no publication behind it, and it is left ' +
+        'that way rather than given a source that does not say this. 1 cm is the point where a ' +
+        'day reads as snowy at all and 10 cm is a substantial city snowfall; both are ordinary ' +
+        'judgement about when weather pushes a traveller indoors, and no meteorological authority ' +
+        'defines that. It moves an indoor score by at most three points of twenty. The travel ' +
+        'side of heavy snow is not modelled here — the gate is on wind, and that gap is named ' +
+        'rather than implied.',
     },
   ],
 }

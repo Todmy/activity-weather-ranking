@@ -118,9 +118,15 @@ describe('outdoor sightseeing, against the sanity table', () => {
     expect(result.factors.slice(1).every((factor) => factor.curveValue === 1)).toBe(true)
   })
 
-  it('cites a source for every factor, because an unsourced threshold is an invented one', () => {
-    for (const factor of outdoorSightseeing.factors) {
-      expect(factor.source.length).toBeGreaterThan(20)
+  it('carries a checkable provenance for every factor and every gate', () => {
+    // `source.length > 20` was the old assertion, and prose with no
+    // publication behind it passes that — which is how one uncited constant
+    // survived a rule saying there are none. A source now has to carry a link,
+    // or say NOT CITED and give its reasoning. Both are honest; only silence
+    // is not.
+    for (const entry of [...outdoorSightseeing.factors, ...(outdoorSightseeing.gates ?? [])]) {
+      expect(entry.source).toMatch(/https?:\/\/|NOT CITED/)
+      expect(entry.source.length).toBeGreaterThan(20)
     }
   })
 })

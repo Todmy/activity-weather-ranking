@@ -137,8 +137,14 @@ describe('indoor sightseeing, against the sanity table', () => {
     expect(indoors.gates[0]?.name).toBe('travelDisruption')
   })
 
-  it('cites a source for every factor and every gate', () => {
+  it('carries a checkable provenance for every factor and every gate', () => {
+    // `source.length > 20` was the old assertion, and prose with no
+    // publication behind it passes that — which is how one uncited constant
+    // survived a rule saying there are none. A source now has to carry a link,
+    // or say NOT CITED and give its reasoning. Both are honest; only silence
+    // is not.
     for (const entry of [...indoorSightseeing.factors, ...(indoorSightseeing.gates ?? [])]) {
+      expect(entry.source).toMatch(/https?:\/\/|NOT CITED/)
       expect(entry.source.length).toBeGreaterThan(20)
     }
   })

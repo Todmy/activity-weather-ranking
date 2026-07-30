@@ -35,8 +35,12 @@ export const skiing: Profile = {
       curve: rampDown(56, 72),
       source:
         'Resort operations: lifts slow around 56 km/h (35 mph) and 64 km/h (40 mph) is widely ' +
-        'described as the tipping point, depending on lift orientation. ' +
-        'https://blog.steamboat.com/navigating-windy-days-at-steamboat-ski-resort-a-qa-with-jake-ingle/',
+        'described as the tipping point, depending on lift orientation. The lower anchor is that ' +
+        '56 verbatim. The upper anchor of 72 is FITTED, not cited: it places the cited 64 exactly ' +
+        'at the midpoint, where the gate is half shut — reading "the tipping point" as the gust at ' +
+        'which holding becomes as likely as running, rather than as the point of no return. ' +
+        'Anchoring the zero at 64 instead scores sanity row 4 at 40 = FAIR, and the table says ' +
+        'POOR. https://blog.steamboat.com/navigating-windy-days-at-steamboat-ski-resort-a-qa-with-jake-ingle/',
     },
   ],
   factors: [

@@ -6,6 +6,14 @@ no further tuning happens.
 
 Bands: **EXCELLENT** 80-100 · **GOOD** 60-79 · **FAIR** 40-59 · **POOR** 0-39.
 
+**Temperatures in the outdoor rows are air temperature; the outdoor profile scores *apparent*
+temperature**, because the comfort scale it cites is defined over apparent. So a second translation
+sits between this table and that profile, one value per row, and it is not free: outdoor rows 3 and
+4 pass at their translated values and would land a band away at their air values. Each row's
+apparent value and the reason it differs is stated in `outdoorSightseeing.test.ts`. Named here
+because a knob nobody mentions is the thing this file exists to prevent, and it was disclosed only
+in a test docstring until an independent audit went looking.
+
 ## How this table came to exist, and why that matters
 
 The original plan was for a human to write it from intuition, precisely so that an AI could not
@@ -107,6 +115,13 @@ direction. *Corrected from "40-60 km/h" in the first draft — too low, which ma
 the wind for a score the absent snowfall was actually driving.*
 - [Steamboat: Navigating Windy Days — Q&A with the Director of Slope Maintenance](https://blog.steamboat.com/navigating-windy-days-at-steamboat-ski-resort-a-qa-with-jake-ingle/)
 - [Palisades Tahoe: Winds and lift operations](https://blog.palisadestahoe.com/operations/winds-lift-operations-squaw/)
+
+*The shipped gate is `rampDown(56, 72)`, and **72 appears in no source**. It is fitted, and this is
+the reading that makes it so: 56 is the cited lower figure verbatim, and 72 places the cited 64 at
+the midpoint of the ramp — the gust at which holding is as likely as running, rather than the point
+of no return. Anchoring the zero at 64 instead scores row 4 at 40 = FAIR against a table that says
+POOR. Named here because a fitted number presented as a cited one is exactly what this file exists
+to prevent.*
 
 **[S2] Wave period — windswell below 8-9 s, groundswell 10 s and above, powerful swell 14 s+**
 Windswell is described as poor quality and not worth surfing; 10-13 s is weak groundswell; 14 s and
