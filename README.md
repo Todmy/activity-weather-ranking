@@ -54,9 +54,13 @@ curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
   -d '{"query":"{ activityForecast(query: \"Cambridge\") { location { name country admin1 } alternatives { name country admin1 } } }"}'
 ```
 
-**Ask where a ski score was actually assessed.** The city is at 214 m and the score belongs to a
-point 3204 m up, so the answer says so rather than letting the number stand as a claim about the
-city centre.
+**Ask where a ski score was actually assessed.** The city is at 218 m and the score belongs to a
+point 3354 m up, so the answer says so rather than letting the number stand as a claim about the
+city centre. Two elevations for one city is not a bug: `location.elevation` is GeoNames' figure for
+the place, and the forecast model reports 214 m for the grid cell it actually scored. The committed
+elevation probe puts the summit at 3204 m rather than 3354 — terrain is sampled once and kept, so
+the deployed box is reporting what upstream told it on the day it asked, which is what `sampledAt`
+and `gridVersion` exist to make traceable.
 
 ```bash
 curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
