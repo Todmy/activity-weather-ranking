@@ -18,6 +18,17 @@ describe('the pinned model', () => {
     expect(serialiseModel().version).toBe(MODEL_VERSION)
   })
 
+  it('carries the terrain gate, which flips skiing between notApplicable and a score', () => {
+    // Not a weight and not a curve, so it would have escaped the snapshot on the
+    // profile shape alone — and it changes more than a score does. 300 m is the
+    // difference between "Amsterdam has no mountain" and Amsterdam being asked
+    // the question at all.
+    expect(serialiseModel().geography).toEqual({
+      terrainMinElevationM: 300,
+      source: 'docs/recon.md, elevation calibration over 16 cities',
+    })
+  })
+
   it('covers all four activities', () => {
     expect(serialiseModel().profiles.map((profile) => profile.activity)).toEqual([
       'skiing',

@@ -1,4 +1,5 @@
 import type { CurveSpec } from './curves.ts'
+import { TERRAIN_MIN_ELEVATION_M } from './geography.ts'
 import { indoorSightseeing } from './profiles/indoorSightseeing.ts'
 import { outdoorSightseeing } from './profiles/outdoorSightseeing.ts'
 import { skiing } from './profiles/skiing.ts'
@@ -15,8 +16,12 @@ import type { Profile } from './score.ts'
  *
  * Bump minor for a new profile or factor, major for anything that changes an
  * existing score.
+ *
+ * 1.1.0 adds the terrain gate. Nothing already scored moves, but skiing becomes
+ * answerable where it previously could not be, which is a new capability rather
+ * than a changed number.
  */
-export const MODEL_VERSION = '1.0.0'
+export const MODEL_VERSION = '1.1.0'
 
 export const PROFILES: readonly Profile[] = [
   skiing,
@@ -44,6 +49,12 @@ type SerialisedProfile = {
 
 export type SerialisedModel = {
   version: string
+  /**
+   * Not a weight and not a curve, so the profile shape alone would have missed
+   * it — and it changes more than a score does: 300 m is the difference between
+   * "Amsterdam has no mountain" and Amsterdam being asked the question at all.
+   */
+  geography: { terrainMinElevationM: number; source: string }
   profiles: SerialisedProfile[]
 }
 
@@ -54,6 +65,10 @@ export type SerialisedModel = {
  */
 export const serialiseModel = (): SerialisedModel => ({
   version: MODEL_VERSION,
+  geography: {
+    terrainMinElevationM: TERRAIN_MIN_ELEVATION_M,
+    source: 'docs/recon.md, elevation calibration over 16 cities',
+  },
   profiles: PROFILES.map((profile) => ({
     activity: profile.activity,
     requires: profile.requires,

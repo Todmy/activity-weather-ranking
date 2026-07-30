@@ -2,6 +2,10 @@
 
 exports[`the pinned model > serialises every number that can change a score 1`] = `
 {
+  "geography": {
+    "source": "docs/recon.md, elevation calibration over 16 cities",
+    "terrainMinElevationM": 300,
+  },
   "profiles": [
     {
       "activity": "skiing",
@@ -279,6 +283,6 @@ exports[`the pinned model > serialises every number that can change a score 1`] 
       "series": "city",
     },
   ],
-  "version": "1.0.0",
+  "version": "1.1.0",
 }
 `;
