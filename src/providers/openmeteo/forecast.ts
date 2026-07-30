@@ -1,0 +1,142 @@
+import { z } from 'zod'
+import type { DayWeather } from '../../domain/weather.ts'
+
+/**
+ * The Open-Meteo daily forecast, validated on the way in.
+ *
+ * The schema is written from a captured response (`docs/probes/forecast-innsbruck.json`)
+ * rather than from the documentation, because the probe is the thing that is
+ * actually true. Nothing downstream sees an unvalidated field: an upstream
+ * change shows up here as a parse error rather than three layers later as a
+ * score that looks like weather.
+ *
+ * Weather data by Open-Meteo.com, licensed CC BY 4.0.
+ */
+const ENDPOINT = 'https://api.open-meteo.com/v1/forecast'
+
+/**
+ * Pinned, in this order, because the fixture is evidence about the live API
+ * only while the request still matches. Sixteen variables costs more than one
+ * call against the free tier's 10,000 a day (anything over ten counts as more
+ * than one), which is affordable precisely because responses are persisted.
+ */
+export const DAILY_VARIABLES = [
+  'temperature_2m_max',
+  'temperature_2m_min',
+  'apparent_temperature_max',
+  'precipitation_sum',
+  'rain_sum',
+  'snowfall_sum',
+  'precipitation_probability_max',
+  'precipitation_hours',
+  'weather_code',
+  'wind_speed_10m_max',
+  'wind_gusts_10m_max',
+  'wind_direction_10m_dominant',
+  'cloud_cover_mean',
+  'uv_index_max',
+  'sunshine_duration',
+  'daylight_duration',
+] as const
+
+const nullableNumbers = z.array(z.number().nullable())
+
+const forecastResponse = z
+  .object({
+    latitude: z.number(),
+    longitude: z.number(),
+    elevation: z.number(),
+    timezone: z.string(),
+    utc_offset_seconds: z.number(),
+    daily: z.object({
+      time: z.array(z.string()),
+      temperature_2m_max: nullableNumbers,
+      temperature_2m_min: nullableNumbers,
+      apparent_temperature_max: nullableNumbers,
+      precipitation_sum: nullableNumbers,
+      rain_sum: nullableNumbers,
+      snowfall_sum: nullableNumbers,
+      precipitation_probability_max: nullableNumbers,
+      precipitation_hours: nullableNumbers,
+      weather_code: nullableNumbers,
+      wind_speed_10m_max: nullableNumbers,
+      wind_gusts_10m_max: nullableNumbers,
+      wind_direction_10m_dominant: nullableNumbers,
+      cloud_cover_mean: nullableNumbers,
+      uv_index_max: nullableNumbers,
+      sunshine_duration: nullableNumbers,
+      daylight_duration: nullableNumbers,
+    }),
+  })
+  .refine(
+    ({ daily }) => Object.values(daily).every((series) => series.length === daily.time.length),
+    // A short array does not fail loudly on its own: it shifts every later
+    // value onto the wrong date and the output still looks like weather.
+    { message: 'every daily series must have the same length as daily.time' },
+  )
+
+export type ForecastResponse = z.infer<typeof forecastResponse>
+export type Coordinates = { latitude: number; longitude: number }
+
+export const parseForecast = (payload: unknown): ForecastResponse =>
+  forecastResponse.parse(payload)
+
+export const buildForecastUrl = ({ latitude, longitude }: Coordinates): string => {
+  const url = new URL(ENDPOINT)
+  url.searchParams.set('latitude', String(latitude))
+  url.searchParams.set('longitude', String(longitude))
+  url.searchParams.set('daily', DAILY_VARIABLES.join(','))
+  // Local calendar dates in the location's own timezone. "Tuesday" in a travel
+  // forecast means Tuesday where the traveller is.
+  url.searchParams.set('timezone', 'auto')
+  url.searchParams.set('forecast_days', '7')
+  return url.toString()
+}
+
+/**
+ * Column-major upstream to row-major domain. `weather_code` and
+ * `wind_direction_10m_dominant` are fetched and deliberately not mapped: no
+ * profile scores them yet, and wind direction only becomes useful with a
+ * coastline orientation this service does not have (decision #23, cut).
+ */
+export const toDailyWeather = (response: ForecastResponse): DayWeather[] => {
+  const { daily } = response
+
+  return daily.time.map((date, index) => ({
+    date: date!,
+    temperatureMax: daily.temperature_2m_max[index] ?? null,
+    temperatureMin: daily.temperature_2m_min[index] ?? null,
+    apparentTemperatureMax: daily.apparent_temperature_max[index] ?? null,
+    precipitationSum: daily.precipitation_sum[index] ?? null,
+    rainSum: daily.rain_sum[index] ?? null,
+    snowfallSum: daily.snowfall_sum[index] ?? null,
+    precipitationProbabilityMax: daily.precipitation_probability_max[index] ?? null,
+    precipitationHours: daily.precipitation_hours[index] ?? null,
+    windSpeedMax: daily.wind_speed_10m_max[index] ?? null,
+    windGustsMax: daily.wind_gusts_10m_max[index] ?? null,
+    cloudCoverMean: daily.cloud_cover_mean[index] ?? null,
+    uvIndexMax: daily.uv_index_max[index] ?? null,
+    sunshineDuration: daily.sunshine_duration[index] ?? null,
+    daylightDuration: daily.daylight_duration[index] ?? null,
+  }))
+}
+
+export class OpenMeteoError extends Error {
+  readonly status: number
+
+  constructor(status: number, body: string) {
+    super(`Open-Meteo answered ${status}: ${body.slice(0, 200)}`)
+    this.name = 'OpenMeteoError'
+    this.status = status
+  }
+}
+
+export const fetchForecast = async (coordinates: Coordinates): Promise<ForecastResponse> => {
+  const response = await fetch(buildForecastUrl(coordinates))
+
+  if (!response.ok) {
+    throw new OpenMeteoError(response.status, await response.text())
+  }
+
+  return parseForecast(await response.json())
+}
