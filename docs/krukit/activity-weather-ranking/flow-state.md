@@ -24,10 +24,10 @@ Task: Backend service that takes a city/town and ranks how good the next 7 days 
 
 - Target submission: Monday 2026-08-03 (brief allows 5 working days from Wed 2026-07-29; strict
   reading due Tue 4 Aug, lenient Wed 5 Aug — aiming a day inside both).
-- Version control deliberately deferred at the user's instruction: no local git, no GitHub repo yet.
-  Artifacts are written to the working tree only. Flagged cost: principle 10 (history is the
-  narrative) cannot be honoured retroactively — whenever versioning starts, everything written
-  before that point lands as a single commit rather than a sequence.
+- Version control was deliberately deferred at the user's instruction and opened on 2026-07-30:
+  `github.com/Todmy/activity-weather-ranking`, public. Everything written on 29-30 July landed as a
+  single batch commit whose message says so plainly rather than imitating gradual work. Principle 10
+  is forfeit for that stretch and honoured from there on. Decision #32 closed.
 
 ## Critical path
 

@@ -82,12 +82,12 @@ Considered and not built. Full reasoning and what each would take in [`cut.md`](
 | 30 | No volume cap on documentation — only the test that a line must carry what code cannot | Verified against how this team actually works rather than assumed | [constitution](./krukit/constitution.md) §8 |
 | 31 | The scoring sanity table is written **before** any curve exists, and every band is justified against a **published convention** rather than against intuition | The original plan — human intuition first — failed honestly: nobody on this project skis or surfs. Conventions are weaker than lived expertise but stronger in one way that matters here, since a reader can check them. Six rows where no convention decides are flagged arguable | [sanity-table.md](./krukit/activity-weather-ranking/sanity-table.md) |
 | 33 | Surfing is modelled for a competent general traveller, not an expert | Changes the answer: 2.5 m clean swell is EXCELLENT for an expert and merely GOOD for the population this service serves | sanity-table.md, surfing row 3 |
-| 32 | Version control deferred at the start of the project | Deliberate, and the cost is recorded: everything written before the repo exists lands as one commit, forfeiting the narrative for that stretch | **open** |
+| 32 | Version control deferred at the start, then opened on day 2 with a single batch commit | Deliberate, and the cost was paid rather than hidden: everything written on 29-30 July lands as one commit, forfeiting principle 10 for that stretch. The commit message says so plainly instead of imitating gradual work. Incremental from there | decided |
 
 ---
 
 ## Still open
 
-One, and it is visible in the table above rather than hidden here.
-
-- **#32** — when version control starts. Cost grows in one direction only.
+None. #32 was the last one and closed on 30 July when the repository was created; every other row
+above is decided, assumed or cut, and the ones marked *assumed* are questions a product manager
+would answer, not decisions still being weighed.
