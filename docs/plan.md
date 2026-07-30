@@ -11,6 +11,13 @@ clock, and stated per slice rather than per task. The mapping to milestone codes
 The ordering rule: **unpredictable work first, predictable work last.** Slices 1 and 3 carry the
 schedule risk; slice 7 is the one that gives way if anything overruns.
 
+**Every slice below is test-first, in every layer it touches** (principle 6, v3.0.0). The slices
+written before 30 July say "test first" only against their domain steps, because that was the rule at
+the time; read it as applying to the provider, application and API steps too. Concretely, from slice
+2 onward: a provider step starts with a test over a captured probe, an API step starts with a test
+through HTTP rather than through `graphql()`, and no step's code is written until its test has been
+run and seen to fail for the reason intended.
+
 ---
 
 ## Slice 0 — Repository, skeleton, deployed — 1 point (M1)

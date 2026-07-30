@@ -348,7 +348,16 @@ change one thing: it widened what the API has to demonstrate, so the example que
 `notApplicable`, staleness and the per-factor breakdown rather than only the happy path. That lands in
 the API surface (§5) and in M6's done-condition, not in the data model.
 
-Recording this rather than silently re-checking the whole document against v2.0.0: a design checked
+**Principle 6 was rewritten after this document too, and the row above is now the weaker half of the
+rule.** Test-first stopped being a domain-only obligation on 30 July: it binds every layer, and the
+failing run is part of it rather than good practice around it. The design is unaffected — the layer
+boundaries are what make each layer testable in the first place — but two things it implies are now
+mandatory rather than sensible. Providers are tested against the captured probes, and the API is
+tested through HTTP rather than through `graphql()`, because Yoga's error masking only exists at that
+level and a schema test cannot see past it. Slice 1 found that out the expensive way; the amendment
+log and `worklog.md` carry the argument.
+
+Recording this rather than silently re-checking the whole document against v3.0.0: a design checked
 against principles that did not exist when it was written would be a claim nobody could verify.
 
 ## 8. What could still go wrong
