@@ -45,6 +45,24 @@ export type LocationDocument = {
 
 export const locationIdFor = (geonameId: number): string => `geoname:${geonameId}`
 
+/**
+ * Back the way it came, for the one caller that needs it: a pinned query whose
+ * city has dropped out of upstream's candidates. The stored document is then
+ * the only remaining description of the place we promised to answer about.
+ */
+export const toGeocoded = (document: LocationDocument): GeocodedLocation => ({
+  geonameId: document.geonameId,
+  name: document.name,
+  country: document.country,
+  countryCode: document.countryCode,
+  admin1: document.admin1,
+  latitude: document.coords.lat,
+  longitude: document.coords.lon,
+  elevation: document.elevation,
+  timezone: document.timezone,
+  population: document.population,
+})
+
 export type LocationRepository = ReturnType<typeof locationRepository>
 
 export const locationRepository = (db: Db) => {
