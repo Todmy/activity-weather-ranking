@@ -190,6 +190,13 @@ Gotchas found while implementing, kept here so a later slice doesn't rediscover 
 - **The probes are fixtures with an expiry condition.** They are evidence about the live API only
   while the request that produced them matches the one the service sends, which is why
   `DAILY_VARIABLES` is pinned and asserted against the fixture's own keys.
+- **`await someAsyncThing()` drains the microtask queue**, so a test that awaits a shutdown and then
+  reads a flag the shutdown was supposed to wait for passes either way. Assert an *order* against
+  work held open by a timer instead. Found in slice 6 by mutation; the red run said only "module not
+  found", which is not evidence that any single assertion holds.
+- **A read-through that upserts is not a read.** `ensureLocation` moves `lastRequestedAt`, so any new
+  caller that wants a location's geography must take it from the document rather than through the
+  read-through, or it silently renews the window the refresher selects on.
 
 ## What blocked the start, and how each was cleared
 
