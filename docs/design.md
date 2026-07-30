@@ -51,10 +51,16 @@ Applicability is decided per location, from measurements taken for that location
 | Marine | wherever the wave model has water; nulls elsewhere | 1 request per issuance, skipped when `notApplicable` |
 | Elevation | global | 81 coordinates, **once ever** |
 
-So Amsterdam is `notApplicable` for skiing because its sampled grid maxes at 11 m, and Vienna is
+So Amsterdam is `notApplicable` for skiing because its sampled grid maxes at 51 m, and Vienna is
 `notApplicable` for surfing because the marine model returns nulls at its coordinate. Neither answer
 comes from a rule naming those cities. Both come from a measurement, which means a city nobody
 anticipated gets the same treatment as one that was tested.
+
+Those two numbers are measured for the config that actually ships, `circ-50km-11x11`, not carried
+over from the coarser grids recon used to choose it
+(`probes/elevation-amsterdam-circ50-81.json`, `probes/elevation-grenoble-circ50-81.json`). Amsterdam
+read 11 m on recon's 3×3 sample and 51 m here; the verdict is unchanged because the cost gate is at
+300 m, but the number a reader can check had to be the one from the shipped grid.
 
 The one real limit is quota, and it applies only to cities the service has never seen. Elevation is
 metered per coordinate, so 10,000/day ÷ 81 caps cold-start terrain sampling at roughly **123 new

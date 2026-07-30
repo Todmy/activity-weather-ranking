@@ -57,7 +57,29 @@ falsified two things this section previously asserted — see questions 7 and 8 
   62.5 km to 2750 m at 45 km.
 
 Settled config: **11×11 over a circular 50 km mask, 81 points, one request**, parameters pinned as
-constants for determinism.
+constants for determinism. An 11×11 lattice at 10 km spacing spans ±50 km and the inscribed circle
+keeps exactly 81 of its 121 points, which is also why the config fits inside the API's 100-coordinate
+cap without a second request.
+
+The numbers above come from the calibration grids (3×3, 5×5, 9×9 squares), which is what the config
+was chosen *against*. The config itself was measured separately, on 30 July, before slice 3 was
+written — the calibration probes are square, and a fixture for the shipped config did not exist:
+
+| City | Sampled max | Distance | vs the 9×9 square |
+|---|---|---|---|
+| Grenoble | 3204 m at 45.0088, 6.2343 | 44.7 km | 3158 m at 62.5 km — the circle finds a *higher* point *closer* |
+| Amsterdam | 51 m | 51.5 km at the square's best | below the 300 m gate either way |
+
+Grenoble is the clearest statement of the non-monotonicity: widening the sample does not improve it,
+because the square's extra reach is diagonal and the mountains here are not. Saved as
+`probes/elevation-grenoble-circ50-81.json` and `probes/elevation-amsterdam-circ50-81.json`, each
+carrying the 81 requested coordinates alongside the response so a test can prove the pinned grid
+reproduces the exact request.
+
+**One cross-check worth having.** The forecast at Grenoble's sampled high point reports
+`elevation: 3204.0`, the same figure the Elevation API gave for that coordinate
+(`probes/forecast-grenoble-summit-past3.json`). Two independent endpoints agree on the terrain, so the
+summit series is being fetched for the place the grid actually found.
 
 **Units, confirmed from `daily_units`:** snowfall `cm`, precipitation `mm`, wind `km/h`, sunshine and
 daylight `s`, UV index dimensionless, `weather_code` is WMO. All 16 daily variables requested came
