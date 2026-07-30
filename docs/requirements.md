@@ -87,7 +87,7 @@ Named rather than omitted, because an unstated gap reads as an oversight:
 |---|---|---|
 | **No authentication, no rate limiting** | The service holds no user data and exposes read-only public weather. A take-home deployed for one reviewer does not justify an auth story, and adding one would be scope the brief did not ask for | An API key at the Yoga layer, and a per-key quota in front of the gateway |
 | **Single instance, no horizontal scale story** | The lease is correct across processes — it is a database row, not in-memory state — so a second instance would work. Nothing proves it, because nothing runs two | Two containers behind a proxy, and a test asserting one fetch across both |
-| **No observability beyond logs** | Structured logging, metrics and tracing are real production requirements and none of them demonstrate modelling, which is what is being assessed | OpenTelemetry at the gateway and provider boundaries |
+| **No metrics and no tracing** | Real production requirements that demonstrate nothing about modelling weather. Request logging *was* added — a service with no access log cannot say what happened, which is a different claim from cannot say it in aggregate. Audited against all twelve factors in [`twelve-factor.md`](./twelve-factor.md) | OpenTelemetry at the gateway and provider boundaries, and a Prometheus endpoint |
 | **The scoring model is reviewable, not validated** | Backtesting against historical conditions is the right way to calibrate and does not fit the budget. [`cut.md`](./cut.md) records the argument; the README says so plainly rather than implying the numbers are verified | Historical archive fetches plus an evaluation harness |
 
 ## Keeping this file honest

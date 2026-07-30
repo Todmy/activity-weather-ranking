@@ -119,3 +119,21 @@ wiring, and a test helper — and the wiring is covered indirectly by `server.te
 
 **When that stops being true.** The first other contributor. A formatter's whole value is removing
 style from review, and there is no review yet.
+
+## Metrics, tracing, and three more twelve-factor items
+
+**What it would be.** A Prometheus endpoint, OpenTelemetry spans at the gateway and provider
+boundaries, the Open-Meteo endpoints moved into configuration, and the refresher split into its own
+process type.
+
+**Why they are cut.** All four are named with their evidence in
+[`twelve-factor.md`](./twelve-factor.md), which is the audit that produced this entry. The short
+version: metrics and tracing are real production requirements that demonstrate nothing about
+modelling weather; configurable upstream endpoints add three variables for a scenario nobody will run
+against a free public API; and a separate worker buys isolation that one instance behind one lease
+does not need.
+
+**What is done instead.** The three things from the same audit that were *not* judgement calls got
+fixed rather than written down: a shutdown that severed the request in flight, a service that could
+not say which commit it was running, and an event stream with nothing on it. The difference is that
+those were defects and these are scope.

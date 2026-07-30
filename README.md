@@ -188,14 +188,14 @@ docker compose up mongo -d      # or point MONGODB_URI at any MongoDB 8
 pnpm dev                        # watch mode on http://localhost:4000/graphql
 ```
 
-Configuration is four variables and every one has a working default, so the service starts with no
+Configuration is five variables and every one has a working default, so the service starts with no
 `.env` at all — see [`.env.example`](.env.example). Override `PORT`, `MONGODB_URI`, `MONGODB_DB` or
-`REFRESH_INTERVAL_MS` only if you need to.
+`REFRESH_INTERVAL_MS``REFRESH_INTERVAL_MS` only if you need to.
 
 ### Tests
 
 ```bash
-pnpm check                      # tsc --noEmit, then 319 tests
+pnpm check                      # tsc --noEmit, then 326 tests
 ```
 
 Neither Docker nor a network is needed. The persistence tests start a real `mongod` through
@@ -310,6 +310,7 @@ Everything deliberately *not* built, with the test each item had to pass, is in
 | [`docs/decisions.md`](docs/decisions.md) | **Start here for the reasoning.** Every decision and assumption, one line each, linking to the full argument |
 | [`docs/worklog.md`](docs/worklog.md) | The sequence as it happened, including two designed mechanisms that died on contact with the real API |
 | [`docs/open-questions.md`](docs/open-questions.md) | The eight questions that would go to a product manager, and the assumption committed to instead |
+| [`docs/twelve-factor.md`](docs/twelve-factor.md) | The twelve factors audited by command rather than by memory — three things it found and fixed, four left undone on purpose |
 | [`docs/cut.md`](docs/cut.md) | What was considered and not built, with the test each item had to pass |
 | [`docs/design.md`](docs/design.md) | Data model, refresh gateway, scoring, determinism |
 | [`docs/sanity-table.md`](docs/sanity-table.md) | Twenty scenarios the scoring model must reproduce, written before any curve exists |
