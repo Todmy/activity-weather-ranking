@@ -26,6 +26,12 @@ export type WeatherInputs = {
   sunshineDuration?: number | null
   daylightDuration?: number | null
 
+  /** Marine series, present only where the Marine API has coverage. */
+  waveHeightMax?: number | null
+  wavePeriodMax?: number | null
+  swellWaveHeightMax?: number | null
+  swellWavePeriodMax?: number | null
+
   /**
    * Derived, not upstream: snowfall over this day and the two before it.
    * Computed by `withDerivedInputs` once per issuance — see decision #39.
