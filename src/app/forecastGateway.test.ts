@@ -134,6 +134,25 @@ describe('ensureFresh', () => {
     expect(issuance?.marine.days?.length).toBeGreaterThan(0)
   })
 
+  it('keeps an issuance that was stored even when releasing the lease fails', async () => {
+    // The release runs in a `finally`, so a throw there replaces the staged
+    // return value. The forecast is on disk and correct, and the caller would
+    // have been told the request failed — with `newest` never consulted, so
+    // stale-if-error could not cover for it either. The lease expires on its
+    // own within thirty seconds; losing a stored answer is the worse outcome.
+    const leases = {
+      ...leaseRepository(db),
+      release: async () => {
+        throw new Error('primary stepped down')
+      },
+    }
+
+    const result = await ensureFresh(deps({ leases }), plan())
+
+    expect(result.status).toBe('fresh')
+    expect(await db.collection('forecasts').countDocuments({ locationId: LOCATION })).toBe(1)
+  })
+
   it('stores a wave model that answered with nothing as unavailable, never as ok', async () => {
     // `fetchMarine` returns `days: []` when the week reads all-null, and the
     // coverage verdict travelling beside it is the only thing that says why.

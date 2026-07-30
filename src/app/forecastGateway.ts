@@ -185,9 +185,13 @@ export const ensureFresh = async (
         ? { status: 'noDataYet', reason }
         : { status: 'stale', issuance: newest, reason }
     } finally {
-      // Always. A failure that keeps the lease blocks every refresh of this
-      // location for the next thirty seconds.
-      await deps.leases.release(key, deps.instanceId)
+      // Always, and never at the cost of the answer. A failure that keeps the
+      // lease blocks every refresh of this location for the next thirty
+      // seconds — but a throw here would replace the staged return value, so a
+      // forecast already on disk would reach the caller as a request error
+      // with stale-if-error unable to cover for it. The lease expires on its
+      // own; a lost answer does not come back.
+      await deps.leases.release(key, deps.instanceId).catch(() => undefined)
     }
   }
 
