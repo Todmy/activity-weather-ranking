@@ -191,7 +191,13 @@ are served. Ambiguous city names get two entry points: one that resolves the bes
 tells you which it picked, and one that returns candidates for a caller who wants to choose.
 
 **Done when:** a reviewer opens GraphiQL on the deployed URL and runs every example query without
-typing anything.
+typing anything, and the examples cover the interesting states rather than only the happy path:
+`notApplicable` against a score of zero, a stale response after an upstream failure, and the
+per-factor breakdown behind a number.
+
+Constitution 12 is what widened this: a capability reachable only from a test does not count as
+delivered, because a reviewer who has to invent a query will exercise the happy path and miss the
+parts that took longest to get right.
 
 **2 points.** Plan: [slice 5](./krukit/activity-weather-ranking/plan.md).
 

@@ -1,14 +1,19 @@
 # Constitution: activity-weather-ranking
 
-Version: 1.0.0 | Ratified: 2026-07-29
+Version: 2.0.0 | Ratified: 2026-07-29 | Last amended: 2026-07-30
 
-The short list of principles every design in this project is checked against (krukit stage 3) and
-re-checked in code against (stage 6). Ten is the cap — if an eleventh ever earns a place, one of
-these has to lose it.
+The principles every design in this project is checked against (krukit stage 3) and re-checked in code
+against (stage 6).
 
-These are commitments, not received wisdom. Each one exists because it would have changed a
-decision in this project, and each is meant to be argued with. Where a principle turned out to be
-the wrong call, that belongs in the worklog, not quietly dropped here.
+**There is no cap, and there is a bar.** The cap was ten at ratification, and it was dropped on
+30 July when two rules arrived that both cleared the bar. Holding the number would have meant merging
+existing principles to make room, which improves the count and degrades the document. So the
+gatekeeper is the bar instead, and it is deliberately hard to clear: a principle belongs here only if
+it would have changed a decision already made in this project **and** it binds work not yet started.
+Anything that only describes what went wrong once belongs in the worklog.
+
+These are commitments, not received wisdom, and each is meant to be argued with. Where a principle
+turns out to be the wrong call, that goes in the worklog rather than being quietly dropped here.
 
 ## Principles
 
@@ -67,12 +72,38 @@ the wrong call, that belongs in the worklog, not quietly dropped here.
    *Travel advice that cannot be reproduced cannot be checked or defended — and the persistence the
    brief asks for is precisely what makes reproducibility possible.*
 
-10. **History is the narrative** — MUST commit in small logical units, with the document that
-    motivates a change committed before the change itself; MUST NOT push to any remote without
-    explicit permission.
+10. **History is the narrative** — MUST commit the document that motivates a change before the
+    change itself; MUST NOT push to any remote without explicit permission.
     *The submission is graded on how the work happened, and git history is the only tamper-evident
     record of that.*
 
+11. **One change per commit, sliced vertically** — MUST keep each commit small enough that a single
+    `git revert` undoes exactly one change without breaking the build, and MUST slice vertically: a
+    commit carries one change through whatever layers it touches, never one layer across many
+    changes. A commit message MUST name everything the commit contains, not just its most
+    interesting part.
+    *Reverting, monitoring progress and reading the log all depend on a commit being one thing. This
+    was implicit in principle 10 as "small logical units" and that phrasing enforced nothing: commit
+    `c674ef8` bundled a documentation conversion across three files with the service skeleton, and
+    its message mentioned only the skeleton. Horizontal slices fail the same test from the other
+    direction — a commit that finishes "the persistence layer" cannot be reverted without taking
+    unrelated features with it. The plan is already organised as vertical slices; this is the same
+    discipline one level down.*
+
+12. **Exercisable by a human, not only by tests** — MUST ship every capability with a way for a
+    person to run it without reading the source: example queries preloaded in GraphiQL, a named use
+    case in the README for each question the service answers, and a runnable example of each failure
+    and absence state. A capability reachable only from a test does not count as delivered.
+    *This is a backend with no UI, so the only way anyone evaluates it is by typing a query. A
+    reviewer who has to invent one will exercise the happy path and miss everything interesting,
+    which here means the parts that took longest to get right: `notApplicable` against a score of
+    zero, staleness after an upstream failure, and the per-factor breakdown behind a number. Passing
+    tests are evidence for me. A query someone can paste is evidence for them.*
+
 ## Amendment log
 
-- 1.0.0 (2026-07-29) — initial ratification
+- 1.0.0 (2026-07-29) — initial ratification, 10 principles
+- 2.0.0 (2026-07-30) — added **One change per commit, sliced vertically** (11) and **Exercisable by
+  a human, not only by tests** (12); narrowed principle 10, which had carried commit granularity in a
+  clause that enforced nothing; dropped the ten-principle cap in favour of an explicit bar (from
+  feature: activity-weather-ranking)

@@ -115,6 +115,12 @@ unticked stage.
 - **Never call Open-Meteo from a test.** Fixtures live in
   `docs/krukit/activity-weather-ranking/probes/`. They are real captured responses.
 - **Never push to a remote without explicit permission.**
+- **One change per commit, sliced vertically** (constitution 11). A commit must be revertable on its
+  own without breaking the build, and its message must name everything it contains. Never commit a
+  whole layer at once, and never quietly fold an unrelated doc edit into a code commit.
+- **Every capability ships with a query a human can paste** (constitution 12). Preloaded GraphiQL
+  examples, a named use case in the README, and a runnable example of each failure and absence state.
+  A feature only a test can reach is not finished.
 - `domain/` performs no I/O. No `new Date()`, no database, no fetch. That boundary is what makes the
   determinism claim in design.md §6 checkable.
 
