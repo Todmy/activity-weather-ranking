@@ -433,6 +433,25 @@ reproduce it and could not identify which test it was, so it is recorded here ra
 fixed. The suspicion is a stale transform immediately after a file rewrite, and the reason it is
 worth writing down is that "it went away" is not a diagnosis.
 
+**It happened again on the last day, and this time it left a fingerprint.** `1 failed | 32 passed`
+files, `310 passed | 6 skipped` tests. Six skipped in a single file means a `beforeAll` threw and took
+its whole file with it, and exactly one file in the repository has six tests: `server.test.ts`, whose
+`beforeAll` starts a `mongod`. Four subsequent full runs were green, and CI re-ran the same suite on
+the same commit and passed. So the narrowed claim is: **`mongodb-memory-server`'s startup occasionally
+loses a race under load** — that run followed a `docker compose down -v` and a full image build — and
+nothing in the service is implicated.
+
+That is still not a diagnosis. The honest version of it would be a `--reporter=verbose` run captured
+to a file the next time it happens, and a startup timeout raised from the default. What I did instead
+was note that both occurrences were the same shape and move on, which is a judgement about the
+remaining budget rather than about the bug.
+
+I also made the mistake worth recording alongside it: the command that surfaced this was
+`pnpm vitest run | grep -E "Tests " && git commit && git push`. `&&` tested `grep`'s exit code, not
+vitest's, so a failing suite committed and pushed anyway. CI caught it on the far side and was green,
+so the commit stands — but the guard I thought I had was checking the wrong thing, which is exactly
+the class of error this project keeps finding in its own tests.
+
 ### A test that passed for the wrong reason
 
 The history tests build three stored issuances and assert the horizon each one saw a given date at.
