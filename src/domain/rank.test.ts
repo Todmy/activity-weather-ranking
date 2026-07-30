@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { rankActivitiesWithinDay, rankDaysWithinActivity } from './rank.ts'
+import { rankActivitiesWithinDay, rankDaysForActivity, rankDaysWithinActivity } from './rank.ts'
 import type { ActivityResult } from './activityResult.ts'
 
 const scored = (activity: string, score: number): ActivityResult => ({
@@ -13,10 +13,19 @@ const scored = (activity: string, score: number): ActivityResult => ({
   gates: [],
 })
 
-const notApplicable = (activity: string): ActivityResult => ({
+const notApplicable = (
+  activity: string,
+  reason: 'noTerrain' | 'noMarineCoverage' = 'noTerrain',
+): ActivityResult => ({
   kind: 'notApplicable',
   activity,
-  reason: 'noTerrain',
+  reason,
+})
+
+const unavailable = (activity: string, reason: string): ActivityResult => ({
+  kind: 'unavailable',
+  activity,
+  reason,
 })
 
 /**
@@ -106,5 +115,50 @@ describe('rankDaysWithinActivity', () => {
 
   it('is empty for an activity nowhere in the results', () => {
     expect(rankDaysWithinActivity(days, 'kitesurfing')).toEqual([])
+  })
+})
+
+describe('rankDaysForActivity', () => {
+  // The ranking axis drops days it cannot score, which is right — a list of good
+  // days to ski should not contain days with no answer. But for a landlocked
+  // city that empties the list entirely, and the first query in the README
+  // returned `{ activity: 'surfing', days: [] }` with nothing saying why. The
+  // reason was on the day axis only, so a caller had to know to switch axes to
+  // learn that the city has no coast.
+  const week = (results: ActivityResult[]) =>
+    results.map((result, index) => ({ date: `2026-01-0${index + 1}`, activities: [result] }))
+
+  it('carries the reason when one answer is true of the whole week', () => {
+    const ranked = rankDaysForActivity(week([notApplicable('surfing', 'noMarineCoverage'),
+      notApplicable('surfing', 'noMarineCoverage')]), 'surfing')
+
+    expect(ranked).toEqual({ activity: 'surfing', days: [], reason: 'noMarineCoverage' })
+  })
+
+  it('says nothing when a day scored, because the list is the answer', () => {
+    const ranked = rankDaysForActivity(
+      [...week([notApplicable('skiing', 'noTerrain')]),
+        { date: '2026-01-09', activities: [scored('skiing', 70)] }],
+      'skiing',
+    )
+
+    expect(ranked.days).toHaveLength(1)
+    expect(ranked.reason).toBeNull()
+  })
+
+  it('says nothing when the dropped days disagree, rather than picking one', () => {
+    // No single sentence is true of the week, and inventing one would be worse
+    // than the silence this replaces. The day axis is where a mixed week lives.
+    const ranked = rankDaysForActivity(week([
+      notApplicable('skiing', 'noTerrain'),
+      unavailable('skiing', 'the forecast carried no values this profile scores'),
+    ]), 'skiing')
+
+    expect(ranked.days).toEqual([])
+    expect(ranked.reason).toBeNull()
+  })
+
+  it('says nothing when the activity is absent from every day', () => {
+    expect(rankDaysForActivity(week([scored('surfing', 10)]), 'skiing').reason).toBeNull()
   })
 })

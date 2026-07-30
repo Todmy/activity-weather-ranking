@@ -4,7 +4,9 @@ import { withDerivedInputs } from '../domain/derive.ts'
 import { geographyFrom } from '../domain/geography.ts'
 import type { Geography } from '../domain/activityResult.ts'
 import { MODEL_VERSION, PROFILES } from '../domain/modelVersion.ts'
-import { rankActivitiesWithinDay, rankDaysWithinActivity } from '../domain/rank.ts'
+import { rankActivitiesWithinDay, rankDaysForActivity } from '../domain/rank.ts'
+import type { ActivityRanking } from '../domain/rank.ts'
+export type { ActivityRanking }
 import type { RankedDay } from '../domain/rank.ts'
 import type { DayWeather } from '../domain/weather.ts'
 import type { IssuanceDocument } from '../persistence/forecasts.ts'
@@ -80,10 +82,6 @@ export type ScoredDay = {
 }
 
 /** One activity's days, ranked best first. The other reading of "ranks". */
-export type ActivityRanking = {
-  activity: string
-  days: RankedDay[]
-}
 
 /**
  * What was measured about this place, reported alongside the scores.
@@ -328,10 +326,7 @@ const forecastFor = async (
     days: scored,
     // Both readings of the brief's "ranks", from the same computation. Neither
     // re-scores anything.
-    rankings: PROFILES.map((profile) => ({
-      activity: profile.activity,
-      days: rankDaysWithinActivity(scored, profile.activity),
-    })),
+    rankings: PROFILES.map((profile) => rankDaysForActivity(scored, profile.activity)),
   }
 }
 

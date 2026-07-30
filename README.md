@@ -23,11 +23,13 @@ holds itself to ([principle 12](docs/principles.md)): a backend has no UI, so a 
 invent a query only ever sees the happy path.
 
 **Rank the next seven days for each activity.** One of the two readings of the brief's "ranks";
-days an activity cannot be scored on are left out rather than ranked as zero.
+days an activity cannot be scored on are left out rather than ranked as zero. Innsbruck has no
+coast, so surfing comes back with an empty list and a `reason` that says why — an empty list on its
+own would make you switch to the other axis to find out.
 
 ```bash
 curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
-  -d '{"query":"{ activityForecast(query: \"Innsbruck\") { location { name country admin1 } modelVersion rankings { activity days { date score confidence } } } }"}'
+  -d '{"query":"{ activityForecast(query: \"Innsbruck\") { location { name country admin1 } modelVersion rankings { activity days { date score confidence } reason } } }"}'
 ```
 
 **Rank the activities within each day**, which is the other reading. The three-state union shows up

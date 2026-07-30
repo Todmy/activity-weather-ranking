@@ -4,6 +4,11 @@ The other reading of "ranks the next seven days": one activity, its days best fi
 type ActivityRanking {
   activity: String
   days: [RankedDay!]
+
+  """
+  Why `days` is empty, when one answer is true of the whole week — a landlocked city reports `noMarineCoverage` here rather than an empty list and silence. Null when a day scored, and null when the dropped days disagree: no single sentence is true of that week, and the per-day view is where a mixed one lives.
+  """
+  reason: String
 }
 
 """

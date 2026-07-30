@@ -181,6 +181,14 @@ const RankingRef = builder.objectRef<ActivityRanking>('ActivityRanking').impleme
   fields: (t) => ({
     activity: t.exposeString('activity'),
     days: t.expose('days', { type: [RankedDayRef] }),
+    reason: t.exposeString('reason', {
+      nullable: true,
+      description:
+        'Why `days` is empty, when one answer is true of the whole week — a landlocked city ' +
+        'reports `noMarineCoverage` here rather than an empty list and silence. Null when a day ' +
+        'scored, and null when the dropped days disagree: no single sentence is true of that ' +
+        'week, and the per-day view is where a mixed one lives.',
+    }),
   }),
 })
 

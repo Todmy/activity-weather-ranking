@@ -38,6 +38,40 @@ export const rankActivitiesWithinDay = (results: ActivityResult[]): ActivityResu
     return a.activity.localeCompare(b.activity) || a.kind.localeCompare(b.kind)
   })
 
+export type ActivityRanking = {
+  activity: string
+  days: RankedDay[]
+  /**
+   * Why the list is empty, when one answer is true of the whole week.
+   *
+   * Dropping unscoreable days is right — a list of good days to ski should not
+   * contain days with no answer — but for a landlocked city it empties the list
+   * entirely, and an empty list with no reason makes the caller switch axes to
+   * find out that the city has no coast.
+   *
+   * Null when a day scored, because then the list is the answer. Null also when
+   * the dropped days disagree: no single sentence is true of that week, and
+   * picking one of several would be worse than the silence this replaces. The
+   * per-day view is where a mixed week lives.
+   */
+  reason: string | null
+}
+
+/** The ranking above, plus why it is empty when that can be said in one line. */
+export const rankDaysForActivity = (days: DayResults[], activity: string): ActivityRanking => {
+  const ranked = rankDaysWithinActivity(days, activity)
+  if (ranked.length > 0) return { activity, days: ranked, reason: null }
+
+  const reasons = new Set(
+    days
+      .map((day) => day.activities.find((candidate) => candidate.activity === activity))
+      .filter((result) => result !== undefined && result.kind !== 'scored')
+      .map((result) => (result as { reason: string }).reason),
+  )
+
+  return { activity, days: ranked, reason: reasons.size === 1 ? [...reasons][0]! : null }
+}
+
 /**
  * The days one activity is worth doing, best first, ties to the earlier date.
  *

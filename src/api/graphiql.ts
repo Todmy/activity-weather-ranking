@@ -17,7 +17,9 @@ export const defaultQuery = `# Seven queries. Pick an operation from the dropdow
 # deliberately not a score of zero. Storage arrives in M5.
 
 # 1. Best days for each activity. One of the two readings of "ranks the next
-#    seven days"; days an activity cannot be scored on are left out.
+#    seven days"; days an activity cannot be scored on are left out, and
+#    \`reason\` says why the list is empty when one answer covers the week —
+#    Innsbruck has no coast, so surfing comes back empty and says so.
 query BestDaysPerActivity {
   activityForecast(query: "Innsbruck") {
     location { name country admin1 }
@@ -26,6 +28,7 @@ query BestDaysPerActivity {
     rankings {
       activity
       days { date score confidence }
+      reason
     }
   }
 }
@@ -97,6 +100,7 @@ query WhereSkiingWasAssessed {
     rankings {
       activity
       days { date score confidence }
+      reason
     }
   }
 }
