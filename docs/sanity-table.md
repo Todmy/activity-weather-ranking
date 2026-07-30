@@ -122,6 +122,39 @@ WHO/EPA global UV index scale: 0-2 low, 3-5 moderate, 6-7 high, 8-10 very high, 
 - [WHO: Radiation — the ultraviolet (UV) index](https://www.who.int/news-room/questions-and-answers/item/radiation-the-ultraviolet-(uv)-index)
 - [US EPA: UV Index Scale](https://www.epa.gov/sunsafety/uv-index-scale-0)
 
+**[S5] A powder day starts at about 15 cm (6 inches) of fresh snow**
+Powder Magazine polled more than a thousand skiers: the large majority put the threshold between 6
+and 11 inches, roughly 15-28 cm. This is a convention among skiers rather than a physical constant,
+and it is cited as such — the profile's curve reaches full marks at 20 cm, in the middle of that
+band, over a three-day window rather than a single day.
+- [Powder: How much new snow counts as a powder day?](https://www.powder.com/news/how-much-new-snow-counts-as-a-powder-day-poll)
+
+**[S6] Rain on snow destroys the surface rather than degrading it**
+Rain destabilises a snowpack by adding heat and load at once, and near freezing it forms an icy
+crust that later snow slides off. This is why skiing row 3 is POOR rather than FAIR: it is not "wet
+snow", it is a different surface.
+- [Avalanche.org: Rain on snow](https://avalanche.org/avalanche-encyclopedia/snowpack/snowpack-observations/signs-of-instability-red-flags/rain-on-snow/)
+
+**[S7] Frostbite within 30 minutes between −18 °C and −28 °C of wind chill**
+The NWS wind chill chart bands time-to-frostbite on exposed skin; the 30-minute band runs from about
+0 °F to −18 °F. The ski temperature curve reaches zero at −28 °C for that reason, and the plateau
+starts at −18 °C.
+- [NWS: Understanding wind chill](https://www.weather.gov/safety/cold-wind-chill-chart)
+
+**[S8] Wave size for a competent general traveller — 0.6 to 1.5 m**
+Surf schools put beginners at 1-3 ft and intermediates at 2-4 ft, with overhead waves reserved for
+experienced surfers. The height curve plateaus over 0.6-1.5 m and reaches zero at 2.8 m, which is
+well overhead. This is the curve that decision #33 (general traveller, not expert) actually cashes
+out into, and it is why sanity row 3 caps at GOOD.
+- [Surf Learner: the perfect wave size for beginners](https://surflearner.com/the-perfect-wave-size-for-beginner-surfers/)
+- [Aotearoa Surf School: how to read surf charts](https://aotearoasurf.co.nz/how-to-read-surf-charts-by-aotearoa-surf-school/)
+
+**[S9] Wind blows surf out above roughly 20 knots; below 10 knots it barely chops**
+Under 10 knots (18 km/h) the surface stays clean; over 20 knots (37 km/h) the surf is blown out.
+That is the gate on surfing, not a weighted factor, because a blown-out day is not a slightly worse
+day.
+- [SurfCaptain: understanding the wind condition forecast](https://surfcaptain.com/blog/1/understanding-wind-condition-forecast)
+
 **[S4] Wind and travel disruption — yellow warnings from roughly 64-72 km/h (40-45 mph) gusts**
 Met Office yellow wind warnings cite initial impacts at 40-45 mph gusts, with 50-60 mph expected
 widely in stronger events; impacts include difficult driving, downed branches and disruption on

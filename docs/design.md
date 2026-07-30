@@ -241,6 +241,10 @@ argument to one of these. That is what "scoring is data, not code" means concret
   activity: "skiing",
   requires: "terrain",              // or "marine", or null
   series: "summit",                 // or "city"
+  floor: 0,                         // indoor sightseeing is the only non-zero
+  gates: [                          // multiplicative; see "Gates" below
+    { name: "liftsHeld", input: "windGustsMax", curve: rampDown(56, 72), source: "…" },
+  ],
   factors: [
     { name: "freshSnow",  weight: TBD, input: "snowfallSum",    curve: rampUp(TBD, TBD), source: "…" },
     { name: "temperature",weight: TBD, input: "tMax",           curve: band(TBD…),       source: "…" },
@@ -250,10 +254,56 @@ argument to one of these. That is what "scoring is data, not code" means concret
 }
 ```
 
-`score = round(100 × Σ(weight × curve(input)) / Σ(weight))`, rounded at exactly one point.
-
 Every factor returns `{ name, weight, rawValue, curveValue, contribution }`. A caller asking why
 Innsbruck scores 34 in July gets the answer from the response, not from reading the source.
+
+### Gates, because a weighted mean cannot veto
+
+**Added 30 July, during slice 2.** A weighted mean says how good a day is on balance. It cannot say
+"none of that matters", and two sanity rows need exactly that. Skiing row 4 is 40 cm of fresh powder
+under 70 km/h gusts and the table says POOR: the lifts are held, so the snow is unreachable. Indoor
+row 4 is a 90 km/h storm and the table says POOR for the opposite reason: the museum is open and you
+cannot get to it.
+
+Additive weights cannot express either. To drag row 4's ideal snow down to 39, wind needs 61% of the
+total weight, and at that weight skiing row 2 — calm, cold, no fresh snow — comes out GOOD when the
+table says FAIR. The two rows contradict each other under any single set of weights.
+
+So a profile carries **gates** alongside its factors, and they multiply:
+
+```ts
+score = round(100 × (floor + (1 − floor) × weightedMean) × Π gate(input))
+```
+
+A gate is the same curve vocabulary pointed at a different job: 1.0 means "nothing in the way", and
+below that it scales the whole score down. Each gate cites its own source, and each reports its
+multiplier in the response, so a score of 9 on a powder day reads as `liftsHeld: 0.125` rather than
+as an unexplained collapse.
+
+Two alternatives were rejected. `min(mean, ...gates)` also passes the rows and throws away magnitude:
+40 cm of snow and 5 cm of snow score identically once the wind vetoes, so the model stops being able
+to rank days it has already given up on. A hard cutoff to 0 fails principle 4 — this project already
+uses `score: 0` to mean "applicable and bad", and a veto that returns 0 makes "the lifts are shut"
+indistinguishable from "today is simply poor".
+
+### The floor, for indoor sightseeing only
+
+Indoor sightseeing is not scored from zero: a museum is open whatever the sky is doing, and the
+sanity table puts a perfect beach day at FAIR rather than POOR. `floor` lifts the profile's range so
+a weighted mean of 0 lands at 55 rather than at 0, and the gate still multiplies afterwards — a storm
+takes it to 0, because you cannot reach the building. Every other profile leaves `floor` at 0 and the
+formula collapses to the original weighted mean.
+
+### Derived inputs
+
+Some factors need a window rather than a day. "Fresh snow" is the obvious one: the sanity table talks
+about 25 cm over three days, and a single day's `snowfall_sum` cannot answer it. Derived inputs are
+computed once over the whole issuance, in the domain, before any scoring: `snowfall3d` is the sum of
+today and the two days before it.
+
+That is why the forecast request carries `past_days=3`. It costs no extra call, and without it the
+first forecast day would have no history at all and would read as though the mountain had never seen
+snow.
 
 **Every TBD above is deliberate.** Risk 6: an AI asked for thresholds produces authoritative-sounding
 numbers nobody can challenge. The order is inverted — a human writes the sanity table first, curves
