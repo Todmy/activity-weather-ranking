@@ -9,6 +9,7 @@ import type { RankedDay } from '../domain/rank.ts'
 import type { DayWeather } from '../domain/weather.ts'
 import type { IssuanceDocument } from '../persistence/forecasts.ts'
 import { locationIdFor } from '../persistence/locations.ts'
+import type { LocationDocument } from '../persistence/locations.ts'
 import type { Resolved } from '../persistence/resolutions.ts'
 import { FORECAST_DAYS } from '../providers/openmeteo/forecast.ts'
 import type { Coordinates } from '../providers/openmeteo/forecast.ts'
@@ -185,6 +186,43 @@ const seriesPlanFor = (
 }
 
 /**
+ * What the stored document knows about a place, in the shape this layer works
+ * in. The read path gets it from the geography read-through; the background
+ * refresher reads it straight off the document, because going through the
+ * read-through would upsert and drag `lastRequestedAt` forward on every tick.
+ */
+export const sampleFrom = (document: LocationDocument): GeographySample => ({
+  ...(document.terrain === undefined ? {} : { terrain: document.terrain }),
+  ...(document.marineCoverage === undefined ? {} : { marineCoverage: document.marineCoverage }),
+})
+
+/**
+ * The one place a fetch plan is decided, for the same reason `scoreIssuance` is
+ * the one place scoring happens.
+ *
+ * Two callers build one: a request, and the background refresher. If they
+ * diverged the refresher would store an issuance without the summit series, a
+ * skier's request would find that issuance fresh, and skiing would come back
+ * `unavailable` for an hour with nothing in the logs to say why.
+ */
+export const fetchPlanFor = (location: GeocodedLocation, sample: GeographySample): FetchPlan => {
+  const coordinates = { latitude: location.latitude, longitude: location.longitude }
+  const geography = geographyFrom(sample.terrain, sample.marineCoverage)
+
+  return {
+    locationId: locationIdFor(location.geonameId),
+    city: coordinates,
+    // The cost gate. A second forecast is worth fetching only where there is
+    // terrain to make it about; below 300 m skiing is answered rather than
+    // scored, and Amsterdam costs one request instead of two.
+    summit: seriesPlanFor(geography.hasTerrain, sample.terrain?.point, 'noTerrain'),
+    // Nothing is asked of the marine model once it has answered "no water
+    // here". Coverage is learned once and kept, so an inland city stops paying.
+    marine: seriesPlanFor(geography.hasMarineCoverage, coordinates, 'noMarineCoverage'),
+  }
+}
+
+/**
  * Score one stored issuance: the whole of the arithmetic, and the only place it
  * happens.
  *
@@ -261,21 +299,10 @@ const forecastFor = async (
   deps: ActivityForecastDeps,
   now: Date,
 ): Promise<ActivityForecast> => {
-  const coordinates = { latitude: location.latitude, longitude: location.longitude }
   const sample = await deps.geography(location, now)
   const geography = geographyFrom(sample.terrain, sample.marineCoverage)
 
-  // The cost gate. A second forecast is worth fetching only where there is
-  // terrain to make it about; below 300 m skiing is answered rather than
-  // scored, and Amsterdam costs one request instead of two.
-  const result = await deps.issuance({
-    locationId: locationIdFor(location.geonameId),
-    city: coordinates,
-    summit: seriesPlanFor(geography.hasTerrain, sample.terrain?.point, 'noTerrain'),
-    // Nothing is asked of the marine model once it has answered "no water
-    // here". Coverage is learned once and kept, so an inland city stops paying.
-    marine: seriesPlanFor(geography.hasMarineCoverage, coordinates, 'noMarineCoverage'),
-  })
+  const result = await deps.issuance(fetchPlanFor(location, sample))
 
   if (result.status === 'noDataYet') {
     throw new NoDataYet(location.name, result.reason)
