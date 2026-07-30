@@ -12,6 +12,20 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+    healthcheck:
+      # The same GET the deploy script uses from outside, asked from inside. Without
+      # it `restart: unless-stopped` only notices a process that exited, not one that
+      # is running and answering nothing — and a hung API is the failure that looks
+      # healthy. wget is busybox's; the runtime image has no curl.
+      test:
+        ['CMD-SHELL', 'wget -q -O - "http://127.0.0.1:4000/graphql?query=%7Bhealth%7D" || exit 1']
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      # Startup is short by construction: compose already waits for mongo to be
+      # healthy, and the API opens the database before it binds the socket with a
+      # 5 s server-selection timeout. Twenty seconds is that, with room.
+      start_period: 20s
     restart: unless-stopped
 
   mongo:
