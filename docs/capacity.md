@@ -15,15 +15,22 @@ than Open-Meteo, and running it cannot spend the free tier. The script fails the
 moves, because that would mean a fetch happened and the numbers would describe something else. It did
 not move.
 
-| Concurrent callers | req/s | p50 | p95 | max | failures |
-|---|---|---|---|---|---|
-| 1 | 19 | 44 ms | 126 ms | 132 ms | 0 |
-| 10 | 165 | 52 ms | 120 ms | 196 ms | 0 |
-| 50 | 267 | 174 ms | 303 ms | 681 ms | 0 |
-| 100 | 321 | 289 ms | 428 ms | 1062 ms | 0 |
-| 200 | 310 | 527 ms | 945 ms | 4189 ms | 0 |
+Ranges rather than single figures, across four runs — three mine and one reproduced independently
+from a different machine. A table of one run reads as more precise than the thing it measured.
 
-**Roughly 300 warm reads per second, saturating at about 100 concurrent callers.** Past that,
+| Concurrent callers | req/s | p50 | p95 | max | failures | runs |
+|---|---|---|---|---|---|---|
+| 1 | 17–19 | 44–49 ms | 126–129 ms | 132–175 ms | 0 | 3 |
+| 10 | 143–165 | 52–58 ms | 120–136 ms | 196–288 ms | 0 | 3 |
+| 50 | 252–271 | 174–188 ms | 261–307 ms | 513–681 ms | 0 | 4 |
+| 100 | 321 | 289 ms | 428 ms | 1062 ms | 0 | 1 |
+| 200 | 310 | 527 ms | 945 ms | 4189 ms | 0 | 1 |
+
+**Run-to-run spread is about 7%** at every level, which is what a shared network path and a 2-vCPU
+box should look like. The two highest levels have one run each and are marked as such: they establish
+the saturation *shape* rather than a number to quote.
+
+**Between 250 and 320 warm reads per second, saturating at about 100 concurrent callers.** Past that,
 throughput stops rising and latency doubles — the textbook shape of a queue forming behind a
 saturated server.
 
@@ -35,6 +42,9 @@ Three things the table is careful about:
 - **Zero failures at every level, including 200.** It degrades by getting slower, not by refusing.
   There is no connection limit, no queue cap and no load shedding — which is a finding as much as a
   reassurance, and it is in "what would have to change" below.
+- **The saturation point is the claim, not the peak.** Throughput stops improving between 100 and 200
+  callers while p95 more than doubles, and that shape held in every run. The individual req/s figures
+  are worth less than that.
 - **CPU was not measured properly** and so is not reported. `top -bn1` reports an average since boot
   on its first iteration, which made the samples taken during the run meaningless. The throughput
   curve establishes saturation on its own; the CPU number would have been decoration.
