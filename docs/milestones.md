@@ -18,13 +18,13 @@ Status: **done** · **in progress** · **not started**
 | **M3** | Scoring model | All four activities, sanity table passing | 5 | **done** |
 | **M4** | Geography | Terrain and ocean decide applicability | 4 | **done** |
 | **M5** | Persistence and refresh | Weather stored, not re-fetched | 5 | **done** |
-| **M6** | API surface | Both ranking axes, ambiguity handled | 2 | not started |
+| **M6** | API surface | Both ranking axes, ambiguity handled | 2 | **done** |
 | **M7** | Background refresher | Scheduled pull, visibly running | 3 | not started |
 | **M8** | Submission | README, worklog, verify, review | 5 | not started |
 
 **About the points.** Fibonacci, relative to each other rather than to a clock. 1 is trivial, 3 is a
 normal unit of work, 5 carries real uncertainty, and 13 is the two days of design that preceded any
-code. Forty-one points in total, thirty-one of them delivered.
+code. Forty-one points in total, thirty-three of them delivered.
 
 The total moved from 40 to 41 on 30 July, after M3 shipped. M4 was re-estimated from 3 to 4 because a
 review of the plan against the design found that it needs the `locations` collection, which the plan
@@ -293,7 +293,30 @@ Constitution 12 is what widened this: a capability reachable only from a test do
 delivered, because a reviewer who has to invent a query will exercise the happy path and miss the
 parts that took longest to get right.
 
-**2 points.** Plan: [slice 5](./plan.md).
+**Status: done, 30 July. 2 points.** Plan: [slice 5](./plan.md).
+
+Four query fields now, and the two entry points for an ambiguous name are a pair rather than a
+duplicate: `activityForecast(query:)` picks one Cambridge and names the other four,
+`searchLocations` picks none and hands back all five with the population upstream ranked them by.
+`activityForecastAt(locationId:)` then forecasts exactly the one chosen, and deliberately does not
+re-resolve — re-resolving is where a silent substitution would creep back in.
+
+`forecastHistory` is the field that makes the storage decision observable. Everything else would
+work identically under an upsert per date; this one cannot exist without keeping the issuances, and
+if it turns out to be useless then the argument in design.md §2 was wrong.
+
+Verified on the deployed URL: the five Cambridges come back in upstream order with their
+populations, `geoname:4931972` forecasts Massachusetts with no alternatives, an unmade-up id answers
+`LOCATION_NOT_FOUND` naming `searchLocations` as the way to get a real one, and `forecastHistory`
+replays 2026-08-02 at a horizon of 3 days with confidence 0.92.
+
+**What it turned up.** One thing, and it was a test rather than the code:
+
+- **A test that proved nothing and passed.** The three fixture issuances in the history tests all
+  carried the same dates, so every horizon came out 3 and the assertion `[3, 3, 3]` held for the
+  wrong reason. Re-dated so that an older issuance covers an earlier window, the horizons read
+  3, 4, 5 and confidence falls across them — which is the property the field exists to show. Noticed
+  because the numbers were suspiciously uniform, not because anything failed.
 
 ---
 

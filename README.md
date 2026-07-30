@@ -79,6 +79,23 @@ curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
   -d '{"query":"{ activityForecast(query: \"Ljubljana\") { location { name } issuedAt stale staleReason } }"}'
 ```
 
+**Let the caller pick, instead of picking for them.** Five Cambridges, in upstream order, with the
+population it ranked them by. Any `geonameId` here works with `activityForecastAt`.
+
+```bash
+curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
+  -d '{"query":"{ searchLocations(query: \"Cambridge\") { geonameId name admin1 countryCode population } }"}'
+```
+
+**Watch a forecast change as the date approaches.** One date, as every stored issuance saw it, with
+the horizon each was seen at. This is the only field that could not exist under an upsert-per-date
+model.
+
+```bash
+curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
+  -d '{"query":"{ forecastHistory(locationId: \"geoname:4931972\", date: \"2026-08-02\") { issuedAt horizonDays day { date activities { ... on ScoredActivity { activity score confidence } } } } }"}'
+```
+
 **Ask for somewhere that does not exist.** The error names the query and carries
 `LOCATION_NOT_FOUND`, rather than being an empty forecast or a made-up location.
 
@@ -89,7 +106,7 @@ curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
 
 ## Current state
 
-**Milestone M5 of M8 done, 31 points of 41.** Progress is tracked in
+**Milestone M6 of M8 done, 33 points of 41.** Progress is tracked in
 [`docs/milestones.md`](docs/milestones.md).
 
 What works today: a city name resolves to a place, and the next seven days come back ranked on both
@@ -117,8 +134,17 @@ You can see that from outside: run `HowFreshIsThisAnswer` in GraphiQL twice insi
 never seen, plus a third immediately after, returned one identical `issuedAt` and left exactly one
 document in `forecasts`.
 
-Not here yet: the second ranking entry point for ambiguous names (M6) and the background refresher
-(M7).
+An ambiguous name has two answers rather than a guess. `activityForecast(query: "Cambridge")` picks
+one and names the other four; `searchLocations(query: "Cambridge")` picks none and returns all five
+with the population upstream ranked them by, and any of those ids goes straight into
+`activityForecastAt(locationId:)` — which forecasts exactly that place and does not re-resolve it.
+
+`forecastHistory(locationId:, date:)` is the field that makes the storage decision visible. It shows
+one date as every surviving issuance saw it, each with the horizon it was seen at, so a forecast for
+Friday can be compared against what we thought on Tuesday. Nothing else in the API needs issuances to
+be kept; this does.
+
+Not here yet: the background refresher (M7).
 
 Two days of design came before any code, and that was deliberate rather than incidental. The brief
 grades how the work happened above the service itself, so the thinking is written down and committed.

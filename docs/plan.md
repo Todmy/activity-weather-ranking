@@ -130,6 +130,10 @@ behind. 266 tests.
 
 **Done when** a reviewer can open the deployed GraphiQL and run every example without typing.
 
+**Done, 30 July.** Three commits, one per capability: `searchLocations`, `activityForecastAt`,
+`forecastHistory`. Eleven preloaded GraphiQL operations, every one of them valid against the schema
+by test. 294 tests.
+
 ## Slice 6 — Background refresher — 3 points (M7)
 
 Deliberately last. Additive: same gateway, same lease, no schema or API change.

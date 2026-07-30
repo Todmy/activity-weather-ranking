@@ -433,6 +433,33 @@ reproduce it and could not identify which test it was, so it is recorded here ra
 fixed. The suspicion is a stale transform immediately after a file rewrite, and the reason it is
 worth writing down is that "it went away" is not a diagnosis.
 
+### A test that passed for the wrong reason
+
+The history tests build three stored issuances and assert the horizon each one saw a given date at.
+They passed on the first run with `[3, 3, 3]`, and that is the tell: three issuances a day apart
+should not agree.
+
+They agreed because all three were built from the same fixture, so all three carried the same seven
+dates. The horizon was identical by construction, and the assertion was checking that arithmetic
+works rather than that the field does. Re-dating each issuance so an older one covers an earlier
+window gives `[3, 4, 5]`, and confidence falls across them — which is the property the field exists
+to demonstrate.
+
+Same class of failure as the vacuous passes in slice 3, and caught the same way: by being suspicious
+of a number that is too tidy rather than by anything going red.
+
+### The field that justifies the storage model
+
+`forecastHistory` is the only part of the API that could not exist under an upsert per (location,
+date). Everything else — the rankings, the assessment, staleness — would work identically. That
+makes it the honest test of design.md §2: if replaying "what did we think on Tuesday that Friday
+would be" turns out to be useless, then keeping issuances was the wrong call and this is where that
+shows, rather than in an argument nobody can check.
+
+It also forced the scoring to become a single exported function used by both the live path and the
+replay. Before that, principle 9's determinism promise was a claim about two code paths staying in
+step; now it is a property of there being one.
+
 ---
 
 ## To be filled in during implementation
