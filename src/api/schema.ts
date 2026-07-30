@@ -13,6 +13,8 @@ import type {
   ScoredDay,
 } from '../app/activityForecast.ts'
 import type { AppDeps } from '../app/deps.ts'
+import { getForecastHistory } from '../app/forecastHistory.ts'
+import type { HistoricalIssuance } from '../app/forecastHistory.ts'
 import { searchForLocations } from '../app/locationSearch.ts'
 import type { ActivityResult } from '../domain/activityResult.ts'
 import type { RankedDay } from '../domain/rank.ts'
@@ -287,6 +289,25 @@ const answering = async <T>(work: () => Promise<T>): Promise<T> => {
   }
 }
 
+const HistoricalIssuanceRef = builder
+  .objectRef<HistoricalIssuance>('HistoricalIssuance')
+  .implement({
+    description:
+      'One date as one stored issuance saw it. This is what keeping issuances buys: an upsert ' +
+      'per date would answer "what is the forecast for Friday" and destroy "what did we think ' +
+      'on Tuesday that Friday would be".',
+    fields: (t) => ({
+      issuedAt: t.exposeString('issuedAt'),
+      horizonDays: t.exposeInt('horizonDays', {
+        description:
+          'How many days ahead this date was when the issuance was fetched. Confidence is a ' +
+          'function of it, which is why the same date scores differently from different days.',
+      }),
+      modelVersion: t.exposeString('modelVersion'),
+      day: t.expose('day', { type: DayRef }),
+    }),
+  })
+
 builder.queryType({
   fields: (t) => ({
     health: t.string({
@@ -305,6 +326,21 @@ builder.queryType({
       },
       resolve: async (_root, args, ctx) =>
         await answering(async () => await searchForLocations(args.query, args.limit ?? 5, ctx.deps)),
+    }),
+    forecastHistory: t.field({
+      type: [HistoricalIssuanceRef],
+      description:
+        'How our forecast for one date changed as that date approached, newest first. ' +
+        'Issuances that never reached the date are omitted rather than padded — "we had not ' +
+        'looked that far" is not "we thought nothing".',
+      args: {
+        locationId: t.arg.id({ required: true }),
+        date: t.arg.string({ required: true, description: 'Local calendar date, YYYY-MM-DD.' }),
+      },
+      resolve: async (_root, args, ctx) =>
+        await answering(
+          async () => await getForecastHistory(String(args.locationId), args.date, ctx.deps),
+        ),
     }),
     activityForecast: t.field({
       type: ForecastResultRef,

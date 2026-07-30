@@ -100,6 +100,15 @@ export const forecastRepository = (db: Db) => {
       await forecasts.findOne({ locationId }, { sort: newestFirst }),
 
     /**
+     * Every surviving issuance, newest first — at most 24 by the prune above,
+     * so this is bounded without a limit clause. It is what makes the "keep the
+     * revisions" decision observable: a caller can watch Friday's forecast
+     * change as Friday approaches.
+     */
+    allFor: async (locationId: string): Promise<IssuanceDocument[]> =>
+      await forecasts.find({ locationId }, { sort: newestFirst }).toArray(),
+
+    /**
      * Writes the issuance and prunes in the same call, because an unpruned
      * write is a growing collection that nothing else is watching.
      */

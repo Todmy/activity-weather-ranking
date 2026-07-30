@@ -134,6 +134,24 @@ describe('forecastRepository', () => {
     ).toBe(1)
   })
 
+  it('hands back every issuance for a location, newest first', async () => {
+    // What "keep the revisions" is for: forecastHistory reads them in the order
+    // they were superseded, so a caller can watch Friday's forecast change as
+    // Friday approaches.
+    const repo = forecastRepository(db)
+    await repo.insert(issuance('geoname:3014728', hourly(0)))
+    await repo.insert(issuance('geoname:2759794', hourly(1)))
+    await repo.insert(issuance('geoname:3014728', hourly(2)))
+
+    const all = await repo.allFor('geoname:3014728')
+
+    expect(all.map((entry) => entry.issuedAt)).toEqual([at(hourly(2)), at(hourly(0))])
+  })
+
+  it('hands back nothing for a location with no issuances', async () => {
+    expect(await forecastRepository(db).allFor('geoname:99')).toEqual([])
+  })
+
   it('indexes the read the gateway actually performs, and can be called twice', async () => {
     // newestFor is `locationId` equality plus a descending sort on issuedAt.
     const repo = forecastRepository(db)

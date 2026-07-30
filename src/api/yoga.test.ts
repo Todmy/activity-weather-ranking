@@ -12,11 +12,20 @@ const fixture = (name: string): unknown =>
 const cambridge = toLocations(parseGeocoding(fixture('geocoding-cambridge.json')))
 const innsbruck = parseForecast(fixture('forecast-innsbruck-past3.json'))
 
+/** One stored issuance, for the history field to replay. */
+const historyPlan = {
+  locationId: 'geoname:2653941',
+  city: { latitude: 52.2, longitude: 0.11667 },
+  summit: { skip: { status: 'notApplicable' as const, reason: 'noTerrain' } },
+  marine: { skip: { status: 'notApplicable' as const, reason: 'noMarineCoverage' } },
+}
+
 const deps = (overrides: Partial<AppDeps> = {}): AppDeps => ({
   resolve: async () => ({ location: cambridge[0]!, alternatives: cambridge.slice(1) }),
   search: async () => cambridge,
   register: async () => undefined,
   locationById: async () => cambridge[1]!,
+  issuances: async () => [issuanceFrom(historyPlan, { city: innsbruck }, DEFAULT_ISSUED_AT)],
   geography: async () => ({}),
   issuance: async (plan) => freshIssuance(plan, { city: innsbruck }),
   now: () => DEFAULT_ISSUED_AT,
@@ -212,6 +221,39 @@ describe('activityForecastAt', () => {
 
     expect(body.errors[0].extensions.code).toBe('LOCATION_NOT_FOUND')
     expect(body.errors[0].message).toContain('searchLocations')
+  })
+})
+
+describe('forecastHistory', () => {
+  it('shows one date as each stored issuance saw it', async () => {
+    const body = await post(
+      createApp({ deps: deps() }),
+      '{ forecastHistory(locationId: "geoname:2653941", date: "2026-08-02") { issuedAt horizonDays modelVersion day { date activities { ... on ScoredActivity { activity score confidence } } } } }',
+    )
+
+    expect(body.errors).toBeUndefined()
+    expect(body.data.forecastHistory).toHaveLength(1)
+    expect(body.data.forecastHistory[0].day.date).toBe('2026-08-02')
+    expect(body.data.forecastHistory[0].horizonDays).toBe(3)
+  })
+
+  it('answers a date no issuance covered with an empty list', async () => {
+    const body = await post(
+      createApp({ deps: deps() }),
+      '{ forecastHistory(locationId: "geoname:2653941", date: "2027-01-01") { issuedAt } }',
+    )
+
+    expect(body.errors).toBeUndefined()
+    expect(body.data.forecastHistory).toEqual([])
+  })
+
+  it('refuses an unknown id the same way the forecast fields do', async () => {
+    const body = await post(
+      createApp({ deps: deps({ locationById: async () => null }) }),
+      '{ forecastHistory(locationId: "geoname:1", date: "2026-08-02") { issuedAt } }',
+    )
+
+    expect(body.errors[0].extensions.code).toBe('LOCATION_NOT_FOUND')
   })
 })
 

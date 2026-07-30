@@ -32,6 +32,7 @@ describe('the GraphiQL examples', () => {
       'HowFreshIsThisAnswer',
       'LetMePickTheCambridge',
       'ForecastThatExactCambridge',
+      'HowFridayChanged',
     ])
   })
 
@@ -68,6 +69,7 @@ describe('the GraphiQL examples', () => {
     // one ambiguity rather than one answer twice.
     expect(defaultQuery).toContain('searchLocations(')
     expect(defaultQuery).toContain('activityForecastAt(')
+    expect(defaultQuery).toContain('forecastHistory(')
   })
 
   it('show measured absence as well as measured presence', () => {

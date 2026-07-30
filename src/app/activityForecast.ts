@@ -2,10 +2,12 @@ import { evaluateActivity } from '../domain/activityResult.ts'
 import type { ActivityResult } from '../domain/activityResult.ts'
 import { withDerivedInputs } from '../domain/derive.ts'
 import { geographyFrom } from '../domain/geography.ts'
+import type { Geography } from '../domain/activityResult.ts'
 import { MODEL_VERSION, PROFILES } from '../domain/modelVersion.ts'
 import { rankActivitiesWithinDay, rankDaysWithinActivity } from '../domain/rank.ts'
 import type { RankedDay } from '../domain/rank.ts'
 import type { DayWeather } from '../domain/weather.ts'
+import type { IssuanceDocument } from '../persistence/forecasts.ts'
 import { locationIdFor } from '../persistence/locations.ts'
 import type { Resolved } from '../persistence/resolutions.ts'
 import { FORECAST_DAYS } from '../providers/openmeteo/forecast.ts'
@@ -183,6 +185,72 @@ const seriesPlanFor = (
 }
 
 /**
+ * Score one stored issuance: the whole of the arithmetic, and the only place it
+ * happens.
+ *
+ * Pure, and deliberately so — the same issuance and the same MODEL_VERSION give
+ * the same numbers whether it is being served as today's forecast or replayed by
+ * `forecastHistory` a week later. That is principle 9, and it would not hold if
+ * either caller scored its own way.
+ */
+export const scoreIssuance = (
+  issuance: Pick<IssuanceDocument, 'city' | 'summit' | 'marine'>,
+  geography: Geography,
+): ScoredDay[] => {
+  const marineDays = issuance.marine.status === 'ok' ? (issuance.marine.days ?? null) : null
+
+  // Derive across the whole issuance, history included, then score only the
+  // days a traveller asked about. The three past days exist to give the first
+  // forecast day a real fresh-snow window, not to be ranked.
+  const cityDays = issuance.city.days ?? []
+  const city = withDerivedInputs(
+    marineDays === null ? cityDays : mergeMarine(cityDays, marineDays),
+  ).slice(-FORECAST_DAYS)
+
+  // Skiing is the one profile that does not score the city it was asked about.
+  const summit =
+    issuance.summit.status === 'ok'
+      ? withDerivedInputs(issuance.summit.days ?? []).slice(-FORECAST_DAYS)
+      : null
+
+  const evaluateDay = (dayIndex: number): ActivityResult[] =>
+    rankActivitiesWithinDay(
+      PROFILES.map((profile) => {
+        const series = profile.series === 'summit' ? summit : city
+        // No series means the geography verdict is the answer — notApplicable
+        // where there is no terrain, unavailable where nobody has looked. Empty
+        // inputs let `evaluateActivity` say which, instead of this layer
+        // guessing, and scoring the city series here would be the one
+        // confidently wrong answer available.
+        return evaluateActivity(profile, series?.[dayIndex] ?? {}, { dayIndex, geography })
+      }),
+    )
+
+  return city.map((day, index) => ({
+    date: day.date,
+    inputs: day,
+    activities: evaluateDay(index),
+  }))
+}
+
+/**
+ * What was measured about a place, in the shape the API reports it.
+ */
+export const assessmentFrom = (sample: GeographySample): Assessment => ({
+  ...(sample.terrain === undefined
+    ? {}
+    : {
+        terrain: {
+          elevation: sample.terrain.maxElevation,
+          point: sample.terrain.point,
+          distanceKm: sample.terrain.distanceKm,
+          gridVersion: sample.terrain.gridVersion,
+        },
+      }),
+  ...(sample.marineCoverage === undefined ? {} : { marineCoverage: sample.marineCoverage }),
+})
+
+/**
  * One pipeline, two ways in. Keeping the scoring here rather than in each entry
  * point is what makes "the id entry answers exactly what the name entry would"
  * a property of the code rather than a claim about it.
@@ -214,57 +282,12 @@ const forecastFor = async (
   }
 
   const { issuance } = result
-  const marineDays = issuance.marine.status === 'ok' ? (issuance.marine.days ?? null) : null
-
-  // Derive across the whole issuance, history included, then score only the
-  // days a traveller asked about. The three past days exist to give the first
-  // forecast day a real fresh-snow window, not to be ranked.
-  const cityDays = issuance.city.days ?? []
-  const city = withDerivedInputs(
-    marineDays === null ? cityDays : mergeMarine(cityDays, marineDays),
-  ).slice(-FORECAST_DAYS)
-
-  // Skiing is the one profile that does not score the city it was asked about.
-  const summit =
-    issuance.summit.status === 'ok'
-      ? withDerivedInputs(issuance.summit.days ?? []).slice(-FORECAST_DAYS)
-      : null
-
-  const evaluateDay = (dayIndex: number): ActivityResult[] =>
-    rankActivitiesWithinDay(
-      PROFILES.map((profile) => {
-        const series = profile.series === 'summit' ? summit : city
-        // No series means the geography verdict is the answer — notApplicable
-        // where there is no terrain, unavailable where nobody has looked. Empty
-        // inputs let `evaluateActivity` say which, instead of this layer
-        // guessing, and scoring the city series here would be the one
-        // confidently wrong answer available.
-        return evaluateActivity(profile, series?.[dayIndex] ?? {}, { dayIndex, geography })
-      }),
-    )
-
-  const scored: ScoredDay[] = city.map((day, index) => ({
-    date: day.date,
-    inputs: day,
-    activities: evaluateDay(index),
-  }))
+  const scored = scoreIssuance(issuance, geography)
 
   return {
     location,
     alternatives,
-    assessment: {
-      ...(sample.terrain === undefined
-        ? {}
-        : {
-            terrain: {
-              elevation: sample.terrain.maxElevation,
-              point: sample.terrain.point,
-              distanceKm: sample.terrain.distanceKm,
-              gridVersion: sample.terrain.gridVersion,
-            },
-          }),
-      ...(sample.marineCoverage === undefined ? {} : { marineCoverage: sample.marineCoverage }),
-    },
+    assessment: assessmentFrom(sample),
     issuedAt: issuance.issuedAt.toISOString(),
     stale: result.status === 'stale',
     staleReason: result.status === 'stale' ? result.reason : null,

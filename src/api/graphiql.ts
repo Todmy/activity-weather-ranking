@@ -173,4 +173,26 @@ query ForecastThatExactCambridge {
     }
   }
 }
+
+# 11. Why issuances are kept instead of overwritten. This asks how our answer for
+#     one date changed as that date approached: every stored fetch that reached
+#     it, newest first, with the horizon it was seen at. An upsert per date
+#     would answer only the first question and destroy the second. Pick a date
+#     inside the next week for a city that has been asked about more than once —
+#     on a freshly deployed service there may be only one issuance, which is
+#     itself the honest answer.
+query HowFridayChanged {
+  forecastHistory(locationId: "geoname:2653941", date: "2026-08-02") {
+    issuedAt
+    horizonDays
+    modelVersion
+    day {
+      date
+      activities {
+        ... on ScoredActivity { activity score confidence }
+        ... on NotApplicableActivity { activity reason }
+      }
+    }
+  }
+}
 `

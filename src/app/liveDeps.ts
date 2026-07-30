@@ -69,6 +69,8 @@ export const liveDepsFor = (db: Db, instanceId: string = randomUUID()): AppDeps 
       }
     },
 
+    issuances: async (locationId) => await forecasts.allFor(locationId),
+
     issuance: async (plan) =>
       await ensureFresh(
         {

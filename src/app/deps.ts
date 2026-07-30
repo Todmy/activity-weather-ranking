@@ -1,4 +1,5 @@
 import type { ActivityForecastDeps } from './activityForecast.ts'
+import type { ForecastHistoryDeps } from './forecastHistory.ts'
 import type { LocationSearchDeps } from './locationSearch.ts'
 
 /**
@@ -9,4 +10,4 @@ import type { LocationSearchDeps } from './locationSearch.ts'
  * only those. This type exists for the one caller that genuinely needs all of
  * them: the GraphQL context.
  */
-export type AppDeps = ActivityForecastDeps & LocationSearchDeps
+export type AppDeps = ActivityForecastDeps & LocationSearchDeps & ForecastHistoryDeps
