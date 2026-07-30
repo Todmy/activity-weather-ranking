@@ -1,0 +1,217 @@
+"""
+The other reading of "ranks the next seven days": one activity, its days best first. Days the activity cannot be scored on are left out rather than ranked as zero.
+"""
+type ActivityRanking {
+  activity: String
+  days: [RankedDay!]
+}
+
+"""
+Three states, because three different things can be true. A nullable score could only carry one of them.
+"""
+union ActivityResult = NotApplicableActivity | ScoredActivity | UnavailableActivity
+
+"""
+What was measured about this place, as opposed to forecast for it. Geography is sampled once per location and kept, because a coastline does not move.
+"""
+type Assessment {
+  """
+  "present" or "none", learned from whether the wave model returns data at this coordinate. Null when it has not been asked yet.
+  """
+  marineCoverage: String
+
+  """Null when the terrain has not been sampled yet."""
+  terrain: TerrainAssessment
+}
+
+type DayForecast {
+  """Every activity for this day, best first. One of the two ranking axes."""
+  activities: [ActivityResult!]
+
+  """
+  Local calendar date in the location's own timezone, never a UTC instant.
+  """
+  date: String
+}
+
+"""
+One factor of one score, with the number that produced it. This is what makes a ranking answerable rather than merely assertive.
+"""
+type FactorContribution {
+  """
+  Points of `base` this factor accounts for. Contributions sum to `base`.
+  """
+  contribution: Float
+
+  """What the factor curve made of it, 0 to 1."""
+  curveValue: Float
+  name: String
+
+  """The upstream measurement. Null when the forecast did not carry it."""
+  rawValue: Float
+  weight: Float
+}
+
+type ForecastResult {
+  """
+  Other places that matched the query, so a substitution is never silent.
+  """
+  alternatives: [Location!]
+
+  """
+  The geography behind the applicability answers, so they can be checked.
+  """
+  assessment: Assessment
+  days: [DayForecast!]
+
+  """When this forecast was fetched upstream, not when it was served."""
+  issuedAt: String
+  location: Location
+
+  """
+  The scoring model that produced these numbers. The same issuance and the same version always reproduce the same ranking.
+  """
+  modelVersion: String
+  rankings: [ActivityRanking!]
+
+  """
+  True when the stored issuance could not be refreshed and is being served anyway. The answer still arrives; it just says so.
+  """
+  stale: Boolean
+
+  """What stopped the refresh, or null when nothing did."""
+  staleReason: String
+}
+
+"""
+A veto, as a multiplier on the whole score. 1 is nothing in the way; below that, everything else is scaled down together — held lifts, blown-out surf, a storm between you and the museum.
+"""
+type GateEffect {
+  multiplier: Float
+  name: String
+  rawValue: Float
+}
+
+"""
+One date as one stored issuance saw it. This is what keeping issuances buys: an upsert per date would answer "what is the forecast for Friday" and destroy "what did we think on Tuesday that Friday would be".
+"""
+type HistoricalIssuance {
+  day: DayForecast
+
+  """
+  How many days ahead this date was when the issuance was fetched. Confidence is a function of it, which is why the same date scores differently from different days.
+  """
+  horizonDays: Int
+  issuedAt: String
+  modelVersion: String
+}
+
+"""A place, as resolved from a free-text query by Open-Meteo geocoding."""
+type Location {
+  """First-level division, which is what tells five Cambridges apart."""
+  admin1: String
+  country: String
+
+  """
+  ISO 3166-1 alpha-2, which is the shortest way to tell two Cambridges apart.
+  """
+  countryCode: String
+  elevation: Float
+
+  """GeoNames id. Stable across calls, so it can be pinned."""
+  geonameId: ID
+  latitude: Float
+  longitude: Float
+  name: String
+
+  """What upstream ranks candidates by, so the ordering can be understood."""
+  population: Int
+  timezone: String
+}
+
+"""
+The question does not arise here: no ocean, or no terrain. Deliberately not a score of zero — "Vienna has no ocean" and "surfing in Vienna would be poor" are different claims.
+"""
+type NotApplicableActivity {
+  activity: String
+  reason: String
+}
+
+type Query {
+  """
+  Resolve a city or town by name and rank the next seven days for skiing, surfing, outdoor sightseeing and indoor sightseeing. The weather is read from storage and refreshed at most once an hour per location.
+  """
+  activityForecast(query: String!): ForecastResult
+
+  """
+  The same ranking for a location the caller has already chosen, by the id searchLocations handed out. Two fields rather than one field with two optional arguments, because the latter admits both-set and neither-set — illegal states the schema should not be able to express.
+  """
+  activityForecastAt(locationId: ID!): ForecastResult
+
+  """
+  How our forecast for one date changed as that date approached, newest first. Issuances that never reached the date are omitted rather than padded — "we had not looked that far" is not "we thought nothing".
+  """
+  forecastHistory(
+    """Local calendar date, YYYY-MM-DD."""
+    date: String!
+    locationId: ID!
+  ): [HistoricalIssuance!]
+
+  """Returns "ok" when the service is running."""
+  health: String
+
+  """
+  Every place matching an ambiguous name, in upstream order, choosing none of them. Use this when the caller must pick — activityForecast(query:) picks for them and says which. The ids returned here are usable with activityForecastAt.
+  """
+  searchLocations(limit: Int = 5, query: String!): [Location!]
+}
+
+type RankedDay {
+  confidence: Float
+  date: String
+  score: Int
+}
+
+type ScoredActivity {
+  activity: String
+
+  """The weighted mean before the floor and the gates, 0 to 100."""
+  base: Float
+  completeness: Float
+
+  """
+  Published forecast skill at this horizon, times the fraction of the profile whose inputs were present. A day-7 number is not a day-1 number.
+  """
+  confidence: Float
+  factors: [FactorContribution!]
+  gates: [GateEffect!]
+
+  """0 to 100, after the floor and the gates."""
+  score: Int
+}
+
+"""
+Where skiing was actually assessed. A ski score is a claim about this point, not about the city centre — Grenoble is 214 m in town and 3204 m within 45 km.
+"""
+type TerrainAssessment {
+  """How far that point is from the city."""
+  distanceKm: Float
+
+  """Metres, the sampled high point."""
+  elevation: Float
+
+  """
+  The sampling parameters. Changing them is a versioned event rather than a silent drift in historical answers.
+  """
+  gridVersion: String
+  latitude: Float
+  longitude: Float
+}
+
+"""
+The activity applies here and could not be answered: something upstream is missing, or the geography has not been assessed yet.
+"""
+type UnavailableActivity {
+  activity: String
+  reason: String
+}

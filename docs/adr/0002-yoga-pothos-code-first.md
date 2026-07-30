@@ -84,10 +84,13 @@ is the contract, reviewable as a diff: a pull request that removes a field shows
 the same change is a deleted `t.exposeString` call among TypeScript, and there is nothing in the
 repository a client developer can open to see the whole API at once.
 
-That gap is currently unmitigated. `graphiql.test.ts` validates every preloaded example against the
-schema, so the examples cannot rot — but nothing pins the schema itself, and a field renamed without
-a matching example change would pass. A printed-SDL snapshot test would close it in about ten lines,
-and it is not written yet.
+**Closed on 30 July**, after this ADR named it. [`docs/schema.graphql`](../schema.graphql) is the
+printed SDL, committed, and `sdl.test.ts` fails if it drifts from the code. `pnpm schema`
+regenerates it, so a pull request that removes a field now shows a removed line of contract.
+
+What that does *not* recover is schema-first's other half. The file follows the code rather than
+constraining it: a reviewer sees the change, and nothing stopped it. Under schema-first the SDL is
+the thing you edit, and the resolvers are what breaks. This is a report, not a contract.
 
 ## What would reverse this
 
@@ -101,8 +104,9 @@ and it is not written yet.
 
 - `src/api/schema.ts` is the schema. There is no other definition of it, and no step that can be
   forgotten.
-- The printed SDL exists only at runtime, via `builder.toSchema()`. Anyone who wants to read it runs
-  the service and introspects — or opens GraphiQL, which is the intended path.
+- The printed SDL is generated from it into `docs/schema.graphql` and committed, so it can be read
+  and diffed without running anything. It is derived, never edited: `sdl.test.ts` fails on any hand
+  edit, which is the correct direction for a code-first project.
 - Preloaded examples are a tested deliverable rather than documentation that drifts. Adding a field
   without adding a way to exercise it fails `graphiql.test.ts`, which is constitution 12 enforced
   rather than asserted.
