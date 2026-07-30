@@ -354,7 +354,10 @@ type Query {
 Two fields rather than one field with two optional arguments, because the latter admits "both set"
 and "neither set" — illegal states that principle 4 exists to forbid. GraphQL's `@oneOf` input would
 express it more elegantly and was rejected: a reviewer reads a schema in thirty seconds, and
-unambiguity beats cleverness at that timescale. ADR to follow.
+unambiguity beats cleverness at that timescale. Implementation then supplied a harder reason: the two
+operations differ in effect, not only in input — `activityForecast` writes a `resolutions` pin and
+`activityForecastAt` writes nothing, which no input union can express.
+[ADR 0003](./adr/0003-two-fields-not-oneof.md).
 
 `ForecastResult` carries the resolved location (so a substitution is never silent), the ski
 assessment point with its elevation and distance (so "Grenoble 78" cannot be misread as a claim

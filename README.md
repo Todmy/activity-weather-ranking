@@ -165,7 +165,7 @@ that commit on.
 | [`docs/cut.md`](docs/cut.md) | What was considered and not built, with the test each item had to pass |
 | [`docs/design.md`](docs/design.md) | Data model, refresh gateway, scoring, determinism |
 | [`docs/sanity-table.md`](docs/sanity-table.md) | Twenty scenarios the scoring model must reproduce, written before any curve exists |
-| [`docs/adr/`](docs/adr/) | The choices big enough to need the argument in full, not one line — including what each one costs |
+| [`docs/adr/`](docs/adr/) | Three choices big enough to need the argument in full — MongoDB, code-first GraphQL, two fields over `@oneOf` — each recording what it cost as well as what it bought |
 
 `docs/probes/` holds raw captured Open-Meteo responses. They are the
 evidence behind the design claims and they become the test fixtures, so no test ever calls the live

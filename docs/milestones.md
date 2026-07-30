@@ -347,10 +347,9 @@ The full argument, including the case for cutting it, is in [`cut.md`](./cut.md)
 A README with setup, the example queries, the assumptions, and what I'd do next. The worklog finished
 with what actually happened during implementation: what the sanity table disagreed with once curves
 were fitted to it, anything built and torn out, where an estimate was wrong and by how much, and the
-first thing that broke in deployment. [ADR 0001](./adr/0001-mongodb-over-postgres.md) is written —
-MongoDB against Postgres, including the argument that turned out to be a tie and the one
-implementation weakened. Two remain pending: Yoga + Pothos code-first (decision #10) and the
-input-type shape rejected in design.md §5.
+first thing that broke in deployment. All three [ADRs](./adr/) are written, and each records what the
+choice cost as well as what it bought: MongoDB against Postgres, Yoga + Pothos code-first, and the
+two-fields-not-`@oneOf` shape.
 
 **Done when:** someone clones the repository, runs `docker compose up`, and gets a working service
 without asking me a question.

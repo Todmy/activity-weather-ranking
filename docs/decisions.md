@@ -46,7 +46,7 @@ assumption taken in its place; all eight are recorded in full, with rejected alt
 | # | Decision | Reason in one line | Detail |
 |---|---|---|---|
 | 9 | MongoDB over Postgres | Matches the team's primary store; the aggregate boundary and the document boundary coincide | [ADR 0001](./adr/0001-mongodb-over-postgres.md) |
-| 10 | GraphQL Yoga + Pothos, code-first | No codegen step to explain or to break; the schema is TypeScript the reviewer can read | ADR pending |
+| 10 | GraphQL Yoga + Pothos, code-first | No generated artifact in a repository that has no build step; the domain type defines the GraphQL type | [ADR 0002](./adr/0002-yoga-pothos-code-first.md) |
 | 35 | No Express and no NestJS. Yoga runs directly on `node:http` | There is one POST endpoint and no REST routes, so Express would be a layer nothing passes through. NestJS was rejected harder: its modules and DI container coordinate large teams across large codebases, and `domain/` is pure functions with no dependencies to inject. Matching Collinson's stack drove the MongoDB choice, but nothing indicates they run NestJS, so copying it would be a guess rather than a match | [principles](./principles.md) §1 simplicity |
 | 11 | Persist raw facts, compute scores at read time. Never store a score | The model is an opinion and will change; the upstream facts will not. Re-scoring must never require re-ingesting | [principles](./principles.md) §1 |
 | 12 | One document per forecast **issuance**, with the 7-day array embedded — not an upsert per (location, date) | Preserves how a forecast evolved, which an upsert destroys | — |
