@@ -133,9 +133,9 @@ no signal for a reader. Resume at the first unticked slice in its stage-5 table.
 
 - Node 24.15.0, pnpm available. TypeScript strict.
 - MongoDB via `docker-compose` — the same file the reviewer runs.
-- Deploy: `./infra/deploy.sh` pushes to a dedicated Hetzner cx23 (`ssh collinson-box`, live at
-  `http://2.28.24.132:4000/graphql`). The box pulls `origin/main` itself; it never receives an rsync
-  of the working tree. Host described in `infra/cloud-init.yaml`, API token in
-  `~/.config/hetzner/collinson.env`.
+- Deploy: `./infra/deploy.sh <host>` — live at `http://2.28.24.132:4000/graphql`. The box pulls
+  `origin/main` itself; it never receives an rsync of the working tree. Host described in
+  `infra/cloud-init.yaml`. Provider credentials live outside this repository and are not referenced
+  from it.
 - Open-Meteo free tier: 600/min, 10k/day. Requests over 10 variables count as more than one call.
   The Elevation API meters **per coordinate** and caps a request at **100 coordinates**.

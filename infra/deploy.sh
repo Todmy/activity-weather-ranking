@@ -4,7 +4,15 @@
 # production is exactly what a reviewer can read.
 set -euo pipefail
 
-HOST="${1:-collinson-box}"
+# The host is required rather than defaulted. A default that is one person's ssh
+# alias means anybody else running this gets a name-resolution error instead of
+# an instruction, and it puts a private naming convention in a public file.
+HOST="${1:-}"
+if [ -z "$HOST" ]; then
+  echo "usage: ${0##*/} <ssh-host>" >&2
+  echo "  <ssh-host>  an ssh alias or user@address for a box with Docker and access to GitHub" >&2
+  exit 64
+fi
 REPO="https://github.com/Todmy/activity-weather-ranking.git"
 DIR="/srv/activity-weather-ranking"
 
