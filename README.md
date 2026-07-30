@@ -198,7 +198,7 @@ deterministic and keeps the free-tier quota for the deployed service.
 
 ## Current state
 
-**Milestone M7 of M8 done, 36 points of 41.** Progress is tracked in
+**All eight milestones done, 41 points.** Progress is tracked in
 [`docs/milestones.md`](docs/milestones.md).
 
 What works today: a city name resolves to a place, and the next seven days come back ranked on both
@@ -243,7 +243,9 @@ deployed box its first tick considered eight locations, refreshed the one that h
 skipped seven: one still fresh, and six with no stored issuance to refresh. You can watch the same
 thing locally in fifteen seconds — [Watch the refresher](#watch-the-refresher).
 
-Not here yet: nothing in the API. What remains is M8, the submission itself.
+Nothing is missing from the API. What is missing from the *service* is listed under
+[What I'd do next](#what-id-do-next), and the largest item there is that the scoring model is
+reviewable rather than validated.
 
 Two days of design came before any code, and that was deliberate rather than incidental. The brief
 grades how the work happened above the service itself, so the thinking is written down and committed.
@@ -252,6 +254,44 @@ One thing to know before reading the history. Version control was deferred at th
 everything written across those two days lands in a single commit rather than a sequence. That cost
 was real and it is recorded as decision #32 rather than glossed over. The history is incremental from
 that commit on.
+
+## Assumptions
+
+The brief leaves eight things open that a product manager would normally answer. None of them were
+guessed silently — each is written up in [`docs/open-questions.md`](docs/open-questions.md) with what
+was rejected and why. The five that most change what the service does:
+
+| Question | What was assumed |
+|---|---|
+| "Ranks the next 7 days" — days within an activity, or activities within a day? | **Both**, from one response and one computation. The reading is ambiguous, and answering only one of them is a coin flip on a graded question |
+| Does "skiing" describe the city, or the region reachable from it? | **The region.** Applicability and conditions both come from the highest sampled point within 50 km, and the answer carries that point's elevation and distance so the number is never read as a claim about the city centre |
+| Does "surfing" mean the ocean? | **Whatever the wave model has data for.** Chicago on Lake Michigan scores, because excluding it would need a special case and a definition of "sea" that Open-Meteo does not provide. The conditions handle it: fetch-limited water rarely produces a surfable day |
+| How stale may stored weather be? | **One hour**, matched to the fastest model Open-Meteo serves rather than to what would minimise traffic. Traffic is not the binding constraint on a 10,000-a-day allowance |
+| May the service refuse to answer? | **No**, except when it genuinely has nothing stored. Confidence decays with horizon and staleness is flagged, but a quality floor would invent a state the caller cannot act on |
+
+Two of these were originally decided a different way and changed when the APIs were probed. That is
+recorded in [`docs/worklog.md`](docs/worklog.md) rather than smoothed over.
+
+## What I'd do next
+
+In order, and the first two are the ones that matter:
+
+1. **Validate the scoring model against something.** It is reviewable — every threshold cites a
+   source and all twenty rows of the sanity table pass — but it is not *validated*. Backtesting
+   against Open-Meteo's historical archive, scored against days people actually skied or surfed, is
+   the only thing that would turn "defensible" into "correct".
+2. **A ski resort dataset.** A sampled high point has no lifts, no piste and no snow-making. The
+   geography model answers "is there terrain" honestly and cannot answer "can you ski there", and
+   that gap is the largest single overclaim risk in the service.
+3. **Two instances behind a proxy.** The lease is a database row rather than in-memory state, so
+   horizontal scale should already work — but nothing runs two, so nothing proves it.
+4. **Structured logging and metrics** at the gateway and provider boundaries. The refresher's log is
+   readable by a human and by nothing else.
+5. **Per-caller rate limiting.** The free tier is the shared resource this service protects, and it
+   currently protects it against its own traffic pattern only.
+
+Everything deliberately *not* built, with the test each item had to pass, is in
+[`docs/cut.md`](docs/cut.md).
 
 ## Where to start
 
