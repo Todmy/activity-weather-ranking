@@ -2,7 +2,10 @@ import { connect } from 'node:net'
 import type { Socket } from 'node:net'
 import { databaseNameFor } from './testing/database.ts'
 import { afterEach, describe, expect, inject, it, vi } from 'vitest'
-import { startServer } from './server.ts'
+import { readFileSync } from 'node:fs'
+import { COLD_START_POLL_MS, COLD_START_POLLS } from './app/forecastGateway.ts'
+import { UPSTREAM_TIMEOUT_MS } from './providers/openmeteo/forecast.ts'
+import { SHUTDOWN_GRACE_MS, startServer } from './server.ts'
 
 /**
  * The bootstrap over a real socket and a real database. Everything else in this
@@ -37,6 +40,32 @@ const openSocket = async (port: number): Promise<Socket> =>
 
 const answered = async (socket: Socket): Promise<string> =>
   await new Promise((resolve) => socket.once('data', (chunk) => resolve(String(chunk))))
+
+describe('the shutdown budget', () => {
+  // Four numbers in three files, and only their ORDER matters. Each was chosen
+  // for its own reason and nothing held them against each other, so the chain
+  // was broken in the middle: the grace was 8 s while a cold-start request
+  // could legitimately wait 10 s, which means SIGTERM severed exactly the
+  // request the grace exists to protect — and then closed the database handle
+  // under a poll loop still querying it.
+  //
+  // The numbers may move. The order may not, which is why this is a test and
+  // not a comment.
+  it('lets every legitimate wait finish inside the grace, and the grace inside Docker\'s', () => {
+    const coldStartMs = COLD_START_POLLS * COLD_START_POLL_MS
+    const compose = readFileSync(new URL('../docker-compose.yml', import.meta.url), 'utf8')
+    const stopGraceMs = Number(/stop_grace_period: (\d+)s/.exec(compose)?.[1]) * 1000
+
+    // A waiter must outlast the fetch it is waiting on, or it gives up on an
+    // answer that was about to arrive.
+    expect(coldStartMs).toBeGreaterThan(UPSTREAM_TIMEOUT_MS)
+    // The grace must outlast the longest wait a request can legitimately make.
+    expect(SHUTDOWN_GRACE_MS).toBeGreaterThan(coldStartMs)
+    // And Docker must not SIGKILL before the grace has run. Its default is 10 s,
+    // which is why this one is declared rather than inherited.
+    expect(stopGraceMs).toBeGreaterThan(SHUTDOWN_GRACE_MS)
+  })
+})
 
 describe('startServer', () => {
   it('listens and answers GraphQL over HTTP', async () => {

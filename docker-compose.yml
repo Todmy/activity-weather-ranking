@@ -10,6 +10,10 @@ services:
         GIT_SHA: ${GIT_SHA:-unknown}
     ports:
       - '${PORT:-4000}:4000'
+    # Docker's default is ten seconds, which is shorter than the service's own
+    # shutdown grace and would SIGKILL the process part way through draining.
+    # Asserted against SHUTDOWN_GRACE_MS in `src/server.test.ts`.
+    stop_grace_period: 30s
     environment:
       PORT: 4000
       MONGODB_URI: mongodb://mongo:27017

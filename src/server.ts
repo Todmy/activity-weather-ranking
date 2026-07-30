@@ -7,10 +7,20 @@ import { startSchedule } from './app/schedule.ts'
 import { connectDatabase } from './persistence/client.ts'
 
 /**
- * How long shutdown waits for a request in flight. Inside Docker's ten seconds
- * between SIGTERM and SIGKILL, so the process ends on its own terms.
+ * How long shutdown waits for a request in flight.
+ *
+ * It has to outlast the longest wait a request can legitimately make, which is
+ * the cold-start poll loop's ten seconds — itself chosen to outlast the eight
+ * second upstream cap, so a waiter does not give up on an answer that was about
+ * to arrive. Eight here was inside Docker's default ten and *under* that poll
+ * loop, so SIGTERM severed the one request the grace exists for and then closed
+ * the database handle underneath it.
+ *
+ * Twelve does not fit in Docker's default, so `docker-compose.yml` declares a
+ * `stop_grace_period` rather than inheriting one. `server.test.ts` holds the
+ * whole chain in order; the numbers may move, the order may not.
  */
-export const SHUTDOWN_GRACE_MS = 8_000
+export const SHUTDOWN_GRACE_MS = 12_000
 
 export type RunningServer = {
   /** The port actually bound, which matters when the caller asked for 0. */
