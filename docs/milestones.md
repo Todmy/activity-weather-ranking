@@ -13,7 +13,7 @@ Status: **done** · **in progress** · **not started**
 | Code | Milestone | Delivers | Points | Status |
 |---|---|---|---|---|
 | **M0** | Preparation | The reasoning, before any code | 13 | **done** |
-| **M1** | Skeleton deployed | A URL that answers GraphQL | 1 | in progress |
+| **M1** | Skeleton deployed | A URL that answers GraphQL | 1 | **done** |
 | **M2** | Tracer bullet | One city, one activity, scored live | 3 | not started |
 | **M3** | Scoring model | All four activities, sanity table passing | 5 | not started |
 | **M4** | Geography | Terrain and ocean decide applicability | 3 | not started |
@@ -24,7 +24,7 @@ Status: **done** · **in progress** · **not started**
 
 **About the points.** Fibonacci, relative to each other rather than to a clock. 1 is trivial, 3 is a
 normal unit of work, 5 carries real uncertainty, and 13 is the two days of design that preceded any
-code. Forty points in total, thirteen of them delivered.
+code. Forty points in total, fourteen of them delivered.
 
 They're here to show where the weight sits, not to promise a date. The weight is not spread evenly:
 M3 is the one milestone that can't be finished by working harder at it, because scoring calibration
@@ -80,7 +80,17 @@ locally.
 This milestone exists to move that discovery to the first day, when there's still schedule to absorb
 it.
 
-**1 point.** Plan: [slice 0](./krukit/activity-weather-ranking/plan.md), steps 2 to 5.
+**Status: done. 1 point.** Live at `http://2.28.24.132:4000/graphql`, answering `{ health }`.
+
+The host is described in [`infra/cloud-init.yaml`](../infra/cloud-init.yaml) and deploys by pulling
+`origin/main`, so there is no console configuration holding state that the repository doesn't show.
+
+Two choices made here rather than deferred. There is no build step: Node 24 strips types at load, so
+no compiled output can drift from the source, and `tsc --noEmit` does the typechecking. And there is
+no Express and no NestJS, because the service has one endpoint and a domain layer of pure functions
+with nothing to inject. Both are recorded as decisions #35 and #22.
+
+Plan: [slice 0](./krukit/activity-weather-ranking/plan.md).
 
 ---
 

@@ -175,14 +175,25 @@ actually ran it.
 
 ### The deploy target changed, for the least interesting and most reliable reason
 
-The plan named Coolify on a Hetzner box. Coolify is a fine tool and it was the wrong choice here. I
-already run a Hetzner box provisioned as code, and I know that path works. Bringing in a platform I'd
-be learning during a four-day deadline puts a novel failure mode on the critical path, in exchange for
-convenience I don't need.
+The plan named Coolify on a Hetzner box. Coolify is a fine tool and it was the wrong choice here.
+Bringing in a platform I'd be learning during a four-day deadline puts a novel failure mode on the
+critical path, in exchange for convenience I don't need. Plain Docker Compose over SSH is a path I
+already know works.
 
-So it's the same `docker-compose.yml` the reviewer runs, brought up on infrastructure that already
-exists. There's a second effect worth more than the first: production is the compose file in the
-repository, not a console configuration nobody else can inspect.
+So it's the same `docker-compose.yml` the reviewer runs. There's a second effect worth more than the
+first: production is the compose file in the repository, not a console configuration nobody else can
+inspect.
+
+**And the premise was wrong.** I'd justified this partly as "the box already exists", which turned
+out not to be true. The Hetzner project I pointed at was empty, and the boxes I was thinking of live
+in a different project. So I created one: a cx23 in Falkenstein, bootstrapped from
+`infra/cloud-init.yaml` in this repository.
+
+The decision survived losing its own justification, which is worth a sentence about why. "Reuse
+infrastructure that already works" was the weaker of the two reasons. The stronger one is that the
+host is now described by a file a reviewer can read, and it took about a minute of cloud-init to get
+there. Corrected in `decisions.md` #22 rather than left standing, because a reason that stopped being
+true is worse than no reason.
 
 ### Things deliberately not done
 

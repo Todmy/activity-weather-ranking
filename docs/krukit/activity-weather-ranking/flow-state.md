@@ -22,7 +22,7 @@ the tick and the code that earns it land together.
 
 | | Slice | Milestone | Points | Status |
 |---|---|---|---|---|
-| 0 | Repository, skeleton, deployed | M1 | 1 | **partial** — steps 1-4 done 2026-07-30: repo public, Node 24 + TS strict + Vitest + zod, Yoga + Pothos answering `health`, Dockerfile and compose verified end to end locally (`{"data":{"health":"ok"}}` through the container). Step 5, deploy to the Hetzner box, remains |
+| 0 | Repository, skeleton, deployed | M1 | 1 | **done** 2026-07-30 — repo public; Node 24 + TS strict + Vitest + zod; Yoga + Pothos answering `health`; deployed to Hetzner cx23 (fsn1) via cloud-init, live at `http://2.28.24.132:4000/graphql` |
 | 1 | Tracer bullet: one city, one activity, no cache | M2 | 3 | not started |
 | 2 | The rest of the scoring domain | M3 | 5 | not started — **carries the schedule risk** |
 | 3 | Geography: terrain sampling and marine coverage | M4 | 3 | not started |

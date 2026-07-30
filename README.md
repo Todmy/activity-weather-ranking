@@ -6,9 +6,22 @@ than fetched on every request.
 
 Node.js, TypeScript, GraphQL, MongoDB.
 
+## Live
+
+`http://2.28.24.132:4000/graphql` — open it for GraphiQL, or:
+
+```bash
+curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
+  -d '{"query":"{ health }"}'
+```
+
+Run it yourself with `docker compose up`, which is the same file the deployed host runs. The host
+itself is described in [`infra/cloud-init.yaml`](infra/cloud-init.yaml).
+
 ## Current state
 
-**Design complete, implementation starting.** This first commit is documentation only, and that is
+**Milestone M1 of M8 done, 14 points of 40.** See [`docs/milestones.md`](docs/milestones.md).
+The service currently answers one field. Scoring arrives in M2 and M3. This first commit is documentation only, and that is
 deliberate rather than incidental: the reasoning was worked out before the code, and the reasoning is
 what these documents hold.
 
