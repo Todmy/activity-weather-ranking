@@ -154,4 +154,23 @@ query LetMePickTheCambridge {
     population
   }
 }
+
+# 10. And the follow-up: take one geonameId from query 9 and forecast exactly
+#     that place. 4931972 is Cambridge, Massachusetts — the one the name query
+#     does NOT pick, because upstream ranks the English original first. No
+#     alternatives come back here: the caller already chose.
+query ForecastThatExactCambridge {
+  activityForecastAt(locationId: "geoname:4931972") {
+    location { name admin1 countryCode }
+    alternatives { name }
+    issuedAt
+    days {
+      date
+      activities {
+        ... on ScoredActivity { activity score }
+        ... on NotApplicableActivity { activity reason }
+      }
+    }
+  }
+}
 `

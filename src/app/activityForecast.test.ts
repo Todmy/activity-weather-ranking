@@ -1,6 +1,11 @@
 import { readFileSync } from 'node:fs'
-import { describe, expect, it } from 'vitest'
-import { getActivityForecast, LocationNotFound, NoDataYet } from './activityForecast.ts'
+import { describe, expect, it, vi } from 'vitest'
+import {
+  getActivityForecast,
+  getActivityForecastAt,
+  LocationNotFound,
+  NoDataYet,
+} from './activityForecast.ts'
 import type { ActivityForecastDeps } from './activityForecast.ts'
 import type { FetchPlan } from './forecastGateway.ts'
 import { DEFAULT_ISSUED_AT, freshIssuance, issuanceFrom } from '../testing/issuance.ts'
@@ -40,6 +45,7 @@ const spyIssuance = (marineDays: MarineDay[] = toDailyMarine(lisbonMarine)) => {
 
 const deps = (overrides: Partial<ActivityForecastDeps> = {}): ActivityForecastDeps => ({
   resolve: async () => ({ location: cambridge[0]!, alternatives: cambridge.slice(1) }),
+  locationById: async () => cambridge[1]!,
   // Unassessed by default, which is what a geography sampling failure looks
   // like. The block below covers the assessed cases.
   geography: async () => ({}),
@@ -155,6 +161,42 @@ describe('getActivityForecast', () => {
     await expect(
       getActivityForecast('Nowhereinparticular', deps({ resolve: async () => null })),
     ).rejects.toThrow(LocationNotFound)
+  })
+})
+
+describe('getActivityForecastAt', () => {
+  it('scores the place the id names, without asking upstream which place that is', async () => {
+    // The point of the id entry: a caller who already chose does not get to be
+    // re-resolved, because re-resolving is where the substitution would creep
+    // back in.
+    const resolve = vi.fn(async () => null)
+
+    const forecast = await getActivityForecastAt('geoname:4931972', deps({ resolve }))
+
+    expect(forecast.location.geonameId).toBe(cambridge[1]!.geonameId)
+    expect(resolve).not.toHaveBeenCalled()
+  })
+
+  it('reports no alternatives, because the caller already picked', async () => {
+    const forecast = await getActivityForecastAt('geoname:4931972', deps())
+
+    expect(forecast.alternatives).toEqual([])
+  })
+
+  it('scores it exactly as the name entry would', async () => {
+    // Same pipeline, different way in. If these ever diverge, one of the two
+    // entry points is quietly a different service.
+    const byId = await getActivityForecastAt('geoname:4931972', deps())
+    const byName = await getActivityForecast('Cambridge', deps())
+
+    expect(byId.days.map((day) => day.date)).toEqual(byName.days.map((day) => day.date))
+    expect(byId.modelVersion).toBe(byName.modelVersion)
+  })
+
+  it('refuses an id it has never stored, and says how to get one', async () => {
+    await expect(
+      getActivityForecastAt('geoname:1', deps({ locationById: async () => null })),
+    ).rejects.toThrow(/searchLocations/)
   })
 })
 

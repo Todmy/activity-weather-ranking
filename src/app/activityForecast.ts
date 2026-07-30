@@ -48,6 +48,12 @@ export type ActivityForecastDeps = {
    */
   resolve: (query: string, now: Date) => Promise<Resolved | null>
   /**
+   * The other way in: a caller who has already chosen from `searchLocations`
+   * passes the id, and is deliberately not re-resolved — re-resolving is exactly
+   * where a silent substitution would creep back in.
+   */
+  locationById: (locationId: string) => Promise<GeocodedLocation | null>
+  /**
    * Read-through over the `locations` collection. Injected rather than imported
    * so this layer never learns what a database is, and so a test can assess a
    * city without one.
@@ -116,8 +122,8 @@ export type ActivityForecast = {
 }
 
 export class LocationNotFound extends Error {
-  constructor(query: string) {
-    super(`No location matched "${query}"`)
+  constructor(what: string, message = `No location matched "${what}"`) {
+    super(message)
     this.name = 'LocationNotFound'
   }
 }
@@ -176,18 +182,17 @@ const seriesPlanFor = (
   return { skip: { status: 'notApplicable', reason } }
 }
 
-export const getActivityForecast = async (
-  query: string,
+/**
+ * One pipeline, two ways in. Keeping the scoring here rather than in each entry
+ * point is what makes "the id entry answers exactly what the name entry would"
+ * a property of the code rather than a claim about it.
+ */
+const forecastFor = async (
+  location: GeocodedLocation,
+  alternatives: GeocodedLocation[],
   deps: ActivityForecastDeps,
+  now: Date,
 ): Promise<ActivityForecast> => {
-  const now = deps.now()
-  const resolved = await deps.resolve(query, now)
-
-  if (resolved === null) {
-    throw new LocationNotFound(query)
-  }
-
-  const { location, alternatives } = resolved
   const coordinates = { latitude: location.latitude, longitude: location.longitude }
   const sample = await deps.geography(location, now)
   const geography = geographyFrom(sample.terrain, sample.marineCoverage)
@@ -272,4 +277,36 @@ export const getActivityForecast = async (
       days: rankDaysWithinActivity(scored, profile.activity),
     })),
   }
+}
+
+export const getActivityForecast = async (
+  query: string,
+  deps: ActivityForecastDeps,
+): Promise<ActivityForecast> => {
+  const now = deps.now()
+  const resolved = await deps.resolve(query, now)
+
+  if (resolved === null) throw new LocationNotFound(query)
+
+  return await forecastFor(resolved.location, resolved.alternatives, deps, now)
+}
+
+export const getActivityForecastAt = async (
+  locationId: string,
+  deps: ActivityForecastDeps,
+): Promise<ActivityForecast> => {
+  const now = deps.now()
+  const location = await deps.locationById(locationId)
+
+  if (location === null) {
+    throw new LocationNotFound(
+      locationId,
+      `No location is stored under "${locationId}". Use searchLocations to get an id this ` +
+        'service knows.',
+    )
+  }
+
+  // No alternatives: the caller already chose, and offering them again would
+  // suggest the choice is still open.
+  return await forecastFor(location, [], deps, now)
 }

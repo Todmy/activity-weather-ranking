@@ -24,6 +24,7 @@ const contextValue: GraphQLContext = {
     resolve: async () => ({ location: cambridge[0]!, alternatives: cambridge.slice(1) }),
     search: async () => cambridge,
     register: async () => undefined,
+    locationById: async () => cambridge[1]!,
     geography: async () => ({}),
     issuance: async (plan) => freshIssuance(plan, { city: innsbruck }),
     now: () => DEFAULT_ISSUED_AT,

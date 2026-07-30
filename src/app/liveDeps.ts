@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import type { Db } from 'mongodb'
 import { forecastRepository } from '../persistence/forecasts.ts'
 import { leaseRepository } from '../persistence/leases.ts'
-import { ensureLocation, locationRepository } from '../persistence/locations.ts'
+import { ensureLocation, locationRepository, toGeocoded } from '../persistence/locations.ts'
 import { resolutionRepository, resolveLocation } from '../persistence/resolutions.ts'
 import { fetchForecast } from '../providers/openmeteo/forecast.ts'
 import { searchLocations } from '../providers/openmeteo/geocoding.ts'
@@ -28,6 +28,11 @@ export const liveDepsFor = (db: Db, instanceId: string = randomUUID()): AppDeps 
       await resolveLocation({ resolutions, locations }, searchLocations, query, at),
 
     search: searchLocations,
+
+    locationById: async (locationId) => {
+      const stored = await locations.findById(locationId)
+      return stored === null ? null : toGeocoded(stored)
+    },
 
     // Registration, not a request: `activityForecastAt` takes an id and nothing
     // can geocode an id, so a search that did not write its candidates would

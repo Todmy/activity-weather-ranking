@@ -1,6 +1,11 @@
 import SchemaBuilder from '@pothos/core'
 import { GraphQLError } from 'graphql'
-import { getActivityForecast, LocationNotFound, NoDataYet } from '../app/activityForecast.ts'
+import {
+  getActivityForecast,
+  getActivityForecastAt,
+  LocationNotFound,
+  NoDataYet,
+} from '../app/activityForecast.ts'
 import type {
   ActivityForecast,
   ActivityRanking,
@@ -244,6 +249,44 @@ const ForecastResultRef = builder.objectRef<ActivityForecast>('ForecastResult').
   }),
 })
 
+/**
+ * Yoga masks anything that is not a `GraphQLError` as "Unexpected error.", which
+ * `graphql()` alone does not do — so a resolver error can pass a schema test and
+ * still reach a reviewer as a blank 500. These four states are the ones a caller
+ * can act on, and they are translated once here rather than per field.
+ */
+const answering = async <T>(work: () => Promise<T>): Promise<T> => {
+  try {
+    return await work()
+  } catch (error) {
+    // A caller who mistyped a city name, or passed an id this service has never
+    // stored, deserves to be told which.
+    if (error instanceof LocationNotFound) {
+      throw new GraphQLError(error.message, { extensions: { code: 'LOCATION_NOT_FOUND' } })
+    }
+
+    // Cold start, someone else already fetching, and the bounded wait ran out.
+    // The one place the service does not answer, and it says which one.
+    if (error instanceof NoDataYet) {
+      throw new GraphQLError(error.message, { extensions: { code: 'NO_DATA_YET' } })
+    }
+
+    // Upstream having a bad five minutes is not a bug in this service, and a
+    // masked 500 makes it look like one. With anything stored this no longer
+    // fires for forecasts at all — stale-if-error turns the outage into a
+    // flagged answer — so in practice it is geocoding that raises it.
+    if (error instanceof OpenMeteoError) {
+      throw new GraphQLError(`Open-Meteo is unavailable: ${error.message}`, {
+        extensions: { code: 'UPSTREAM_UNAVAILABLE', upstreamStatus: error.status },
+      })
+    }
+
+    // Deliberately unmasked-from-here: an infrastructure detail is not a
+    // caller's business, so Yoga's mask is the right answer for the rest.
+    throw error
+  }
+}
+
 builder.queryType({
   fields: (t) => ({
     health: t.string({
@@ -260,19 +303,8 @@ builder.queryType({
         query: t.arg.string({ required: true }),
         limit: t.arg.int({ defaultValue: 5 }),
       },
-      resolve: async (_root, args, ctx) => {
-        try {
-          return await searchForLocations(args.query, args.limit ?? 5, ctx.deps)
-        } catch (error) {
-          if (error instanceof OpenMeteoError) {
-            throw new GraphQLError(`Open-Meteo is unavailable: ${error.message}`, {
-              extensions: { code: 'UPSTREAM_UNAVAILABLE', upstreamStatus: error.status },
-            })
-          }
-
-          throw error
-        }
-      },
+      resolve: async (_root, args, ctx) =>
+        await answering(async () => await searchForLocations(args.query, args.limit ?? 5, ctx.deps)),
     }),
     activityForecast: t.field({
       type: ForecastResultRef,
@@ -281,40 +313,19 @@ builder.queryType({
         'outdoor sightseeing and indoor sightseeing. The weather is read from storage and ' +
         'refreshed at most once an hour per location.',
       args: { query: t.arg.string({ required: true }) },
-      resolve: async (_root, args, ctx) => {
-        try {
-          return await getActivityForecast(args.query, ctx.deps)
-        } catch (error) {
-          // Yoga masks anything that is not a GraphQLError as "Unexpected
-          // error." A caller who mistyped a city name deserves to be told that,
-          // so the app-layer error is translated here rather than leaking or
-          // being swallowed.
-          if (error instanceof LocationNotFound) {
-            throw new GraphQLError(error.message, {
-              extensions: { code: 'LOCATION_NOT_FOUND' },
-            })
-          }
-
-          // Cold start, someone else already fetching, and the bounded wait ran
-          // out. The one place the service does not answer, and it says which
-          // one rather than returning a masked 500.
-          if (error instanceof NoDataYet) {
-            throw new GraphQLError(error.message, { extensions: { code: 'NO_DATA_YET' } })
-          }
-
-          // Upstream having a bad five minutes is not a bug in this service, and
-          // a masked 500 makes it look like one. With anything stored this no
-          // longer fires at all: stale-if-error turns the outage into a flagged
-          // answer instead of an apology.
-          if (error instanceof OpenMeteoError) {
-            throw new GraphQLError(`Open-Meteo is unavailable: ${error.message}`, {
-              extensions: { code: 'UPSTREAM_UNAVAILABLE', upstreamStatus: error.status },
-            })
-          }
-
-          throw error
-        }
-      },
+      resolve: async (_root, args, ctx) =>
+        await answering(async () => await getActivityForecast(args.query, ctx.deps)),
+    }),
+    activityForecastAt: t.field({
+      type: ForecastResultRef,
+      description:
+        'The same ranking for a location the caller has already chosen, by the id ' +
+        'searchLocations handed out. Two fields rather than one field with two optional ' +
+        'arguments, because the latter admits both-set and neither-set — illegal states the ' +
+        'schema should not be able to express.',
+      args: { locationId: t.arg.id({ required: true }) },
+      resolve: async (_root, args, ctx) =>
+        await answering(async () => await getActivityForecastAt(String(args.locationId), ctx.deps)),
     }),
   }),
 })

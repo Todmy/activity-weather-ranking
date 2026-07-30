@@ -16,6 +16,7 @@ const deps = (overrides: Partial<AppDeps> = {}): AppDeps => ({
   resolve: async () => ({ location: cambridge[0]!, alternatives: cambridge.slice(1) }),
   search: async () => cambridge,
   register: async () => undefined,
+  locationById: async () => cambridge[1]!,
   geography: async () => ({}),
   issuance: async (plan) => freshIssuance(plan, { city: innsbruck }),
   now: () => DEFAULT_ISSUED_AT,
@@ -184,6 +185,33 @@ describe('searchLocations', () => {
 
     expect(body.errors).toBeUndefined()
     expect(body.data.searchLocations).toEqual([])
+  })
+})
+
+describe('activityForecastAt', () => {
+  it('forecasts the id it was given, without re-resolving anything', async () => {
+    const resolve = vi.fn(async () => null)
+
+    const body = await post(
+      createApp({ deps: deps({ resolve }) }),
+      '{ activityForecastAt(locationId: "geoname:4931972") { location { geonameId admin1 } alternatives { geonameId } days { date } } }',
+    )
+
+    expect(body.errors).toBeUndefined()
+    expect(body.data.activityForecastAt.location.admin1).toBe('Massachusetts')
+    expect(body.data.activityForecastAt.alternatives).toEqual([])
+    expect(body.data.activityForecastAt.days).toHaveLength(7)
+    expect(resolve).not.toHaveBeenCalled()
+  })
+
+  it('refuses an unknown id with LOCATION_NOT_FOUND and a way forward', async () => {
+    const body = await post(
+      createApp({ deps: deps({ locationById: async () => null }) }),
+      '{ activityForecastAt(locationId: "geoname:1") { issuedAt } }',
+    )
+
+    expect(body.errors[0].extensions.code).toBe('LOCATION_NOT_FOUND')
+    expect(body.errors[0].message).toContain('searchLocations')
   })
 })
 
