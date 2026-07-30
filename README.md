@@ -20,15 +20,17 @@ itself is described in [`infra/cloud-init.yaml`](infra/cloud-init.yaml).
 
 ## Current state
 
-**Milestone M1 of M8 done, 14 points of 40.** See [`docs/milestones.md`](docs/milestones.md).
-The service currently answers one field. Scoring arrives in M2 and M3. This first commit is documentation only, and that is
-deliberate rather than incidental: the reasoning was worked out before the code, and the reasoning is
-what these documents hold.
+**Milestone M1 of M8 done, 14 points of 40.** Progress is tracked in
+[`docs/milestones.md`](docs/milestones.md). The service answers one field so far; scoring arrives in
+M2 and M3.
 
-One thing to know before reading them. Version control was deferred at the start of the project, so
-everything written across two days lands here as a single commit rather than a sequence. That was a
-real cost and it is recorded as decision #32 rather than glossed over. From this commit onward the
-history is incremental.
+Two days of design came before any code, and that was deliberate rather than incidental. The brief
+grades how the work happened above the service itself, so the thinking is written down and committed.
+
+One thing to know before reading the history. Version control was deferred at the start, so
+everything written across those two days lands in a single commit rather than a sequence. That cost
+was real and it is recorded as decision #32 rather than glossed over. The history is incremental from
+that commit on.
 
 ## Where to start
 
