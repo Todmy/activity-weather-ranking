@@ -67,6 +67,35 @@ describe('the app over HTTP', () => {
     expect(body.data.release).toBe('unknown')
   })
 
+  it('logs one line per request, with the operation and how long it took', async () => {
+    // Factor XI. The mechanism was already right — stdout, no files, no rotation
+    // — but there was nothing on it: five console calls in the whole service and
+    // none per request. "What happened at 14:03" had no answer.
+    const lines: string[] = []
+    const app = createApp({ deps: deps(), log: (line) => lines.push(line) })
+
+    await post(app, 'query WhoAmI { release }')
+
+    expect(lines).toHaveLength(1)
+    const entry = JSON.parse(lines[0] as string)
+    expect(entry).toMatchObject({ msg: 'request', operation: 'WhoAmI', status: 200, errors: 0 })
+    expect(entry.durationMs).toBeGreaterThanOrEqual(0)
+  })
+
+  it('counts the errors in a response rather than calling a 200 a success', async () => {
+    // GraphQL answers 200 with an `errors` array, so status alone would report
+    // every failure this service has as a success.
+    const lines: string[] = []
+    const app = createApp({
+      deps: deps({ resolve: async () => null }),
+      log: (line) => lines.push(line),
+    })
+
+    await post(app, 'query Missing { activityForecast(query: "Nowhere") { issuedAt } }')
+
+    expect(JSON.parse(lines[0] as string)).toMatchObject({ operation: 'Missing', errors: 1 })
+  })
+
   it('answers a forecast', async () => {
     const body = await post(
       createApp({ deps: deps() }),

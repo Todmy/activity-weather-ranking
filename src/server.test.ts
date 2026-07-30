@@ -51,6 +51,37 @@ describe('startServer', () => {
     expect(await response.json()).toEqual({ data: { health: 'ok' } })
   })
 
+  it('logs the request over the transport the deployed service actually uses', async () => {
+    // The reason this is here and not only in yoga.test.ts: `createServer(app)`
+    // hands the app to Node as a request listener, which never goes through
+    // `fetch`. A logger attached to `fetch` would log everything the tests do and
+    // nothing production does — this service has shipped that shape of bug once
+    // already, and a green test was what let it through.
+    const lines: string[] = []
+    const log = vi.spyOn(console, 'log').mockImplementation((line: string) => {
+      lines.push(line)
+    })
+
+    try {
+      running = await start()
+      await fetch(`http://127.0.0.1:${running.port}/graphql`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ query: 'query OverTheWire { health }' }),
+      })
+    } finally {
+      log.mockRestore()
+    }
+
+    const requests = lines.filter((line) => line.includes('"msg":"request"')).map(String)
+    expect(requests).toHaveLength(1)
+    expect(JSON.parse(requests[0] as string)).toMatchObject({
+      operation: 'OverTheWire',
+      status: 200,
+      errors: 0,
+    })
+  })
+
   it('serves GraphQL at /graphql and nothing at /', async () => {
     running = await start()
 
