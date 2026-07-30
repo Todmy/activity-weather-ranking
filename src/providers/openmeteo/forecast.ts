@@ -139,8 +139,16 @@ export class OpenMeteoError extends Error {
   }
 }
 
-export const fetchForecast = async (coordinates: Coordinates): Promise<ForecastResponse> => {
-  const response = await fetch(buildForecastUrl(coordinates))
+/**
+ * `signal` is how the refresh gateway's 8-second cap reaches the socket. Passing
+ * it rather than racing a promise means the request is actually cancelled, so a
+ * hung upstream stops holding a connection as well as a lease.
+ */
+export const fetchForecast = async (
+  coordinates: Coordinates,
+  signal?: AbortSignal,
+): Promise<ForecastResponse> => {
+  const response = await fetch(buildForecastUrl(coordinates), { signal: signal ?? null })
 
   if (!response.ok) {
     throw new OpenMeteoError(response.status, await response.text())

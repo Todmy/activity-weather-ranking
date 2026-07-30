@@ -142,9 +142,18 @@ describe('fetchMarine', () => {
 
     expect(result.coverage).toBe('present')
     expect(result.days).toHaveLength(10)
-    expect(spy).toHaveBeenCalledWith(
-      buildMarineUrl({ latitude: 38.7223, longitude: -9.1393 }),
-    )
+    expect(spy).toHaveBeenCalledWith(buildMarineUrl({ latitude: 38.7223, longitude: -9.1393 }), {
+      signal: null,
+    })
+  })
+
+  it('passes the caller\'s abort signal down to the socket', async () => {
+    const spy = stubFetch(new Response(JSON.stringify(lisbon), { status: 200 }))
+    const signal = AbortSignal.timeout(8_000)
+
+    await fetchMarine({ latitude: 38.7223, longitude: -9.1393 }, signal)
+
+    expect(spy).toHaveBeenCalledWith(expect.any(String), { signal })
   })
 
   it('returns no coverage and no days for an inland coordinate', async () => {

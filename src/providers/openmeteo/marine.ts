@@ -108,11 +108,15 @@ export const buildMarineUrl = (coordinates: {
   return url.toString()
 }
 
-export const fetchMarine = async (coordinates: {
-  latitude: number
-  longitude: number
-}): Promise<{ coverage: MarineCoverage; days: MarineDay[] }> => {
-  const response = await fetch(buildMarineUrl(coordinates))
+/** `signal` carries the refresh gateway's 8-second cap; see `fetchForecast`. */
+export const fetchMarine = async (
+  coordinates: {
+    latitude: number
+    longitude: number
+  },
+  signal?: AbortSignal,
+): Promise<{ coverage: MarineCoverage; days: MarineDay[] }> => {
+  const response = await fetch(buildMarineUrl(coordinates), { signal: signal ?? null })
 
   if (!response.ok) {
     throw new OpenMeteoError(response.status, await response.text())

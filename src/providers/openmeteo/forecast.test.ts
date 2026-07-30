@@ -144,7 +144,20 @@ describe('fetchForecast', () => {
     const result = await fetchForecast({ latitude: 47.26, longitude: 11.39 })
 
     expect(result.timezone).toBe('Europe/Vienna')
-    expect(spy).toHaveBeenCalledWith(buildForecastUrl({ latitude: 47.26, longitude: 11.39 }))
+    expect(spy).toHaveBeenCalledWith(buildForecastUrl({ latitude: 47.26, longitude: 11.39 }), {
+      signal: null,
+    })
+  })
+
+  it('passes the caller\'s abort signal down to the socket', async () => {
+    // The gateway caps every upstream call at 8 s against a 30 s lease. A cap
+    // the request never receives is a number in a document, not a timeout.
+    const spy = stubFetch(new Response(JSON.stringify(innsbruck), { status: 200 }))
+    const signal = AbortSignal.timeout(8_000)
+
+    await fetchForecast({ latitude: 47.26, longitude: 11.39 }, signal)
+
+    expect(spy).toHaveBeenCalledWith(expect.any(String), { signal })
   })
 
   it('turns a quota rejection into an error carrying the status', async () => {
