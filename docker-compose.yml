@@ -9,6 +9,10 @@ services:
       PORT: 4000
       MONGODB_URI: mongodb://mongo:27017
       MONGODB_DB: ${MONGODB_DB:-activity_weather}
+      # How often the background refresher wakes. Ten minutes in normal running;
+      # override it on the command line to watch the thing work without waiting
+      # (README, "Watch the refresher"). Zero runs no refresher at all.
+      REFRESH_INTERVAL_MS: ${REFRESH_INTERVAL_MS:-600000}
     depends_on:
       mongo:
         condition: service_healthy
