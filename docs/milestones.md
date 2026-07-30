@@ -336,7 +336,30 @@ schema change and no API change. If the schedule bites, it gives way by plan rat
 
 The full argument, including the case for cutting it, is in [`cut.md`](./cut.md).
 
-**3 points.** Plan: [slice 6](./plan.md).
+**Status: done, 30 July. 3 points.** Plan: [slice 6](./plan.md).
+
+The done-condition is a log, so here is the log. First tick after the deploy, on the box:
+
+```
+refresher: woke at 2026-07-30T15:53:02.378Z, 8 locations requested in the last 24h
+refresher: Cambridge (geoname:4931972) stillFresh
+refresher: Cambridge (geoname:2653941) neverScored
+refresher: Cambridge (geoname:5913695) neverScored
+refresher: Cambridge (geoname:5149007) neverScored
+refresher: Cambridge (geoname:4350175) neverScored
+refresher: Ljubljana (geoname:3196359) refreshed
+refresher: Vienna (geoname:2761369) neverScored
+refresher: Grenoble (geoname:3014728) neverScored
+refresher: done — 1 refreshed, 7 skipped, 0 failed
+```
+
+Ljubljana's new issuance is stamped `15:53:02.401` — 23 ms after the tick woke — and `leases` is
+empty, so the lease it took to write that was released. The four extra Cambridges are decision #49
+doing its job: `searchLocations` registered them, nobody ever asked them for a forecast, and none of
+them cost a request.
+
+Two of the tests written for this were vacuous and were caught by mutation rather than by review;
+that is written up in [`worklog.md`](./worklog.md).
 
 ---
 

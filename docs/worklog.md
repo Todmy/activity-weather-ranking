@@ -460,6 +460,50 @@ It also forced the scoring to become a single exported function used by both the
 replay. Before that, principle 9's determinism promise was a claim about two code paths staying in
 step; now it is a property of there being one.
 
+### Two tests I wrote first, and neither of them tested anything
+
+The refresher's schedule has exactly two properties worth having. The next tick is scheduled when the
+previous one finishes, so ticks cannot overlap. And `stop()` waits for the tick in flight, because
+`ensureFresh` releases its lease in a `finally` and closing the database under a running tick would
+throw there and strand that lease for thirty seconds.
+
+I wrote both tests before the code, watched them go red — "module not found" — and then green. By the
+letter of principle 6 that is the rule satisfied. It isn't. A red that only says the file does not
+exist tells you nothing about whether any individual assertion is load-bearing, so I flipped the two
+lines the tests exist for and reran: `await inFlight` deleted from `stop()`, and the `if (!stopped)`
+guard forced true. Six green, both times.
+
+Both tests were decoration, for different reasons:
+
+- `await schedule.stop()` drains the microtask queue whether or not stop waited for anything, so the
+  flag my test read had been set by the time it read it either way. It now asserts an *order* — "run
+  finished" before "stopped" — against a run held open by a timer, because a promise resolved in the
+  same tick cannot tell the two cases apart.
+- The stop test stopped the schedule *between* runs, and `clearTimeout` covers that on its own. The
+  case the guard exists for is a stop that lands mid-run, where there is no timer to clear yet and
+  the run schedules the next one as it finishes. So the test now stops mid-run.
+
+Both mutations now fail exactly one test each. It is the same lesson as `[3, 3, 3]` in the history
+tests, one layer harder to see: there, the number was too tidy; here, everything was green and the
+order the tests ran in was doing the work.
+
+### The trap I nearly walked into on the way to the plan
+
+The refresher needs a fetch plan per location, and a fetch plan needs geography. There is a function
+for that already — `deps.geography`, the read-through the request path uses — and reusing it is the
+obvious move.
+
+It would have been silent and it would have been permanent. The read-through upserts, and the upsert
+moves `lastRequestedAt`. Every tick would have renewed the very window it selects on: every city ever
+requested stays inside the last 24 hours forever, the cutoff quietly stops meaning anything, and the
+quota drains with nothing in the logs to say why. Nothing would have looked broken.
+
+So the tick reads geography off the document it already has. The related half went the other way:
+`fetchPlanFor` is now one function shared by both paths, because if they planned differently the
+refresher would store an issuance with no summit series, a skier's request would find that issuance
+fresh, and skiing would answer `unavailable` for an hour for no visible reason. Same shape of
+argument as `scoreIssuance` in M6 — the two callers cannot diverge if there is only one of them.
+
 ---
 
 ## The two questions this file promised to answer at the end

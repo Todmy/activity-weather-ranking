@@ -127,6 +127,49 @@ around the city and asks the wave model whether there is water there. All of tha
 request for the next hour is served from the stored issuance — which you can see, because `issuedAt`
 does not move.
 
+### Watch the refresher
+
+Weather is also refreshed without being asked for. Every ten minutes the service wakes, takes the
+locations somebody requested in the last 24 hours, and refreshes the ones whose weather has aged past
+its hour — through the same gateway and the same lease a request uses, so the two cannot race.
+
+Ten minutes against an hour of freshness is nothing you can sit and watch. Start it with a short
+interval and back-date the stored weather instead:
+
+```bash
+REFRESH_INTERVAL_MS=15000 docker compose up -d
+
+curl -s http://localhost:4000/graphql -H 'content-type: application/json' \
+  -d '{"query":"{ activityForecast(query: \"Innsbruck\") { issuedAt } }"}'
+
+# Pretend the stored issuance is two hours old. Fine on a database you have just
+# started; it rewrites the timestamps forecastHistory reports.
+docker compose exec -T mongo mongosh activity_weather --quiet \
+  --eval 'db.forecasts.updateMany({}, {$set: {issuedAt: new Date(Date.now() - 2*60*60*1000)}})'
+
+docker compose logs -f api
+```
+
+Within fifteen seconds:
+
+```
+refresher: woke at 2026-07-30T15:56:48.761Z, 1 locations requested in the last 24h
+refresher: Innsbruck (geoname:2775220) refreshed
+refresher: done — 1 refreshed, 0 skipped, 0 failed
+refresher: woke at 2026-07-30T15:57:03.938Z, 1 locations requested in the last 24h
+refresher: Innsbruck (geoname:2775220) stillFresh
+refresher: done — 0 refreshed, 1 skipped, 0 failed
+```
+
+The second tick is the one worth reading: it refreshes nothing, because the first already did.
+
+A city that has only ever been *searched* shows `neverScored` and is never fetched for —
+`searchLocations` registers all five Cambridges the moment you type the name, and spending a metered
+request on four cities nobody wants a forecast for is exactly the wrong place to spend it.
+
+`REFRESH_INTERVAL_MS=0` runs no refresher at all. That is what a second instance behind the same
+database should use: one is enough, and the lease makes a second safe rather than useful.
+
 ### Without Docker
 
 Node 24 or newer and pnpm. Node 24 strips TypeScript types at load, so there is no build step.
@@ -137,14 +180,14 @@ docker compose up mongo -d      # or point MONGODB_URI at any MongoDB 8
 pnpm dev                        # watch mode on http://localhost:4000/graphql
 ```
 
-Configuration is three variables and every one has a working default, so the service starts with no
-`.env` at all — see [`.env.example`](.env.example). Override `PORT`, `MONGODB_URI` or `MONGODB_DB`
-only if you need to.
+Configuration is four variables and every one has a working default, so the service starts with no
+`.env` at all — see [`.env.example`](.env.example). Override `PORT`, `MONGODB_URI`, `MONGODB_DB` or
+`REFRESH_INTERVAL_MS` only if you need to.
 
 ### Tests
 
 ```bash
-pnpm check                      # tsc --noEmit, then 295 tests
+pnpm check                      # tsc --noEmit, then 316 tests
 ```
 
 Neither Docker nor a network is needed. The persistence tests start a real `mongod` through
@@ -155,7 +198,7 @@ deterministic and keeps the free-tier quota for the deployed service.
 
 ## Current state
 
-**Milestone M6 of M8 done, 33 points of 41.** Progress is tracked in
+**Milestone M7 of M8 done, 36 points of 41.** Progress is tracked in
 [`docs/milestones.md`](docs/milestones.md).
 
 What works today: a city name resolves to a place, and the next seven days come back ranked on both
@@ -193,7 +236,14 @@ one date as every surviving issuance saw it, each with the horizon it was seen a
 Friday can be compared against what we thought on Tuesday. Nothing else in the API needs issuances to
 be kept; this does.
 
-Not here yet: the background refresher (M7).
+The weather is also kept warm without being asked for. A tick every ten minutes takes the locations
+requested in the last 24 hours and refreshes the ones past their hour, through the same gateway and
+the same lease — so the first traveller after an hour usually does not pay for the fetch. On the
+deployed box its first tick considered eight locations, refreshed the one that had aged out, and
+skipped seven: one still fresh, and six with no stored issuance to refresh. You can watch the same
+thing locally in fifteen seconds — [Watch the refresher](#watch-the-refresher).
+
+Not here yet: nothing in the API. What remains is M8, the submission itself.
 
 Two days of design came before any code, and that was deliberate rather than incidental. The brief
 grades how the work happened above the service itself, so the thinking is written down and committed.

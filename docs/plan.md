@@ -147,6 +147,12 @@ Deliberately last. Additive: same gateway, same lease, no schema or API change.
 **If the schedule bites, this is what gives way** — and `cut.md` already holds the entry explaining
 why it would have been built.
 
+**Done, 30 July.** Five commits: `requestedSince`, the tick, the schedule, the wiring, the docs. Step
+2 was already done in M4 — `lastRequestedAt` has been written on the read path since the `locations`
+collection existed, which is what made this slice three points rather than five. Step 5 became
+`REFRESH_INTERVAL_MS` plus a back-dating one-liner in the README, verified end to end on a local
+compose stack. The deployed log is quoted in [`milestones.md`](./milestones.md). 316 tests.
+
 ## Slice 7 — The submission itself — 5 points (M8)
 
 1. `README.md` — what it is, how to run it, the assumptions, the CC BY 4.0 attribution, and links

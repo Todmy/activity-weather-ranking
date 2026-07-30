@@ -45,10 +45,10 @@ assumption, and is labelled as one.
 | FR15 | Show how a forecast for one date changed as that date approached | self-imposed (depth on "model, store") | `forecastHistory` | GraphiQL `HowFridayChanged` |
 | FR16 | Refuse honestly rather than inventing an answer | assumption ([Q6](./open-questions.md)) | `LOCATION_NOT_FOUND`, `NO_DATA_YET`, `UPSTREAM_UNAVAILABLE` | GraphiQL `NoSuchPlace` |
 | FR17 | Every capability reachable by a query a human can paste | self-imposed (constitution 12) | 11 preloaded GraphiQL operations | `graphiql.test.ts` validates all of them against the schema |
-| FR18 | Keep recently-requested locations warm on a schedule | assumption (scope call, [cut.md](./cut.md)) | **Not built yet — M7** | — |
+| FR18 | Keep recently-requested locations warm on a schedule | assumption (scope call, [cut.md](./cut.md)) | A tick every 10 min over `lastRequestedAt` within 24 h, through the read path's own `ensureFresh` | `refresher.test.ts`, `schedule.test.ts`, the boot log in [`milestones.md`](./milestones.md) |
 
-FR18 is the only functional row not met. It is the last milestone before submission and is
-deliberately sequenced last because it is additive: same gateway, same lease, no schema change.
+Every functional row is now met. FR18 was the last, and it was sequenced last deliberately because it
+is additive: same gateway, same lease, no schema change and no API change.
 
 ## Non-functional requirements
 
@@ -83,9 +83,10 @@ Named rather than omitted, because an unstated gap reads as an oversight:
 
 ## Keeping this file honest
 
-Every row above points at something runnable or readable. Two rows are the ones most likely to rot:
+Every row above points at something runnable or readable. The rows most likely to rot:
 
-- **FR18** flips to met when M7 ships, and this table is where that is recorded.
+- **FR18** flipped to met on 30 July when M7 shipped, which is what this section was written to make
+  happen rather than to predict.
 - **NFR5**'s quota arithmetic depends on the terrain grid staying at 81 coordinates. If `GRID_VERSION`
   changes, this number changes with it.
 
