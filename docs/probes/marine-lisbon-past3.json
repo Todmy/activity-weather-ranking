@@ -1,0 +1,91 @@
+{
+ "latitude": 38.708336,
+ "longitude": -9.208328,
+ "generationtime_ms": 0.3679990768432617,
+ "utc_offset_seconds": 3600,
+ "timezone": "Europe/Lisbon",
+ "timezone_abbreviation": "GMT+1",
+ "elevation": 66.0,
+ "daily_units": {
+  "time": "iso8601",
+  "wave_height_max": "m",
+  "wave_period_max": "s",
+  "wind_wave_height_max": "m",
+  "swell_wave_height_max": "m",
+  "swell_wave_period_max": "s"
+ },
+ "daily": {
+  "time": [
+   "2026-07-27",
+   "2026-07-28",
+   "2026-07-29",
+   "2026-07-30",
+   "2026-07-31",
+   "2026-08-01",
+   "2026-08-02",
+   "2026-08-03",
+   "2026-08-04",
+   "2026-08-05"
+  ],
+  "wave_height_max": [
+   0.5,
+   0.52,
+   0.44,
+   0.4,
+   0.5,
+   0.58,
+   0.54,
+   0.46,
+   0.64,
+   0.6
+  ],
+  "wave_period_max": [
+   7.05,
+   7.45,
+   6.85,
+   6.25,
+   7.2,
+   8.05,
+   7.0,
+   7.6,
+   7.05,
+   7.0
+  ],
+  "wind_wave_height_max": [
+   0.16,
+   0.22,
+   0.18,
+   0.32,
+   0.26,
+   0.32,
+   0.28,
+   0.18,
+   0.16,
+   0.22
+  ],
+  "swell_wave_height_max": [
+   0.46,
+   0.4,
+   0.28,
+   0.2,
+   0.36,
+   0.48,
+   0.36,
+   0.44,
+   0.6,
+   0.58
+  ],
+  "swell_wave_period_max": [
+   6.75,
+   6.9,
+   6.9,
+   6.9,
+   8.05,
+   7.7,
+   7.5,
+   7.2,
+   5.8,
+   5.8
+  ]
+ }
+}
