@@ -1,0 +1,44 @@
+# Typecheck and tests on every push and pull request.
+#
+# There is no build step to run — Node 24 strips types at load, so `tsc --noEmit`
+# is the whole of the compilation check. And there is no service container: the
+# persistence tests start a real mongod through mongodb-memory-server, which is
+# why they can run here exactly as they run on a laptop.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      # The mongod binary is ~80 MB and is downloaded on first use. Cached by
+      # lockfile, because that is what pins the mongodb-memory-server version
+      # that decides which binary is wanted.
+      - name: Cache the mongod binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: mongodb-binaries-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm typecheck
+
+      - run: pnpm test
