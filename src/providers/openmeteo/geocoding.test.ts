@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
-import { describe, expect, it } from 'vitest'
-import { buildGeocodingUrl, parseGeocoding, toLocations } from './geocoding.ts'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { buildGeocodingUrl, parseGeocoding, searchLocations, toLocations } from './geocoding.ts'
 
 const cambridge = JSON.parse(
   readFileSync(new URL('../../../docs/probes/geocoding-cambridge.json', import.meta.url), 'utf8'),
@@ -56,5 +56,49 @@ describe('buildGeocodingUrl', () => {
 
     expect(url.searchParams.get('name')).toBe('Innsbruck')
     expect(url.searchParams.get('count')).toBe('5')
+  })
+})
+
+describe('searchLocations', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  const stubFetch = (response: Response): ReturnType<typeof vi.fn> => {
+    const spy = vi.fn(async () => response)
+    vi.stubGlobal('fetch', spy)
+    return spy
+  }
+
+  it('asks for the requested number of candidates and maps them', async () => {
+    const spy = stubFetch(new Response(JSON.stringify(cambridge), { status: 200 }))
+
+    const locations = await searchLocations('Cambridge', 5)
+
+    expect(locations).toHaveLength(5)
+    expect(spy).toHaveBeenCalledWith(buildGeocodingUrl('Cambridge', 5))
+  })
+
+  it('asks for five candidates when nobody says otherwise', async () => {
+    const spy = stubFetch(new Response(JSON.stringify(cambridge), { status: 200 }))
+
+    await searchLocations('Cambridge')
+
+    expect(spy).toHaveBeenCalledWith(buildGeocodingUrl('Cambridge', 5))
+  })
+
+  it('returns nothing, rather than throwing, for a query that matched nothing', async () => {
+    stubFetch(new Response(JSON.stringify({ generationtime_ms: 0.2 }), { status: 200 }))
+
+    await expect(searchLocations('Nowhereinparticular')).resolves.toEqual([])
+  })
+
+  it('turns an upstream failure into an error carrying the status', async () => {
+    stubFetch(new Response('upstream is having a day', { status: 503 }))
+
+    await expect(searchLocations('Cambridge')).rejects.toMatchObject({
+      name: 'OpenMeteoError',
+      status: 503,
+    })
   })
 })
