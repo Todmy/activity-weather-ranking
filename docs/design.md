@@ -320,7 +320,7 @@ green the model is done. See `design-questions.md` Q5.
 first as planned, but the human-intuition version of it failed and was rebuilt from cited
 conventions, three of which moved once they were actually checked — the story is in
 [`worklog.md`](./worklog.md). The shipped numbers live in
-[`src/domain/profiles/`](../src/domain/profiles/), one `source:` per factor, and all twenty rows of
+[`src/domain/profiles/`](../src/domain/profiles/), one `source:` per factor, and all twenty-three rows of
 [`sanity-table.md`](./sanity-table.md) pass. Every TBD above is a pointer to those files rather than
 an open question.
 

@@ -83,6 +83,12 @@ survived being checked against the code by hand, because a reviewer's report is 
 existed. The distribution is the point: the self-review found three findings and none of them was a
 defect.
 
+Both criticals are now fixed. The second one — skiing scoring a snowless mountain — took a source, a
+new upstream variable and three sanity rows written before the curve, because the project's hardest
+rule is that a human fixes the target before anything is fitted to it. The finding underneath it is
+worth more than the gate: **the first twenty sanity rows contain no case where the activity is
+impossible**, so no amount of running them could have failed on one.
+
 ### Fixed
 
 | Severity | Finding | Commit |
@@ -93,13 +99,14 @@ defect.
 | Important | `SHUTDOWN_GRACE_MS` was 8 s while a cold-start request can legitimately wait 10 s, so SIGTERM severed exactly the request the grace exists to protect. The chain now runs 8 s upstream < 10 s wait < 12 s grace < 30 s Docker, and a test asserts the order | `af5a3a0` |
 | Important | A throw from the lease release, running in a `finally`, replaced a successfully stored issuance with a request error | `34a35fd` |
 | Important | **"No scoring number without a named published source" was not literally true.** Skiing's lift-hold gate is `rampDown(56, 72)` and 72 is in no citation; the outdoor table states air temperature while the profile scores apparent; one constant has no publication at all. All three are defensible and none was disclosed. Now marked, with the reasoning — and the four tests that claimed to enforce the rule asserted `source.length > 20`, which prose passes | `8d08dff` |
+| **Critical** | **Skiing scored 35/100 on a bare 14 °C summit with no snow and ranked it the best ski day of the week.** Fixed with a `snowPresent` gate on snow depth, `rampUp(0, 30)` — neither anchor fitted, the upper one being the 100-day rule's skiable threshold. Snow depth has no daily aggregate upstream, so it is fetched six-hourly and folded into the day; four probes re-captured, one of them Portillo in the Chilean Andes so the gate is exercised against a real two-metre base rather than only against zeros. Model 2.0.0, major because existing scores move | `16d5882` `7e74139` |
+| Important | **The sanity table had no negative rows, and its bands could not have caught this anyway.** POOR spans 0-39 and the bug scored 35, so the missing row would have passed. Rows 6-8 added, with row 6 carrying a separate assertion that the score is exactly zero, and rows 1-5 now state the base they always assumed | `4c2c81f` |
 | Important | Eight figures a reader can check in one command were wrong: Grenoble at 218 m/3354 m against a probe that says 214/3204 and a GraphQL schema that says the same, eight milestones against nine, 54 decision rows against 53, an index claiming completeness while missing two cut items, a pointer to a file deleted in `c0507c5` | `2d29d60` |
 
 ### Open, and the author's call rather than a defect
 
 | Finding | Why it is not fixed here |
 |---|---|
-| **Skiing scores 35/100 on a bare 14 °C summit with no snow, and ranks it the best ski day of the week.** Zero temperature and zero fresh snow surrender only their own share of the weight; wind and rain carry 7 of 20. There is no snow gate | The fix needs a threshold, and this project's hardest rule is that a human writes the sanity rows before a curve is fitted to them. All five ski rows presuppose a base — rows 2 and 5 say so out loud — so the fitting procedure had no way to fail this case. **That is the real finding: the table has no negative examples.** Raised with the author with the four candidate fixes costed; `snow_depth` is the only signal that is not a proxy, and it is hourly-only, so it is not a three-line change |
 | The API returns a bare integer where the sanity table defines POOR/FAIR/GOOD/EXCELLENT bands | A feature, not a defect. Raised |
 | Terrain is sampled over 50 km, marine at the single city coordinate — so Amsterdam is `noMarineCoverage` with Zandvoort 25 km away. The argument that justifies the Grenoble summit invalidates the marine treatment | Real asymmetry, and no document notices it. It needs an answer written down more than it needs code |
 | Seven minor code findings: a stale issuance discarded on the degrade path, a `removeListener` that removes nothing, a schedule left running on bind failure, the summit series joined by index without the date check marine has, the refresher planning from an unassessed document, `issuedAt` taken before the fetch rather than after, and `localeCompare` without an explicit locale | Recorded, not fixed. Each is small; none changes an answer today; and the author's instruction was to stop and analyse before adding, not to close every open box before a deadline |

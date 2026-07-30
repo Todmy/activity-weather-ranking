@@ -221,6 +221,6 @@ that produces it is one constant in a profile file.
 ## What happens if the table cannot be satisfied
 
 Human-written targets are not guaranteed to be mutually consistent, and neither are source-derived
-ones. If no curve set passes all twenty rows, the contradiction is the interesting result: two rows
+ones. If no curve set passes every row, the contradiction is the interesting result: two rows
 encode incompatible beliefs about how factors trade off. That goes in the worklog, and the row that
 gives way is recorded with the reason.

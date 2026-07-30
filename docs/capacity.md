@@ -55,13 +55,27 @@ Three things the table is careful about:
 the service could never feed that many *distinct* cities. Read throughput is not the ceiling; the
 upstream budget is, and it binds in two different ways:
 
+Open-Meteo does not publish the formula, only worked examples: *2 weeks with 15 variables = 1.5
+calls*, *4 weeks the same = 3.0*. That gives `cost = max(1, variables/10) × max(1, weeks/2)`, and
+the arithmetic below uses it — inferred, therefore, rather than quoted, and stated that way.
+
+This service asks for 10 days, inside the 2-week span, so only the variable count bites: 17 for a
+forecast (16 daily plus hourly snow depth) is **1.7 calls**, and 5 marine variables is **1.0**.
+
 | Limit | Arithmetic | Roughly |
 |---|---|---|
-| Cities kept hourly-fresh | Each refresh costs one forecast call, plus a summit call where there is terrain and a marine call where there is water — one to three, and a request asking more than ten variables counts as more than one call. At 24 refreshes a day | **~200 cities**, round the clock |
-| Cities the service has never seen | Terrain sampling is 81 coordinates and the Elevation API meters **per coordinate** | **~123 a day**, and they share the same 10,000 |
+| Cities kept hourly-fresh — worst case | A mountain city on a coast costs a forecast, a summit and a marine call: 1.7 + 1.7 + 1.0 = 4.4, at 24 refreshes a day | **~95 cities** |
+| Cities kept hourly-fresh — city only | No terrain and no water: 1.7 a refresh | **~245 cities** |
+| Cities the service has never seen | Terrain sampling is 81 coordinates and the Elevation API meters **per coordinate**. Unaffected by snow depth | **~123 a day**, sharing the same 10,000 |
+
+*Corrected 30 July. This table previously said "~200 cities" for a range that runs from 95 to 245
+depending on whether the place has a mountain and a coast, which is a single number standing in for
+a spread of more than twice its own width. Adding hourly snow depth on the same day moved each
+figure by about 5% — 99 to 95, 260 to 245 — so the correction is worth far more than the change
+that prompted it.*
 
 Both are already recorded as NFR5 in [`requirements.md`](./requirements.md). What this file adds is
-the other side: the service can serve those ~200 cities to a very large number of *callers*, because
+the other side: the service can serve that set of cities to a very large number of *callers*, because
 after the first request an hour, every caller is reading from MongoDB.
 
 Put plainly: **this is sized by how many distinct places are asked about, not by how many people

@@ -23,7 +23,7 @@ Status: **done** · **in progress** · **not started**
 | **M8** | Submission | README, worklog, verify, review | 5 | **done** |
 
 **All nine done, 41 points, 30 July.** Every row's condition was met by something observable from
-outside the code — a URL answering, a log line, a table of twenty rows going green, a clone somebody
+outside the code — a URL answering, a log line, a table of sanity rows going green, a clone somebody
 else could run — and the commit that met it landed before the row changed.
 
 **About the points.** Fibonacci, relative to each other rather than to a clock. 1 is trivial, 3 is a

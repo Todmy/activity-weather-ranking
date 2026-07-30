@@ -195,7 +195,7 @@ Configuration is five variables and every one has a working default, so the serv
 ### Tests
 
 ```bash
-pnpm check                      # tsc --noEmit, then 334 tests
+pnpm check                      # tsc --noEmit, then 342 tests
 ```
 
 Docker is not needed. A network is, once: the persistence tests start a real `mongod` through
@@ -214,7 +214,7 @@ deterministic and keeps the free-tier quota for the deployed service.
 
 What works today: a city name resolves to a place, and the next seven days come back ranked on both
 axes for all four activities, with every score explained by the factors and gates that produced it,
-a confidence that decays with the forecast horizon, and a pinned model version. All twenty rows of
+a confidence that decays with the forecast horizon, and a pinned model version. All twenty-three rows of
 [`docs/sanity-table.md`](docs/sanity-table.md) pass.
 
 Geography is measured rather than looked up. Terrain comes from 81 elevation samples on a circular
@@ -288,12 +288,17 @@ recorded in [`docs/worklog.md`](docs/worklog.md) rather than smoothed over.
 In order, and the first two are the ones that matter:
 
 1. **Validate the scoring model against something.** It is reviewable — every threshold cites a
-   source and all twenty rows of the sanity table pass — but it is not *validated*. Backtesting
+   source and all twenty-three rows of the sanity table pass — but it is not *validated*. Backtesting
    against Open-Meteo's historical archive, scored against days people actually skied or surfed, is
    the only thing that would turn "defensible" into "correct".
 2. **A ski resort dataset.** A sampled high point has no lifts, no piste and no snow-making. The
    geography model answers "is there terrain" honestly and cannot answer "can you ski there", and
    that gap is the largest single overclaim risk in the service.
+3. **Spring skiing.** The ski temperature curve reaches zero above +3 °C, so a summit at +4 °C on a
+   deep base scores POOR — and spring corn is genuinely good skiing to many people. This was found
+   while adding the snow gate and deliberately not fixed with it: the gate needed no new number and
+   this needs the temperature curve re-fitted against sanity rows that do not exist yet. Named rather
+   than quietly carried.
 3. **Two instances behind a proxy.** The lease is a database row rather than in-memory state, so
    horizontal scale should already work — but nothing runs two, so nothing proves it. It is the
    largest unproven claim here, and [`capacity.md`](docs/capacity.md) says so alongside the numbers

@@ -13,7 +13,7 @@ import type { Profile } from '../score.ts'
  *
  * **Weights are fitted to the sanity table** in `docs/sanity-table.md`, written
  * before this file existed. No published source ranks "cold" against "grey", so
- * the twenty rows are the target and the weights are what reproduces them. When
+ * the sanity rows are the target and the weights are what reproduces them. When
  * the rows pass, tuning stops.
  *
  * ## UV is not a factor here, and that is a finding rather than an omission
