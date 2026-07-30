@@ -102,3 +102,20 @@ not make it *validated*, and the README says so.
 
 Explicitly excluded by the brief. Noted only because `searchLocations` exists and looks like it
 serves a UI: it is API design for an ambiguous-name flow, not a UI. Nothing renders anything.
+
+## A linter, a formatter, and a coverage report
+
+**Why it is cut.** Not on scope grounds — on a reading-the-history one. A formatter introduced part
+way through a five-day submission rewrites files it did not author, and the resulting diff buries the
+commits this project is graded on under whitespace. Style here is consistent because one person wrote
+it in two days, which is exactly the situation where a formatter buys least. A coverage report is a
+different case: it would have been genuinely useful and it is simply absent, which the
+[review](./review.md) records as a fair thing for a reviewer to ask for and not find.
+
+**What is done instead.** `tsc --noEmit` under `strict` plus `erasableSyntaxOnly`, run in CI on every
+push, catches the class of error a linter would. Coverage is answered qualitatively: every source
+file has a sibling test except five — two type-only modules, the process entry point, the production
+wiring, and a test helper — and the wiring is covered indirectly by `server.test.ts`.
+
+**When that stops being true.** The first other contributor. A formatter's whole value is removing
+style from review, and there is no review yet.
