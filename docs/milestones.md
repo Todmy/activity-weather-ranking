@@ -15,7 +15,7 @@ Status: **done** · **in progress** · **not started**
 | **M0** | Preparation | The reasoning, before any code | 13 | **done** |
 | **M1** | Skeleton deployed | A URL that answers GraphQL | 1 | **done** |
 | **M2** | Tracer bullet | One city, one activity, scored live | 3 | **done** |
-| **M3** | Scoring model | All four activities, sanity table passing | 5 | not started |
+| **M3** | Scoring model | All four activities, sanity table passing | 5 | **done** |
 | **M4** | Geography | Terrain and ocean decide applicability | 3 | not started |
 | **M5** | Persistence and refresh | Weather stored, not re-fetched | 5 | not started |
 | **M6** | API surface | Both ranking axes, ambiguity handled | 2 | not started |
@@ -24,7 +24,7 @@ Status: **done** · **in progress** · **not started**
 
 **About the points.** Fibonacci, relative to each other rather than to a clock. 1 is trivial, 3 is a
 normal unit of work, 5 carries real uncertainty, and 13 is the two days of design that preceded any
-code. Forty points in total, seventeen of them delivered.
+code. Forty points in total, twenty-two of them delivered.
 
 They're here to show where the weight sits, not to promise a date. The weight is not spread evenly:
 M3 is the one milestone that can't be finished by working harder at it, because scoring calibration
@@ -126,6 +126,21 @@ hypothetical, and everything that follows is widening a path that already runs e
 ---
 
 ## M3 — Scoring model
+
+**Status: done, 30 July. 5 points.** All twenty sanity rows pass. What it turned up, in order of how
+much it changed:
+
+- **A weighted mean cannot veto**, and two rows need one: 40 cm of powder under held lifts, and a
+  storm between you and an open museum. Profiles gained multiplicative gates (decision #37 in
+  [`decisions.md`](./decisions.md)), the largest change to the scoring design since it was written.
+- **Indoor sightseeing needed a floor** rather than a zero, because the activity is available
+  whatever the sky does (#38).
+- **The probes caught what the table could not.** With height and period as equal factors, every
+  surfing row passed and Chicago on Lake Michigan scored 50 — "fair surf" for 4.6 s of lake chop.
+  The table has no lake row; the recon fixtures do. Period became a gate as well as a factor.
+- **Fresh snow is a window**, so the request now carries `past_days=3` (#39).
+- **A double-count found by a failing row**: snow counts inside `precipitation_sum`, so a snowy day
+  was paid twice by indoor sightseeing. Fixed by reading `rain_sum`, not by shrinking a weight.
 
 **Delivers:** all four activities, with every threshold traceable to a source.
 

@@ -257,6 +257,46 @@ no test on the only path that reaches a score. It has one now, and the same muta
 Eight mutations is not a coverage tool and I'm not claiming it is. It's the cheapest thing that
 answers the only question worth asking about a test written after its code: would this notice?
 
+### The scoring model, and the two things that told me it was wrong
+
+All twenty sanity rows pass now. Two of the corrections came from places I wasn't looking.
+
+**The table cannot catch what the table doesn't contain.** With wave height and period as equal
+factors, every surfing row passed, and then I ran the recon probes through the profile out of
+curiosity. Chicago on Lake Michigan scored 50. That's "fair surf" for water with 4.6 s of chop in it,
+and it's the exact mistake recon was supposed to have killed: the wave is the right size and has no
+energy in it. The sanity table has no lake row, so nothing in it could have told me. The fixtures
+could, because they're real places.
+
+More weight on period doesn't fix that. Row 3 needs height to carry enough to cap a clean overhead
+day at GOOD, and Chicago needs period to dominate, and those pull opposite ways. So "is there swell
+at all" became a gate, separate from "how good is the swell there is". Chicago drops to 7.
+
+**A failing row found a double-count.** Indoor sightseeing scored a snowy day at 84 against a GOOD
+target. The cause wasn't the weights: snowfall shows up in `precipitation_sum` as water equivalent,
+so the rain factor and the snow factor were both being paid for the same snow. Reading `rain_sum`
+instead fixes it honestly. Shrinking the rain weight would also have made the row pass, and would
+have left the model wrong in a way no row happened to test.
+
+I'm recording both because they're the same lesson from opposite directions. A calibration target
+tells you when you're done; it doesn't tell you that the thing you're calibrating is sound.
+
+### The veto, argued once and decided quickly
+
+Skiing row 4 — 40 cm of powder, 70 km/h gusts, POOR — cannot be expressed as weights. To drag an
+otherwise perfect day to 39 the wind needs 61% of the total, and at that weight row 2 comes out GOOD
+when the table says FAIR. The two rows contradict each other under any single set of weights, which
+is the useful kind of contradiction: it means the model is missing a mechanism rather than a number.
+
+Gates multiply. `min()` would also pass both rows and would throw away magnitude, so 40 cm in a gale
+and 5 cm in a gale would score identically, and the model would stop being able to rank days it had
+already given up on. A hard cutoff to zero collides with principle 4, where zero already means
+"applicable and bad".
+
+Same mechanism, three uses: held lifts, blown-out surf, and a storm between you and an open museum.
+That last one is the row the table calls the proof that indoor isn't the inverse of outdoor, and it
+only works because the floor and the gate are separate — the museum is open, and you can't get there.
+
 ### A test that paid for itself in ten minutes
 
 The three curve primitives are about thirty lines and I nearly wrote them without tests, on the

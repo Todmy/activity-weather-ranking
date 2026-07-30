@@ -20,11 +20,20 @@ Every capability has a query you can paste, including the ones that fail. That i
 holds itself to ([principle 12](docs/principles.md)): a backend has no UI, so a reviewer who has to
 invent a query only ever sees the happy path.
 
-**Score the next seven days for a city.**
+**Rank the next seven days for each activity.** One of the two readings of the brief's "ranks";
+days an activity cannot be scored on are left out rather than ranked as zero.
 
 ```bash
 curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
-  -d '{"query":"{ activityForecast(query: \"Innsbruck\") { location { name country admin1 } days { date activities { activity score completeness } } } }"}'
+  -d '{"query":"{ activityForecast(query: \"Innsbruck\") { location { name country admin1 } modelVersion rankings { activity days { date score confidence } } } }"}'
+```
+
+**Rank the activities within each day**, which is the other reading. The three-state union shows up
+here: a day carries `ScoredActivity`, `NotApplicableActivity` and `UnavailableActivity` side by side.
+
+```bash
+curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
+  -d '{"query":"{ activityForecast(query: \"Lisbon\") { days { date activities { ... on ScoredActivity { activity score confidence } ... on NotApplicableActivity { activity reason } ... on UnavailableActivity { activity reason } } } } }"}'
 ```
 
 **Ask why a day scored what it did.** Every factor reports the forecast value behind it, what the
@@ -32,7 +41,7 @@ curve made of it, and how many points of the total it accounts for.
 
 ```bash
 curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
-  -d '{"query":"{ activityForecast(query: \"Reykjavik\") { days { date activities { score factors { name weight rawValue curveValue contribution } } } } }"}'
+  -d '{"query":"{ activityForecast(query: \"Reykjavik\") { days { date activities { ... on ScoredActivity { activity score base factors { name rawValue curveValue contribution } gates { name rawValue multiplier } } } } } }"}'
 ```
 
 **Ask about an ambiguous name.** "Cambridge" matches five places. The service scores one and shows
@@ -53,14 +62,21 @@ curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
 
 ## Current state
 
-**Milestone M2 of M8 done, 17 points of 40.** Progress is tracked in
+**Milestone M3 of M8 done, 22 points of 40.** Progress is tracked in
 [`docs/milestones.md`](docs/milestones.md).
 
-What works today: a city name resolves to a place, the next seven days come back scored for outdoor
-sightseeing, and every score carries the forecast values that produced it. What is deliberately not
-here yet: the other three activities (M3), terrain and ocean applicability (M4), and persistence,
-which is the part of the brief this service most obviously owes and which arrives in M5. Until then
-every request goes upstream.
+What works today: a city name resolves to a place, and the next seven days come back ranked on both
+axes for all four activities, with every score explained by the factors and gates that produced it,
+a confidence that decays with the forecast horizon, and a pinned model version. All twenty rows of
+[`docs/sanity-table.md`](docs/sanity-table.md) pass.
+
+Skiing and surfing answer `UnavailableActivity` rather than a number, because both need geography
+this service has not fetched yet. That is deliberately not `NotApplicableActivity`: "we have not
+looked" and "there is no mountain here" are different claims, and the API keeps them apart. Terrain
+and ocean coverage arrive in M4.
+
+Not here yet: persistence, which is the part of the brief this service most obviously owes and which
+arrives in M5. Until then every request goes upstream.
 
 Two days of design came before any code, and that was deliberate rather than incidental. The brief
 grades how the work happened above the service itself, so the thinking is written down and committed.
