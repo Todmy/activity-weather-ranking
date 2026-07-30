@@ -54,8 +54,8 @@ curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
   -d '{"query":"{ activityForecast(query: \"Cambridge\") { location { name country admin1 } alternatives { name country admin1 } } }"}'
 ```
 
-**Ask where a ski score was actually assessed.** The city is at 218 m and the score belongs to a
-point 3354 m up, so the answer says so rather than letting the number stand as a claim about the
+**Ask where a ski score was actually assessed.** The city is at 214 m and the score belongs to a
+point 3204 m up, so the answer says so rather than letting the number stand as a claim about the
 city centre.
 
 ```bash
@@ -95,7 +95,7 @@ model.
 
 ```bash
 curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
-  -d '{"query":"{ forecastHistory(locationId: \"geoname:4931972\", date: \"2026-08-02\") { issuedAt horizonDays day { date activities { ... on ScoredActivity { activity score confidence } } } } }"}'
+  -d '{"query":"{ forecastHistory(locationId: \"geoname:4931972\", date: \"2026-08-02\") { issuedAt horizonDays day { date activities { ... on ScoredActivity { activity score confidence } ... on NotApplicableActivity { activity reason } ... on UnavailableActivity { activity reason } } } } }"}'
 ```
 
 **Ask for somewhere that does not exist.** The error names the query and carries
@@ -190,23 +190,26 @@ pnpm dev                        # watch mode on http://localhost:4000/graphql
 
 Configuration is five variables and every one has a working default, so the service starts with no
 `.env` at all — see [`.env.example`](.env.example). Override `PORT`, `MONGODB_URI`, `MONGODB_DB` or
-`REFRESH_INTERVAL_MS``REFRESH_INTERVAL_MS` only if you need to.
+`REFRESH_INTERVAL_MS` only if you need to.
 
 ### Tests
 
 ```bash
-pnpm check                      # tsc --noEmit, then 326 tests
+pnpm check                      # tsc --noEmit, then 334 tests
 ```
 
-Neither Docker nor a network is needed. The persistence tests start a real `mongod` through
-`mongodb-memory-server` — the same major version as the `mongo:8` in compose, so the driver, the
-indexes and the concurrency behaviour under test are production's. No test ever calls Open-Meteo;
+Docker is not needed. A network is, once: the persistence tests start a real `mongod` through
+`mongodb-memory-server`, which fetches the binary (~80 MB) on the first run and caches it, so a cold
+clone offline will not get past the first suite. Every run after that is offline.
+
+That `mongod` is the same major version as the `mongo:8` in compose, so the driver, the indexes and
+the concurrency behaviour under test are production's. No test ever calls Open-Meteo;
 they run against the captured responses in [`docs/probes/`](docs/probes/), which is what keeps them
 deterministic and keeps the free-tier quota for the deployed service.
 
 ## Current state
 
-**All eight milestones done, 41 points.** Progress is tracked in
+**All nine milestones done, 41 points.** Progress is tracked in
 [`docs/milestones.md`](docs/milestones.md).
 
 What works today: a city name resolves to a place, and the next seven days come back ranked on both

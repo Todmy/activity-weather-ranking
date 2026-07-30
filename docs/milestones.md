@@ -28,7 +28,7 @@ else could run — and the commit that met it landed before the row changed.
 
 **About the points.** Fibonacci, relative to each other rather than to a clock. 1 is trivial, 3 is a
 normal unit of work, 5 carries real uncertainty, and 13 is the two days of design that preceded any
-code. Forty-one points in total, thirty-three of them delivered.
+code. Forty-one points in total, all of them delivered.
 
 The total moved from 40 to 41 on 30 July, after M3 shipped. M4 was re-estimated from 3 to 4 because a
 review of the plan against the design found that it needs the `locations` collection, which the plan

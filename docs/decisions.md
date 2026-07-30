@@ -56,7 +56,7 @@ assumption taken in its place; all eight are recorded in full, with rejected alt
 | 16 | The summit weather series lives inside the city's issuance document | An issuance is the unit of consistency; separate documents would let city and summit drift to different TTLs and be compared anyway | [design-questions.md](./design-questions.md) Q1+2 |
 | 17 | Absence has three states: `notApplicable`, `unavailable`, score `0` | "No ocean here", "the fetch failed" and "conditions are bad" are three different claims | design-questions.md Q1+2 |
 | 18 | Scoring is declarative data — weighted factors over named curves — never branching code, and every score returns its per-factor contributions | A number nobody can interrogate is not a ranking, it is a guess | [principles](./principles.md) §2 |
-| 19 | Store local dates plus the location's IANA timezone, never UTC instants | "Tuesday" in a travel forecast means Tuesday where the traveller is | context.md invariants |
+| 19 | Store local dates plus the location's IANA timezone, never UTC instants | "Tuesday" in a travel forecast means Tuesday where the traveller is | [`design.md`](./design.md) §6 |
 | 20 | Confidence decays with forecast horizon and is returned alongside every score | A day-7 number presented like a day-1 number is a product bug | [principles](./principles.md) §5 |
 | 21 | `modelVersion` is a global semver covering everything that can change a score, enforced by a snapshot test over the serialised domain config | A hash cannot be forgotten but tells a reviewer nothing; a semver is readable but relies on memory. The test removes the reliance | design-questions.md Q4 |
 | 22 | Docker Compose on a dedicated Hetzner box, bootstrapped by [`infra/cloud-init.yaml`](../infra/cloud-init.yaml) and deployed by pulling `origin/main`; the reviewer runs the same compose file locally | Deploy on day one on infrastructure that is described in the repository rather than configured by hand. A deployment discovered on the last day is a deployment that fails on the last day, and a novel platform learned under deadline is the usual way that happens. *Corrected from "an existing box the author already runs" — the box did not exist and had to be created, which made the original justification untrue* | — |
@@ -91,6 +91,8 @@ Considered and not built. Full reasoning and what each would take in [`cut.md`](
 | 25 | Multi-request terrain grids | Measurement showed the extra precision is unusable: the sampled maximum is non-monotonic in radius | cut |
 | 26 | Backtesting the scoring model against historical conditions | The right way to calibrate, and it does not fit the budget. The model is made *reviewable* instead of *validated*, and the README says so | cut |
 | 27 | A front end | Excluded by the brief | cut |
+| 54 | A linter, a formatter and a coverage report | A formatter introduced part way through buries the commits this is graded on under whitespace, and `tsc --noEmit` under `strict` catches what a linter would. Found by the stage-7 review as an omission nobody had written down — the same failure mode as an undocumented threshold | cut |
+| 55 | Metrics, tracing, and three more twelve-factor items | Real production requirements that demonstrate nothing about modelling weather. The line drawn: a service with no access log cannot say what happened, while one with no percentile histogram merely cannot say it in aggregate — so the log was built and the histogram was not | cut |
 
 ## Process decisions
 

@@ -38,7 +38,7 @@ Every claim below was produced by running the command, in this order, on 30 July
 | 5 | Never more confident than the data | `stale`, `staleReason`, `confidence`, the ski assessment point — and finding V2 below, which is this principle applied to our own quota claim | holds after V2 |
 | 6 | Test-first in every layer, red run included | Sampled by mutation rather than trusted: two load-bearing branches flipped, each killed exactly one test (below) | holds on the sample |
 | 7 | Scope earns its place | Six items in `cut.md`, each with the test it had to pass | holds |
-| 8 | Docs carry what code cannot | Rejected alternatives recorded in 54 decision rows and three ADRs, each with what the choice cost | holds |
+| 8 | Docs carry what code cannot | Rejected alternatives recorded in 53 decision rows and three ADRs, each with what the choice cost | holds |
 | 9 | Deterministic by construction | `grep` over `src/domain/`: no `new Date(`, no `fetch(`, no `Math.random`, no import of `providers/` or `persistence/`. One `scoreIssuance` for both the live path and replay | holds |
 | 10 | History is the narrative | Documents committed before the code they motivate; nothing pushed without permission | holds, with #32's deferral recorded |
 | 11 | One change per commit, sliced vertically | M7 landed as six commits, each a slice through the layers it touched; each message names everything in it | holds |
@@ -67,7 +67,7 @@ tests this project has found were all found this way, two of them during M7 itse
 | V3 | LOW | [`requirements.md`](./requirements.md) NFR3 | "`domain/` performs no I/O" cited principle 3 (no silent upstream calls). It follows from principle 9 — it is the boundary that makes determinism checkable | **Fixed.** Citation corrected |
 | V4 | LOW | [`src/app/liveDeps.ts`](../src/app/liveDeps.ts) | The production wiring has no test of its own. It is covered only by `server.test.ts`, which boots a real server and checks health and the refresher's first log line, so a mis-wired dependency on a path that boot does not touch would surface at runtime rather than as a red test | **Accepted.** The file is assignment statements over collaborators that are each tested, and the alternative is a test that asserts the shape of a literal. Recorded for stage 7 |
 
-**Metrics.** 18 functional and 15 non-functional requirements, all met. 4 findings: 0 CRITICAL,
+**Metrics.** 18 functional and 15 numbered non-functional requirements — 16 rows, since NFR5b was inserted rather than renumbered — all met. 4 findings: 0 CRITICAL,
 0 HIGH, 2 MEDIUM, 2 LOW. Two fixed, one documented, one accepted.
 
 ## What this stage did not check
