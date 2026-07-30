@@ -377,8 +377,18 @@ two-fields-not-`@oneOf` shape.
 **Done when:** someone clones the repository, runs `docker compose up`, and gets a working service
 without asking me a question.
 
-**5 points**, including the verify and review stages of the pipeline. Plan:
+**Status: done, 30 July. 5 points**, including the verify and review stages of the pipeline. Plan:
 [slice 7](./plan.md).
+
+The done-condition is a clone, so it was tested as one rather than reasoned about. `git clone` of the
+public repository into an empty directory at `ce299ba`, `docker compose up -d --build`, no `.env` and
+no other setup: the API reported healthy nine seconds after the build, and a cold-database request
+for Innsbruck came back with a full ranking, `stale: false`, and one document each in `forecasts`,
+`locations` and `resolutions`. GraphiQL served its preloaded operations. The refresher's first tick
+logged zero locations, which is the correct answer on an empty database.
+
+One deviation, stated because it is a deviation: the clone ran on `PORT=4100`, because port 4000 on
+the machine that tested it was already held by a dev server. Nothing else was changed.
 
 ---
 

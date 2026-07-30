@@ -163,6 +163,13 @@ compose stack. The deployed log is quoted in [`milestones.md`](./milestones.md).
 
 The worklog is graded first and is the one artifact that must not read as generated.
 
+**Done, 30 July.** The README gained the two things M8 asked of it and it did not have — the
+assumptions inline rather than one link away, and what I would do next. Decisions 51-53 close the
+final pass: the committed SDL and what it does not buy, the container health check, and the data
+licence. The worklog was already carrying its promised list; slice 6 added two entries to it. Then
+the done-condition itself, tested rather than argued: a fresh clone of the public repository, `docker
+compose up`, and a working answer on a cold database.
+
 ---
 
 ## Total
