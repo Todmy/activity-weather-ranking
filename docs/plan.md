@@ -131,6 +131,26 @@ The worklog is graded first and is the one artifact that must not read as genera
 27 points across eight slices. The slack is real but it lives entirely in slices 2 and 6; everything
 else is predictable work whose shape is already settled.
 
+## Learnings
+
+Gotchas found while implementing, kept here so a later slice doesn't rediscover them.
+
+- **A weighted mean cannot express harm or veto.** A factor that punishes one kind of day scores 1.0
+  on every other kind, so the weight needed to punish also rewards. Cost slice 1 its UV factor
+  (decision #36). Skiing row 4 in the sanity table is an outright veto, so slice 2 needs a mechanism
+  that the additive model does not have. Decide it before fitting the ski curves, not after.
+- **Yoga masks anything that is not a `GraphQLError`** as "Unexpected error." with
+  INTERNAL_SERVER_ERROR. `graphql()` in a schema test does not, so error behaviour has to be tested
+  through `createApp().fetch()` or it is not tested at all.
+- **Vitest needs a wide inline list** for graphql to exist once: `[/graphql/, /@pothos/, /@envelop/,
+  /@whatwg-node/]`. Anything narrower and a second copy loads through Yoga, and the only symptom is
+  every resolver error arriving as INTERNAL_SERVER_ERROR.
+- **`erasableSyntaxOnly` forbids constructor parameter properties.** Declare the field, assign in the
+  body. Node's type stripping is the reason the flag is on.
+- **The probes are fixtures with an expiry condition.** They are evidence about the live API only
+  while the request that produced them matches the one the service sends, which is why
+  `DAILY_VARIABLES` is pinned and asserted against the fixture's own keys.
+
 ## What blocked the start, and how each was cleared
 
 - **Decision #32, version control.** Blocked slice 0 and nothing else. Cleared 2026-07-30: the

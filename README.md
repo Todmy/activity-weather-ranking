@@ -8,21 +8,59 @@ Node.js, TypeScript, GraphQL, MongoDB.
 
 ## Live
 
-`http://2.28.24.132:4000/graphql` — open it for GraphiQL, or:
-
-```bash
-curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
-  -d '{"query":"{ health }"}'
-```
+`http://2.28.24.132:4000/graphql` — open it for GraphiQL, which loads with the example queries below
+already in the editor. Pick one from the operation dropdown and press play.
 
 Run it yourself with `docker compose up`, which is the same file the deployed host runs. The host
 itself is described in [`infra/cloud-init.yaml`](infra/cloud-init.yaml).
 
+## Try it
+
+Every capability has a query you can paste, including the ones that fail. That is a rule this project
+holds itself to ([principle 12](docs/principles.md)): a backend has no UI, so a reviewer who has to
+invent a query only ever sees the happy path.
+
+**Score the next seven days for a city.**
+
+```bash
+curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
+  -d '{"query":"{ activityForecast(query: \"Innsbruck\") { location { name country admin1 } days { date activities { activity score completeness } } } }"}'
+```
+
+**Ask why a day scored what it did.** Every factor reports the forecast value behind it, what the
+curve made of it, and how many points of the total it accounts for.
+
+```bash
+curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
+  -d '{"query":"{ activityForecast(query: \"Reykjavik\") { days { date activities { score factors { name weight rawValue curveValue contribution } } } } }"}'
+```
+
+**Ask about an ambiguous name.** "Cambridge" matches five places. The service scores one and shows
+the rest, rather than quietly answering about the wrong country.
+
+```bash
+curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
+  -d '{"query":"{ activityForecast(query: \"Cambridge\") { location { name country admin1 } alternatives { name country admin1 } } }"}'
+```
+
+**Ask for somewhere that does not exist.** The error names the query and carries
+`LOCATION_NOT_FOUND`, rather than being an empty forecast or a made-up location.
+
+```bash
+curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
+  -d '{"query":"{ activityForecast(query: \"Nowhereinparticular\") { location { name } } }"}'
+```
+
 ## Current state
 
-**Milestone M1 of M8 done, 14 points of 40.** Progress is tracked in
-[`docs/milestones.md`](docs/milestones.md). The service answers one field so far; scoring arrives in
-M2 and M3.
+**Milestone M2 of M8 done, 17 points of 40.** Progress is tracked in
+[`docs/milestones.md`](docs/milestones.md).
+
+What works today: a city name resolves to a place, the next seven days come back scored for outdoor
+sightseeing, and every score carries the forecast values that produced it. What is deliberately not
+here yet: the other three activities (M3), terrain and ocean applicability (M4), and persistence,
+which is the part of the brief this service most obviously owes and which arrives in M5. Until then
+every request goes upstream.
 
 Two days of design came before any code, and that was deliberate rather than incidental. The brief
 grades how the work happened above the service itself, so the thinking is written down and committed.

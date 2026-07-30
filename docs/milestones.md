@@ -14,7 +14,7 @@ Status: **done** · **in progress** · **not started**
 |---|---|---|---|---|
 | **M0** | Preparation | The reasoning, before any code | 13 | **done** |
 | **M1** | Skeleton deployed | A URL that answers GraphQL | 1 | **done** |
-| **M2** | Tracer bullet | One city, one activity, scored live | 3 | not started |
+| **M2** | Tracer bullet | One city, one activity, scored live | 3 | **done** |
 | **M3** | Scoring model | All four activities, sanity table passing | 5 | not started |
 | **M4** | Geography | Terrain and ocean decide applicability | 3 | not started |
 | **M5** | Persistence and refresh | Weather stored, not re-fetched | 5 | not started |
@@ -24,7 +24,7 @@ Status: **done** · **in progress** · **not started**
 
 **About the points.** Fibonacci, relative to each other rather than to a clock. 1 is trivial, 3 is a
 normal unit of work, 5 carries real uncertainty, and 13 is the two days of design that preceded any
-code. Forty points in total, fourteen of them delivered.
+code. Forty points in total, seventeen of them delivered.
 
 They're here to show where the weight sits, not to promise a date. The weight is not spread evenly:
 M3 is the one milestone that can't be finished by working harder at it, because scoring calibration
@@ -96,6 +96,8 @@ Plan: [slice 0](./plan.md).
 
 ## M2 — Tracer bullet
 
+**Status: done, 30 July. 3 points.**
+
 **Delivers:** one city, one activity, a real score, no persistence at all.
 
 Geocoding resolves the city, the forecast API is called live, the outdoor sightseeing profile scores
@@ -107,6 +109,17 @@ a breakdown of what produced it.
 
 **Why here:** it's the thinnest possible cut through every layer. After this, no layer is
 hypothetical, and everything that follows is widening a path that already runs end to end.
+
+**What it turned up.** Two things, both recorded rather than absorbed:
+
+- UV started as a weighted factor and was removed. A weighted mean can say "this is pleasant" and
+  cannot say "this is harmful", because a harm factor scores full marks whenever the harm is absent.
+  The weight that pulled a 31 °C day down to FAIR simultaneously lifted a cold, wet, windy day out of
+  POOR. Heat is carried by apparent temperature now ([decision #36](./decisions.md)). Skiing row 4 is
+  a veto and will need a mechanism this profile doesn't have, so M3 inherits the problem knowingly.
+- A mistyped city name reached the deployed service as a blank `INTERNAL_SERVER_ERROR` while its
+  schema test passed, because Yoga masks anything that isn't a `GraphQLError` and `graphql()` alone
+  doesn't. Found by testing over HTTP, which is now where the API-level tests run.
 
 **3 points.** Plan: [slice 1](./plan.md).
 
