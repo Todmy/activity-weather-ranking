@@ -462,7 +462,55 @@ step; now it is a property of there being one.
 
 ---
 
-## To be filled in during implementation
+## The two questions this file promised to answer at the end
 
-- Anything I built and tore out
-- The first thing that broke in deployment
+It has said since 29 July that it would close with "anything I built and tore out" and "the first
+thing that broke in deployment". Both are answerable now, and one of the answers is short in a way
+worth noticing.
+
+### What was built and torn out: nothing, after the design stage
+
+Four mechanisms died on this project, and all four died **before** they were written:
+
+| Mechanism | Killed by | When |
+|---|---|---|
+| Haversine distance to decide marine applicability | The API returns nulls inland rather than snapping to a distant sea cell | Recon, day 1 |
+| Elevation as a ski test | 16-city calibration: Oslo skis at 631 m, Barcelona does not at 1025 m | Recon, day 1 |
+| Single-request terrain grids at higher resolution | The sampled maximum is non-monotonic in radius, so the extra precision is unusable | Recon, day 1 |
+| UV as a weighted factor | A weighted mean cannot express harm — the weight that fixed one sanity row broke another | Slice 1, while fitting |
+
+After UV, nothing was built and then removed. Every later change was additive or a refactor under
+green tests: gates were added to profiles, the read-through was split into two independent samples,
+scoring was extracted into one function two callers share.
+
+That is the return on two days of design before any code, and it is the only honest way I have to
+measure it. Three of the four deaths cost a probe and an afternoon; the same three discovered during
+implementation would each have cost a rewrite of something already tested and deployed. The fourth,
+UV, is what that looks like — it was cheap only because slice 1 was three points of tracer bullet
+rather than a finished scoring model.
+
+The counter-reading is available too, and I would rather state it than let a reviewer supply it: two
+days is a large fraction of five, and a project this size could have discovered the same four things
+in a day of prototyping. What that would not have produced is the record — `open-questions.md`,
+`cut.md` and the probes exist because the deaths happened somewhere they could be written down.
+
+### The first thing that broke in deployment
+
+A mistyped city name, on the day the tracer bullet went live. It reached the deployed URL as a blank
+`INTERNAL_SERVER_ERROR` with no message, while its schema test sat green.
+
+The cause is in "The constitution changed because the slice proved it wrong" above: Yoga masks
+anything that is not a `GraphQLError`, and `graphql()` called directly does not, so a test that never
+went over HTTP could not see it. A curl found it, not the suite.
+
+It is the most useful failure in this project, and not because of the bug. It happened the same
+afternoon as `rampUp(5, 5)` returning 0 at its own threshold — caught in the domain, where the
+failing run was honoured — and the two results split exactly along the line the constitution had
+drawn between "test-first here" and "tests alongside, weighted by risk, there". One discipline caught
+its bug in thirty lines. The other shipped its bug to a public URL. That is what rewrote principle 6
+to bind every layer.
+
+Nothing has broken in deployment since. That is a weaker claim than it
+sounds: deploys are `git pull` plus `docker compose up` on a host described by a file in this
+repository, so there is not much surface left to break. Making the deployment boring on day one was
+the point of scheduling it first.
