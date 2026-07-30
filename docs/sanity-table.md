@@ -1,8 +1,15 @@
 # Sanity table
 
-Twenty scenarios with the rating band each should land in, written **before** any curve exists.
-Curves are then fitted to reproduce this table. When every row passes, the scoring model is done and
-no further tuning happens.
+Twenty-three scenarios with the rating band each should land in. Curves are fitted to reproduce this
+table; when every row passes, the scoring model is done and no further tuning happens.
+
+The first twenty were written **before any curve existed**, which is the order that makes them
+evidence rather than description. **Skiing rows 6-8 were not**: they were added on 30 July, after an
+independent review found the shipped model scoring a bare summer mountain at 35 out of 100 and
+ranking it the best ski day of the week. Their bands were fixed against [S10] before the gate was
+written, and the gate was then checked against them — but the honest label is *after the fact*, and
+the reason they were needed is more useful than the rows themselves: **the first twenty contain no
+negative case**, so the fitting procedure had no way to fail on one.
 
 Bands: **EXCELLENT** 80-100 · **GOOD** 60-79 · **FAIR** 40-59 · **POOR** 0-39.
 
@@ -40,6 +47,12 @@ luck, and the reader deserves to know which they are holding.
 
 Assessed at the sampled high point, not the city.
 
+**Rows 1-5 assume a base at or above the 30 cm skiable threshold [S10].** That assumption was
+unspoken until rows 6-8 were added, and its being unspoken is exactly why the model scored a bare
+summer mountain as rankable skiing: every row taught it that absent fresh snow is survivable,
+because in every row the base was there to survive on. Rows 6-8 are the negative and boundary cases
+the first twenty had none of.
+
 | # | Conditions | Band | Basis |
 |---|---|---|---|
 | 1 | −4 °C, 25 cm fresh snow over 3 days, wind 10 km/h, clear | **EXCELLENT** | Cold enough to preserve fresh snow, calm, good visibility. The uncontested ideal |
@@ -47,6 +60,9 @@ Assessed at the sampled high point, not the city.
 | 3 | +2 °C, 5 cm fresh snow, turning to rain during the day | **POOR** | Rain on snow destroys the surface rather than degrading it. Above freezing plus precipitation is decisive |
 | 4 | −15 °C, 40 cm fresh snow, gusts 70 km/h | **POOR** | The row that tests whether one factor can veto the others. Forty centimetres of powder is exceptional, and it is unreachable: 70 km/h is past the 56-64 km/h band where resorts hold lifts [S1], and −15 °C with that wind is roughly −28 °C of windchill. **Arguable** against FAIR |
 | 5 | −2 °C, no fresh snow, a week cold and dry, sunny | **GOOD** | The classic groomed bluebird day. No powder, but a preserved base, sun and calm. **Arguable** against FAIR, depending on how heavily fresh snow is weighted |
+| 6 | +14 °C, base 0 cm, no snowfall for a month | **POOR** | Added after the shipped model scored this at 35 and ranked it the best ski day of the week. The 100-day rule puts skiable cover at 30 cm [S10]; zero is not a bad day for skiing, it is the absence of skiing. The row exists because rows 1-5 all presuppose a base and none of them says so, so nothing here could ever fail on its absence |
+| 7 | −2 °C, base 120 cm, no fresh snow for 10 days, sunny | **GOOD** | Row 5 with the base spoken aloud, at four times the [S10] threshold. It exists to prove the snow gate does **not** fire on a preserved base — a gate that fixes row 6 by breaking January is not a fix |
+| 8 | −6 °C, base 15 cm, 3 cm fresh | **POOR** | Half the [S10] threshold, which is where rocks and stumps come through. Cold and a dusting cannot rescue what is not underneath them. **Arguable** against FAIR: 15 cm on a grassy piste skis better than 15 cm on boulders, and nothing here knows which it is |
 
 ## Surfing
 
@@ -170,6 +186,21 @@ That is the gate on surfing, not a weighted factor, because a blown-out day is n
 day.
 - [SurfCaptain: understanding the wind condition forecast](https://surfcaptain.com/blog/1/understanding-wind-condition-forecast)
 
+**[S10] Skiable snow cover starts at 30 cm**
+The "100-day rule" — natural snow reliability requires cover of **at least 30 cm** on at least 100
+days between 16 December and 15 April, in 7 winters out of 10. Proposed by Witmer (1984), developed
+by Abegg (1996) and Bürki (2000), and adopted by the OECD as the reference approach for assessing
+climate impact on Alpine winter tourism. It is the depth below which governments stop calling a
+region skiable, which is a stronger provenance than any figure a ski shop publishes: the searches
+that reached for one returned blogs and Quora, and those were rejected rather than used.
+
+The gate anchors on it directly — `rampUp(0, 30)` — so **neither anchor is fitted**. Zero is the
+physical absence of snow and 30 is the cited threshold, which is why this is the one curve in the
+model with nothing to argue about except the source itself.
+- [OECD (2007), *Climate Change in the European Alps: Adapting Winter Tourism*](https://www.oecd.org/content/dam/oecd/en/publications/reports/2007/01/climate-change-in-the-european-alps_g1gh7c4d/9789264031692-en.pdf)
+- [Willibald et al. (2021), *Vulnerability of ski tourism towards internal climate variability and climate change in the Swiss Alps*](https://www.dora.lib4ri.ch/wsl/dload/wsl:26774/PDF/Willibald-2021-Vulnerability_of_ski_tourism_towards-(published_version).pdf) — the Witmer → Abegg → Bürki lineage
+- [Spandre et al. (2019), *Winter tourism under climate change in the Pyrenees and the French Alps*, The Cryosphere](https://tc.copernicus.org/articles/13/1325/2019/)
+
 **[S4] Wind and travel disruption — yellow warnings from roughly 64-72 km/h (40-45 mph) gusts**
 Met Office yellow wind warnings cite initial impacts at 40-45 mph gusts, with 50-60 mph expected
 widely in stronger events; impacts include difficult driving, downed branches and disruption on
@@ -181,7 +212,7 @@ exposed routes. *The only figure that survived the first draft unchanged.*
 Named rather than hidden, because a table presented as unanimous when it is not is the same
 overconfidence the rest of the design tries to avoid.
 
-Skiing 2, skiing 4, skiing 5, outdoor 4, outdoor 5, indoor 5.
+Skiing 2, skiing 4, skiing 5, skiing 8, outdoor 4, outdoor 5, indoor 5.
 
 Each is a case where two defensible readings exist. The band chosen is stated above with its
 reasoning; a reviewer who disagrees can see exactly what they are disagreeing with, and the curve
