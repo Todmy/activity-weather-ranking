@@ -45,7 +45,7 @@ in aggregate. Recorded in [`cut.md`](./cut.md) and [`requirements.md`](./require
 
 **Open-Meteo endpoints in configuration.** Factor IV wants a backing service attachable by config,
 and these are constants in three provider files. It is fifteen minutes of work. It is not done
-because the config surface is currently four variables that each earn their place, and three more
+because the config surface is currently five variables that each earn their place, and three more
 existing only for a scenario nobody will run — pointing this service at a mirror of a free public API
 — makes the story worse, not better. The moment there is a staging environment with a proxy in front
 of Open-Meteo, this changes.
@@ -53,7 +53,9 @@ of Open-Meteo, this changes.
 **A separate worker process.** Factor VIII would put the refresher in its own process type. It shares
 the web process instead, and the lease is why that is safe: it is the same lease a request takes, so
 two instances behind one database already cannot double-fetch. Splitting it would buy isolation this
-service has no use for at one instance. Decision [#48](./decisions.md).
+service has no use for at one instance — and [`capacity.md`](./capacity.md) now says why with a
+number, because the ceiling turns out to be the upstream quota rather than this process. Decision
+[#48](./decisions.md).
 
 **Two log formats on one stream.** The refresher writes lines a human reads
 (`refresher: Ljubljana (geoname:3196359) refreshed`); requests write JSON a machine reads. That is

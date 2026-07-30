@@ -292,7 +292,9 @@ In order, and the first two are the ones that matter:
    geography model answers "is there terrain" honestly and cannot answer "can you ski there", and
    that gap is the largest single overclaim risk in the service.
 3. **Two instances behind a proxy.** The lease is a database row rather than in-memory state, so
-   horizontal scale should already work — but nothing runs two, so nothing proves it.
+   horizontal scale should already work — but nothing runs two, so nothing proves it. It is the
+   largest unproven claim here, and [`capacity.md`](docs/capacity.md) says so alongside the numbers
+   that are measured.
 4. **Structured logging and metrics** at the gateway and provider boundaries. The refresher's log is
    readable by a human and by nothing else.
 5. **Per-caller rate limiting.** The free tier is the shared resource this service protects, and it
@@ -310,6 +312,7 @@ Everything deliberately *not* built, with the test each item had to pass, is in
 | [`docs/decisions.md`](docs/decisions.md) | **Start here for the reasoning.** Every decision and assumption, one line each, linking to the full argument |
 | [`docs/worklog.md`](docs/worklog.md) | The sequence as it happened, including two designed mechanisms that died on contact with the real API |
 | [`docs/open-questions.md`](docs/open-questions.md) | The eight questions that would go to a product manager, and the assumption committed to instead |
+| [`docs/capacity.md`](docs/capacity.md) | How many callers it takes, measured on the deployed box — and why that number is not the real ceiling |
 | [`docs/twelve-factor.md`](docs/twelve-factor.md) | The twelve factors audited by command rather than by memory — three things it found and fixed, four left undone on purpose |
 | [`docs/cut.md`](docs/cut.md) | What was considered and not built, with the test each item had to pass |
 | [`docs/design.md`](docs/design.md) | Data model, refresh gateway, scoring, determinism |
