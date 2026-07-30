@@ -11,8 +11,8 @@ Node.js, TypeScript, GraphQL, MongoDB.
 `http://2.28.24.132:4000/graphql` — open it for GraphiQL, which loads with the example queries below
 already in the editor. Pick one from the operation dropdown and press play.
 
-Run it yourself with `docker compose up`, which is the same file the deployed host runs. The host
-itself is described in [`infra/cloud-init.yaml`](infra/cloud-init.yaml).
+To run it yourself, see [Run it yourself](#run-it-yourself) below — the same compose file the
+deployed host uses. The host itself is described in [`infra/cloud-init.yaml`](infra/cloud-init.yaml).
 
 ## Try it
 
@@ -103,6 +103,53 @@ curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
 curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
   -d '{"query":"{ activityForecast(query: \"Nowhereinparticular\") { location { name } } }"}'
 ```
+
+## Run it yourself
+
+```bash
+git clone https://github.com/Todmy/activity-weather-ranking && cd activity-weather-ranking
+docker compose up
+```
+
+Then open `http://localhost:4000/graphql`. That is the whole of it: no API key, no signup, no
+account. Open-Meteo's free tier needs none, which is part of why it was chosen.
+
+`docker-compose.yml` is the same file the deployed host runs, so this is not a development-only
+path. It builds the image, waits for MongoDB to report healthy, and only then starts the API — which
+opens the database before it binds the socket, so a service that accepts requests is a service that
+can answer them.
+
+**The first request for a city takes a few seconds.** It geocodes, samples 81 elevation coordinates
+around the city and asks the wave model whether there is water there. All of that is written to
+`locations` and never paid again. The second request for the same city is a database read, and every
+request for the next hour is served from the stored issuance — which you can see, because `issuedAt`
+does not move.
+
+### Without Docker
+
+Node 24 or newer and pnpm. Node 24 strips TypeScript types at load, so there is no build step.
+
+```bash
+pnpm install
+docker compose up mongo -d      # or point MONGODB_URI at any MongoDB 8
+pnpm dev                        # watch mode on http://localhost:4000/graphql
+```
+
+Configuration is three variables and every one has a working default, so the service starts with no
+`.env` at all — see [`.env.example`](.env.example). Override `PORT`, `MONGODB_URI` or `MONGODB_DB`
+only if you need to.
+
+### Tests
+
+```bash
+pnpm check                      # tsc --noEmit, then 294 tests
+```
+
+Neither Docker nor a network is needed. The persistence tests start a real `mongod` through
+`mongodb-memory-server` — the same major version as the `mongo:8` in compose, so the driver, the
+indexes and the concurrency behaviour under test are production's. No test ever calls Open-Meteo;
+they run against the captured responses in [`docs/probes/`](docs/probes/), which is what keeps them
+deterministic and keeps the free-tier quota for the deployed service.
 
 ## Current state
 
