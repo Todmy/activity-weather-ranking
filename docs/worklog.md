@@ -231,6 +231,32 @@ I expect to meet this again in slice 2. Skiing row 4 is 40 cm of fresh powder wi
 the table says POOR, which is a veto, and an additive model cannot veto anything. That row needs a
 mechanism this profile didn't.
 
+### The constitution changed because the slice proved it wrong
+
+Principle 6 said test-first in the domain and "alongside the code, weighted by risk" everywhere
+else. That looked like a sensible budget call when I wrote it: the scoring model is what's under
+judgement, the plumbing isn't, and four days is four days.
+
+Slice 1 ran both halves of it as an experiment I didn't plan. In the domain, where I honoured the
+failing run, it caught `rampUp(5, 5)` returning 0 at its own threshold, in the first thirty lines of
+the project. Outside the domain, where I wrote tests after the code, the not-found path passed its
+schema test and reached the deployed service as a blank `INTERNAL_SERVER_ERROR`. A curl found it,
+not the suite. Same afternoon, same person, two different disciplines, and the results split exactly
+along that line.
+
+So the rule now binds every layer, and it names the failing run as part of itself rather than as
+good practice around it. A test that has never failed is a claim, not evidence.
+
+The retrofit needed proof rather than assertion, because the tests I'd already written couldn't be
+run red after the fact. I broke eight lines across the five modules outside the domain, one at a
+time, and checked which suites noticed. Seven died. One lived: turning a null precipitation into 0
+inside `toDailyWeather`. My null test covered the parser and stopped there, so the exact thing
+principle 4 exists to prevent, "we have no rainfall figure" quietly becoming "it did not rain", had
+no test on the only path that reaches a score. It has one now, and the same mutation kills it.
+
+Eight mutations is not a coverage tool and I'm not claiming it is. It's the cheapest thing that
+answers the only question worth asking about a test written after its code: would this notice?
+
 ### A test that paid for itself in ten minutes
 
 The three curve primitives are about thirty lines and I nearly wrote them without tests, on the
