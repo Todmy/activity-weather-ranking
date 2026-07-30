@@ -1,4 +1,5 @@
-import { MongoMemoryServer } from 'mongodb-memory-server'
+import type { MongoMemoryServer } from 'mongodb-memory-server'
+import { startMongod } from './testing/mongod.ts'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { startServer } from './server.ts'
 
@@ -13,7 +14,7 @@ let mongod: MongoMemoryServer
 let running: Awaited<ReturnType<typeof startServer>> | undefined
 
 beforeAll(async () => {
-  mongod = await MongoMemoryServer.create()
+  mongod = await startMongod()
 }, 120_000)
 
 afterAll(async () => {

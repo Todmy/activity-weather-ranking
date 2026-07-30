@@ -1,11 +1,12 @@
-import { MongoMemoryServer } from 'mongodb-memory-server'
+import type { MongoMemoryServer } from 'mongodb-memory-server'
+import { startMongod } from '../testing/mongod.ts'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { connectDatabase } from './client.ts'
 
 let mongod: MongoMemoryServer
 
 beforeAll(async () => {
-  mongod = await MongoMemoryServer.create()
+  mongod = await startMongod()
 }, 120_000)
 
 afterAll(async () => {

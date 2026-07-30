@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs'
 import type { Db } from 'mongodb'
 import { MongoClient } from 'mongodb'
-import { MongoMemoryServer } from 'mongodb-memory-server'
+import type { MongoMemoryServer } from 'mongodb-memory-server'
+import { startMongod } from '../testing/mongod.ts'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { forecastRepository } from '../persistence/forecasts.ts'
 import type { NewIssuance } from '../persistence/forecasts.ts'
@@ -26,7 +27,7 @@ let client: MongoClient
 let db: Db
 
 beforeAll(async () => {
-  mongod = await MongoMemoryServer.create()
+  mongod = await startMongod()
   client = new MongoClient(mongod.getUri())
   await client.connect()
   db = client.db('test')

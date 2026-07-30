@@ -1,6 +1,7 @@
 import type { Db } from 'mongodb'
 import { MongoClient } from 'mongodb'
-import { MongoMemoryServer } from 'mongodb-memory-server'
+import type { MongoMemoryServer } from 'mongodb-memory-server'
+import { startMongod } from '../testing/mongod.ts'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import type { LeaseDocument } from './leases.ts'
 import { LEASE_TTL_MS, leaseKeyFor, leaseRepository } from './leases.ts'
@@ -14,7 +15,7 @@ let client: MongoClient
 let db: Db
 
 beforeAll(async () => {
-  mongod = await MongoMemoryServer.create()
+  mongod = await startMongod()
   client = new MongoClient(mongod.getUri())
   await client.connect()
   db = client.db('test')
