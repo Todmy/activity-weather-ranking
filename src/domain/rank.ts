@@ -21,7 +21,7 @@ export type RankedDay = {
 
 export type DayResults = {
   date: string
-  results: ActivityResult[]
+  activities: ActivityResult[]
 }
 
 /** Scored first, best score first, ties by activity name. */
@@ -48,7 +48,7 @@ export const rankActivitiesWithinDay = (results: ActivityResult[]): ActivityResu
 export const rankDaysWithinActivity = (days: DayResults[], activity: string): RankedDay[] =>
   days
     .flatMap((day) => {
-      const result = day.results.find((candidate) => candidate.activity === activity)
+      const result = day.activities.find((candidate) => candidate.activity === activity)
 
       return result?.kind === 'scored'
         ? [{ date: day.date, score: result.score, confidence: result.confidence }]

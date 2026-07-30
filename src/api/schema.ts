@@ -10,6 +10,7 @@ import type {
 import type { ActivityResult } from '../domain/activityResult.ts'
 import type { RankedDay } from '../domain/rank.ts'
 import type { FactorContribution, GateEffect } from '../domain/score.ts'
+import { OpenMeteoError } from '../providers/openmeteo/forecast.ts'
 import type { GeocodedLocation } from '../providers/openmeteo/geocoding.ts'
 
 /**
@@ -206,6 +207,18 @@ builder.queryType({
               extensions: { code: 'LOCATION_NOT_FOUND' },
             })
           }
+
+          // Upstream having a bad five minutes is not a bug in this service,
+          // and a masked 500 makes it look like one. There is nothing to serve
+          // instead until the cache lands in M5, and stale-if-error is exactly
+          // the mechanism that will turn this into an answer rather than an
+          // apology.
+          if (error instanceof OpenMeteoError) {
+            throw new GraphQLError(`Open-Meteo is unavailable: ${error.message}`, {
+              extensions: { code: 'UPSTREAM_UNAVAILABLE', upstreamStatus: error.status },
+            })
+          }
+
           throw error
         }
       },

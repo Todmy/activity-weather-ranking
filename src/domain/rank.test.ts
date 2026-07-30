@@ -79,9 +79,9 @@ describe('rankActivitiesWithinDay', () => {
 
 describe('rankDaysWithinActivity', () => {
   const days = [
-    { date: '2026-01-01', results: [scored('skiing', 40), scored('surfing', 10)] },
-    { date: '2026-01-02', results: [scored('skiing', 90), scored('surfing', 5)] },
-    { date: '2026-01-03', results: [scored('skiing', 40), notApplicable('surfing')] },
+    { date: '2026-01-01', activities: [scored('skiing', 40), scored('surfing', 10)] },
+    { date: '2026-01-02', activities: [scored('skiing', 90), scored('surfing', 5)] },
+    { date: '2026-01-03', activities: [scored('skiing', 40), notApplicable('surfing')] },
   ]
 
   it('orders the days for one activity, best first', () => {
