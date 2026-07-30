@@ -1,15 +1,15 @@
 import { createServer } from 'node:http'
-import { createYoga } from 'graphql-yoga'
 import { config } from './config.ts'
-import { schema } from './api/schema.ts'
+import { createApp } from './api/yoga.ts'
 
 /**
  * Yoga runs directly on `node:http`. There is one endpoint and no REST routes,
  * so Express would be a layer nothing passes through. See decisions.md #35.
+ *
+ * The app itself is built in `api/yoga.ts`, which is what the tests exercise —
+ * including the error masking, which only exists at this layer.
  */
-const yoga = createYoga({ schema, graphqlEndpoint: '/graphql' })
-
-const server = createServer(yoga)
+const server = createServer(createApp())
 
 server.listen(config.PORT, () => {
   console.log(`GraphQL ready at http://localhost:${config.PORT}/graphql`)
