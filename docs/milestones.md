@@ -10,27 +10,32 @@ having finished isn't a milestone.
 
 Status: **done** · **in progress** · **not started**
 
-| Code | Milestone | Delivers | Est | Target | Status |
-|---|---|---|---|---|---|
-| **M0** | Preparation | The reasoning, before any code | 2 days | Wed 29 to Thu 30 Jul | **done** |
-| **M1** | Skeleton deployed | A URL that answers GraphQL | 45 min | Thu 31 Jul | in progress |
-| **M2** | Tracer bullet | One city, one activity, scored live | 2 h | Thu 31 Jul | not started |
-| **M3** | Scoring model | All four activities, sanity table passing | 3 h | Fri 31 Jul | not started |
-| **M4** | Geography | Terrain and ocean decide applicability | 2 h | Fri 31 Jul | not started |
-| **M5** | Persistence and refresh | Weather stored, not re-fetched | 3 h | Sat 1 Aug | not started |
-| **M6** | API surface | Both ranking axes, ambiguity handled | 1.5 h | Sat 1 Aug | not started |
-| **M7** | Background refresher | Scheduled pull, visibly running | 2 h | Sun 2 Aug | not started |
-| **M8** | Submission | README, worklog, verify, review | 3 h | Sun 2 Aug | not started |
+| Code | Milestone | Delivers | Points | Status |
+|---|---|---|---|---|
+| **M0** | Preparation | The reasoning, before any code | 13 | **done** |
+| **M1** | Skeleton deployed | A URL that answers GraphQL | 1 | in progress |
+| **M2** | Tracer bullet | One city, one activity, scored live | 3 | not started |
+| **M3** | Scoring model | All four activities, sanity table passing | 5 | not started |
+| **M4** | Geography | Terrain and ocean decide applicability | 3 | not started |
+| **M5** | Persistence and refresh | Weather stored, not re-fetched | 5 | not started |
+| **M6** | API surface | Both ranking axes, ambiguity handled | 2 | not started |
+| **M7** | Background refresher | Scheduled pull, visibly running | 3 | not started |
+| **M8** | Submission | README, worklog, verify, review | 5 | not started |
 
-Roughly 17 hours of work remain against three and a half days. The buffer isn't spread evenly, and
-M3 is where it goes if it goes: scoring calibration has no ground truth, so it's the one block that
-can't be finished by working harder at it.
+**About the points.** Fibonacci, relative to each other rather than to a clock. 1 is trivial, 3 is a
+normal unit of work, 5 carries real uncertainty, and 13 is the two days of design that preceded any
+code. Forty points in total, thirteen of them delivered.
+
+They're here to show where the weight sits, not to promise a date. The weight is not spread evenly:
+M3 is the one milestone that can't be finished by working harder at it, because scoring calibration
+has no ground truth and therefore no natural stopping point. Everything after M4 is predictable work,
+which is exactly why the unpredictable milestones run first.
 
 ---
 
 ## M0 — Preparation
 
-**Status: done.** Two days, 29 and 30 July, no application code.
+**Status: done. 13 points.** Two days, 29 and 30 July, no application code.
 
 This is deliberate. The brief grades how the work happened above the service itself, so the thinking
 happened first and in writing. Everything below is committed and readable.
@@ -75,7 +80,7 @@ locally.
 This milestone exists to move that discovery to the first day, when there's still schedule to absorb
 it.
 
-**Est: 45 min.** Plan: [slice 0](./krukit/activity-weather-ranking/plan.md), steps 2 to 5.
+**1 point.** Plan: [slice 0](./krukit/activity-weather-ranking/plan.md), steps 2 to 5.
 
 ---
 
@@ -93,7 +98,7 @@ a breakdown of what produced it.
 **Why here:** it's the thinnest possible cut through every layer. After this, no layer is
 hypothetical, and everything that follows is widening a path that already runs end to end.
 
-**Est: 2 h.** Plan: [slice 1](./krukit/activity-weather-ranking/plan.md).
+**3 points.** Plan: [slice 1](./krukit/activity-weather-ranking/plan.md).
 
 ---
 
@@ -119,7 +124,7 @@ If the table turns out to be unsatisfiable, that's the interesting result rather
 rows would then encode incompatible beliefs about how factors trade off, and the row that gives way
 gets recorded with the reason.
 
-**Est: 3 h.** Plan: [slice 2](./krukit/activity-weather-ranking/plan.md).
+**5 points.** Plan: [slice 2](./krukit/activity-weather-ranking/plan.md).
 
 ---
 
@@ -139,7 +144,7 @@ elevation and distance stated. Amsterdam returns `notApplicable` for skiing and 
 activities that need it need different geography. Scoring a city coordinate for skiing gives
 confidently wrong answers for exactly the cities a traveller would ask about.
 
-**Est: 2 h.** Plan: [slice 3](./krukit/activity-weather-ranking/plan.md).
+**3 points.** Plan: [slice 3](./krukit/activity-weather-ranking/plan.md).
 
 ---
 
@@ -161,7 +166,7 @@ answers correctly with Open-Meteo unreachable, flagging the data as stale.
 milestone where the design is least negotiable, because "how you model, store, and refresh it" is
 quoted from the brief.
 
-**Est: 3 h.** Plan: [slice 4](./krukit/activity-weather-ranking/plan.md).
+**5 points.** Plan: [slice 4](./krukit/activity-weather-ranking/plan.md).
 
 ---
 
@@ -178,7 +183,7 @@ tells you which it picked, and one that returns candidates for a caller who want
 **Done when:** a reviewer opens GraphiQL on the deployed URL and runs every example query without
 typing anything.
 
-**Est: 1.5 h.** Plan: [slice 5](./krukit/activity-weather-ranking/plan.md).
+**2 points.** Plan: [slice 5](./krukit/activity-weather-ranking/plan.md).
 
 ---
 
@@ -198,7 +203,7 @@ schema change and no API change. If the schedule bites, it gives way by plan rat
 
 The full argument, including the case for cutting it, is in [`cut.md`](./cut.md).
 
-**Est: 2 h.** Plan: [slice 6](./krukit/activity-weather-ranking/plan.md).
+**3 points.** Plan: [slice 6](./krukit/activity-weather-ranking/plan.md).
 
 ---
 
@@ -215,7 +220,7 @@ Postgres, and the input-type shape I rejected.
 **Done when:** someone clones the repository, runs `docker compose up`, and gets a working service
 without asking me a question.
 
-**Est: 3 h**, including the verify and review stages of the pipeline. Plan:
+**5 points**, including the verify and review stages of the pipeline. Plan:
 [slice 7](./krukit/activity-weather-ranking/plan.md).
 
 ---

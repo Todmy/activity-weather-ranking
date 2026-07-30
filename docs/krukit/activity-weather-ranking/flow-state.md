@@ -20,27 +20,27 @@ Full step lists and done-conditions are in [`plan.md`](./plan.md).
 Tick a slice only when its **Done when** condition in plan.md is met, and commit before ticking, so
 the tick and the code that earns it land together.
 
-| | Slice | Est | Status |
-|---|---|---|---|
-| 0 | Repository, skeleton, deployed | 1 h | **partial** — repo created and first commits pushed 2026-07-30 (`github.com/Todmy/activity-weather-ranking`, public). Steps 2-5 remain: Node/TS/Vitest/zod, Yoga + Pothos with `health`, Dockerfile + compose, deploy |
-| 1 | Tracer bullet: one city, one activity, no cache | 2 h | not started |
-| 2 | The rest of the scoring domain | 3 h | not started — **carries the schedule risk** |
-| 3 | Geography: terrain sampling and marine coverage | 2 h | not started |
-| 4 | Persistence and the refresh gateway | 3 h | not started |
-| 5 | The full API surface | 1.5 h | not started |
-| 6 | Background refresher | 2 h | not started — additive, gives way first if the schedule bites |
-| 7 | README and worklog | 2 h | not started |
+| | Slice | Milestone | Points | Status |
+|---|---|---|---|---|
+| 0 | Repository, skeleton, deployed | M1 | 1 | **partial** — steps 1-4 done 2026-07-30: repo public, Node 24 + TS strict + Vitest + zod, Yoga + Pothos answering `health`, Dockerfile and compose verified end to end locally (`{"data":{"health":"ok"}}` through the container). Step 5, deploy to the Hetzner box, remains |
+| 1 | Tracer bullet: one city, one activity, no cache | M2 | 3 | not started |
+| 2 | The rest of the scoring domain | M3 | 5 | not started — **carries the schedule risk** |
+| 3 | Geography: terrain sampling and marine coverage | M4 | 3 | not started |
+| 4 | Persistence and the refresh gateway | M5 | 5 | not started |
+| 5 | The full API surface | M6 | 2 | not started |
+| 6 | Background refresher | M7 | 3 | not started — additive, gives way first if the schedule bites |
+| 7 | README and worklog | M8 | 5 | not started |
 
 **Suggested session boundaries.** Each is a clean `/clear` point: the work is committed, the table is
 ticked, and nothing lives only in conversation.
 
-| Session | Slices | Est | Why these together |
+| Session | Slices | Points | Why these together |
 |---|---|---|---|
-| 1 | 0 + 1 | 2.5 h | Both exist to prove the path end to end. Splitting them leaves a skeleton that does nothing |
-| 2 | 2 | 3 h | Alone, deliberately. The sanity table has to stay in context and the calibration is the one thing here with no ground truth |
-| 3 | 3 + 4 | 5 h | The two persistence-shaped slices. Split them if context gets tight; slice 4 is the natural break |
-| 4 | 5 + 6 | 3.5 h | Both additive on a working core, so both are safe to lose |
-| 5 | 7 | 2 h | Documentation reads better written after the code exists than predicted before it |
+| 1 | 0 + 1 | 4 | Both exist to prove the path end to end. Splitting them leaves a skeleton that does nothing |
+| 2 | 2 | 5 | Alone, deliberately. The sanity table has to stay in context and the calibration is the one thing here with no ground truth |
+| 3 | 3 + 4 | 8 | The two persistence-shaped slices. Split them if context gets tight; slice 4 is the natural break |
+| 4 | 5 + 6 | 5 | Both additive on a working core, so both are safe to lose |
+| 5 | 7 | 5 | Documentation reads better written after the code exists than predicted before it |
 
 ## Notes
 
@@ -83,12 +83,12 @@ run first, while there is still schedule left to absorb what they turn up.
 Target submission Monday 2026-08-03; the brief's five working days from Wednesday 2026-07-29 put the
 strict deadline at Tuesday 4 August. Aiming a day inside it.
 
-- Thursday — sanity table, design.md, first commit, tracer bullet deployed
-- Friday — scoring domain under TDD, persistence and gateway
-- Saturday/Sunday — buffer, background refresher, README and worklog
-- Monday — submit
+Sequencing rather than dated commitments: 27 points remain across five sessions, and the order is
+fixed by risk rather than by calendar. Slice 2 runs before the predictable work so that a calibration
+problem surfaces while there is still room to absorb it, and slice 6 runs last so it can give way
+without touching anything else.
 
-Estimates assume AI-compressed development, which is not uniform: 5-20× on mechanical and named-
+Sizes assume AI-compressed development, which is not uniform: 5-20× on mechanical and named-
 pattern work, 2-4× on debugging, and roughly 1× on external API round trips, decisions without
 ground truth, and reviewing generated code. Block C is almost entirely the 1× kind, which is the
 second reason it carries the schedule risk.

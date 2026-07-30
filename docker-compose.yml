@@ -1,0 +1,31 @@
+# The reviewer runs this file, and so does production. Nothing about the
+# deployment lives outside it.
+services:
+  api:
+    build: .
+    ports:
+      - '${PORT:-4000}:4000'
+    environment:
+      PORT: 4000
+      MONGODB_URI: mongodb://mongo:27017
+      MONGODB_DB: ${MONGODB_DB:-activity_weather}
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:8
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      # The API waits for this rather than retrying a connection on boot: a
+      # container that exits because its dependency was slow is a false alarm.
+      test: ['CMD', 'mongosh', '--quiet', '--eval', 'db.adminCommand("ping")']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+volumes:
+  mongo-data:

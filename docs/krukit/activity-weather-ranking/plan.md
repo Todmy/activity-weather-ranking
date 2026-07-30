@@ -4,14 +4,16 @@ Stage 4 of 7. Date: 2026-07-30. Design: [`design.md`](./design.md).
 
 Ordered as vertical slices, not layers. Each slice ends with something that runs, so a slice
 abandoned mid-project still leaves a working service rather than three finished layers and no
-product. Estimates assume AI-assisted work and are stated per slice, not per task.
+product. Sizes are story points on a Fibonacci scale, relative to each other rather than to a
+clock, and stated per slice rather than per task. The mapping to milestone codes M0 to M8 is in
+[`../../milestones.md`](../../milestones.md).
 
 The ordering rule: **unpredictable work first, predictable work last.** Slices 1 and 3 carry the
 schedule risk; slice 7 is the one that gives way if anything overruns.
 
 ---
 
-## Slice 0 — Repository, skeleton, deployed — 1 h
+## Slice 0 — Repository, skeleton, deployed — 1 point (M1)
 
 Blocked on decision #32 (version control). Nothing else is blocked by it.
 
@@ -31,7 +33,7 @@ The box already exists and is managed as code, so this slice adds no new infrast
 platform to learn under deadline. It also constrains the deployment usefully: whatever runs in
 production is the compose file in the repository, not a console configuration nobody else can see.
 
-## Slice 1 — Tracer bullet — 2 h
+## Slice 1 — Tracer bullet — 3 points (M2)
 
 One city, one activity, no cache, no tests beyond the domain. Proves the whole path exists.
 
@@ -49,7 +51,7 @@ per-factor contributions.
 
 **Blocked on** the sanity table for step 4. Curves can be written before it; the numbers cannot.
 
-## Slice 2 — The rest of the domain — 3 h, highest schedule risk
+## Slice 2 — The rest of the domain — 5 points (M3), highest schedule risk
 
 Pure TDD throughout. Zero I/O, so there is nothing to mock and no excuse.
 
@@ -66,7 +68,7 @@ Pure TDD throughout. Zero I/O, so there is nothing to mock and no excuse.
 **This is the block with no natural stopping point.** The stopping rule is the table going green,
 and nothing beyond it. Further tuning goes in the worklog as a temptation resisted, not into code.
 
-## Slice 3 — Geography — 2 h
+## Slice 3 — Geography — 3 points (M4)
 
 1. `providers/openmeteo/elevation.ts` — the 11×11 circular 50 km grid, 81 points, pinned constants.
 2. `providers/openmeteo/marine.ts` — all-null daily arrays mean no coverage, per recon.
@@ -77,7 +79,7 @@ and nothing beyond it. Further tuning goes in the worklog as a temptation resist
 **Done when** Amsterdam returns `notApplicable/noTerrain` for skiing and Vienna returns
 `notApplicable/noMarineCoverage` for surfing, both from fixtures.
 
-## Slice 4 — Persistence and the gateway — 3 h
+## Slice 4 — Persistence and the gateway — 5 points (M5)
 
 1. Three collections with their indexes; the `resolutions` pin.
 2. Issuance write + prune-beyond-24; `expiresAt` 30 days.
@@ -89,7 +91,7 @@ and nothing beyond it. Further tuning goes in the worklog as a temptation resist
 
 **Done when** two concurrent requests for a cold location produce exactly one upstream fetch.
 
-## Slice 5 — Full API — 1.5 h
+## Slice 5 — Full API — 2 points (M6)
 
 1. `searchLocations`, `activityForecastAt`, `forecastHistory`.
 2. `stale`, `modelVersion`, `issuedAt`, the ski assessment point, and the three-state union all
@@ -99,7 +101,7 @@ and nothing beyond it. Further tuning goes in the worklog as a temptation resist
 
 **Done when** a reviewer can open the deployed GraphiQL and run every example without typing.
 
-## Slice 6 — Background refresher — 2 h
+## Slice 6 — Background refresher — 3 points (M7)
 
 Deliberately last. Additive: same gateway, same lease, no schema or API change.
 
@@ -112,7 +114,7 @@ Deliberately last. Additive: same gateway, same lease, no schema or API change.
 **If the schedule bites, this is what gives way** — and `cut.md` already holds the entry explaining
 why it would have been built.
 
-## Slice 7 — The submission itself — 2 h
+## Slice 7 — The submission itself — 5 points (M8)
 
 1. `README.md` — what it is, how to run it, the assumptions, the CC BY 4.0 attribution, and links
    into `decisions.md`.
@@ -126,11 +128,13 @@ The worklog is graded first and is the one artifact that must not read as genera
 
 ## Total
 
-15.5 h across seven slices, against a Thursday-to-Monday window. The slack is real but it lives
-entirely in slices 2 and 6 — everything else is predictable.
+27 points across eight slices. The slack is real but it lives entirely in slices 2 and 6; everything
+else is predictable work whose shape is already settled.
 
-## Two things block the start
+## What blocked the start, and how each was cleared
 
-- **Decision #32, version control.** Blocks slice 0, and only slice 0.
-- **The sanity table.** Blocks step 4 of slice 1 and all of slice 2. Curves can be written without
-  it; numbers cannot.
+- **Decision #32, version control.** Blocked slice 0 and nothing else. Cleared 2026-07-30: the
+  repository is public and the deferral is recorded rather than hidden.
+- **The sanity table.** Blocked step 4 of slice 1 and all of slice 2, because curves can be written
+  without it but numbers cannot. Cleared, though not as designed: the human-intuition version failed
+  and was replaced with cited conventions, three of which moved when they were actually checked.

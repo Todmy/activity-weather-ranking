@@ -47,6 +47,7 @@ assumption taken in its place; all eight are recorded in full, with rejected alt
 |---|---|---|---|
 | 9 | MongoDB over Postgres | Matches the team's primary store; the document shape fits a forecast issuance naturally | ADR pending |
 | 10 | GraphQL Yoga + Pothos, code-first | No codegen step to explain or to break; the schema is TypeScript the reviewer can read | ADR pending |
+| 35 | No Express and no NestJS. Yoga runs directly on `node:http` | There is one POST endpoint and no REST routes, so Express would be a layer nothing passes through. NestJS was rejected harder: its modules and DI container coordinate large teams across large codebases, and `domain/` is pure functions with no dependencies to inject. Matching Collinson's stack drove the MongoDB choice, but nothing indicates they run NestJS, so copying it would be a guess rather than a match | [constitution](./krukit/constitution.md) §1 simplicity |
 | 11 | Persist raw facts, compute scores at read time. Never store a score | The model is an opinion and will change; the upstream facts will not. Re-scoring must never require re-ingesting | [constitution](./krukit/constitution.md) §1 |
 | 12 | One document per forecast **issuance**, with the 7-day array embedded — not an upsert per (location, date) | Preserves how a forecast evolved, which an upsert destroys | — |
 | 13 | Two collections, two lifecycles: `locations` immutable, `forecasts` volatile with TTL | They differ by orders of magnitude in write rate and retention; one policy cannot serve both | — |
