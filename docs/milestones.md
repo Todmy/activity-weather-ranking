@@ -16,7 +16,7 @@ Status: **done** · **in progress** · **not started**
 | **M1** | Skeleton deployed | A URL that answers GraphQL | 1 | **done** |
 | **M2** | Tracer bullet | One city, one activity, scored live | 3 | **done** |
 | **M3** | Scoring model | All four activities, sanity table passing | 5 | **done** |
-| **M4** | Geography | Terrain and ocean decide applicability | 3 | not started |
+| **M4** | Geography | Terrain and ocean decide applicability | 4 | not started |
 | **M5** | Persistence and refresh | Weather stored, not re-fetched | 5 | not started |
 | **M6** | API surface | Both ranking axes, ambiguity handled | 2 | not started |
 | **M7** | Background refresher | Scheduled pull, visibly running | 3 | not started |
@@ -24,7 +24,12 @@ Status: **done** · **in progress** · **not started**
 
 **About the points.** Fibonacci, relative to each other rather than to a clock. 1 is trivial, 3 is a
 normal unit of work, 5 carries real uncertainty, and 13 is the two days of design that preceded any
-code. Forty points in total, twenty-two of them delivered.
+code. Forty-one points in total, twenty-two of them delivered.
+
+The total moved from 40 to 41 on 30 July, after M3 shipped. M4 was re-estimated from 3 to 4 because a
+review of the plan against the design found that it needs the `locations` collection, which the plan
+had put in M5. The estimate is corrected in place rather than absorbed quietly, because a plan that
+silently reflows to fit what happened is not a plan anyone can check.
 
 They're here to show where the weight sits, not to promise a date. The weight is not spread evenly:
 M3 is the one milestone that can't be finished by working harder at it, because scoring calibration
@@ -176,13 +181,22 @@ coverage comes from the marine model returning data or nulls at that coordinate.
 
 **Done when:** Grenoble returns a ski score attached to the high point it was assessed at, with
 elevation and distance stated. Amsterdam returns `notApplicable` for skiing and Vienna returns
-`notApplicable` for surfing, both from measurement rather than a rule naming them.
+`notApplicable` for surfing, both from measurement rather than a rule naming them. A second request
+for the same city performs no elevation call at all.
 
 **Why here:** this is the modelling trap in the brief. Geography is not weather, and the two
 activities that need it need different geography. Scoring a city coordinate for skiing gives
 confidently wrong answers for exactly the cities a traveller would ask about.
 
-**3 points.** Plan: [slice 3](./plan.md).
+**This milestone carries the `locations` collection**, which the plan had put in M5. Terrain and
+marine coverage are fields on the location document, so without it the 81-point grid is re-sampled on
+every request — and because the Elevation API meters per coordinate, that caps the whole service at
+about 123 requests a day before the free tier is gone. `locations` is the immutable collection and
+needs no gateway, no lease and no TTL, so moving it here is a vertical slice rather than a borrowed
+piece of the next one. The read-through it introduces is also the first thing on the critical path
+that persists anything, which pulls the brief's named requirement one milestone earlier.
+
+**4 points**, re-estimated from 3 when that dependency surfaced. Plan: [slice 3](./plan.md).
 
 ---
 
@@ -191,8 +205,8 @@ confidently wrong answers for exactly the cities a traveller would ask about.
 **Delivers:** the part the brief calls out by name. Weather is stored and read from storage, never
 re-fetched per request.
 
-One document per forecast **issuance** with the seven-day array embedded, rather than an upsert per
-city and date. That preserves how a forecast changed as the date approached, which an upsert
+`forecasts` and `resolutions`; `locations` already exists from M4. One document per forecast
+**issuance** with the seven-day array embedded, rather than an upsert per city and date. That preserves how a forecast changed as the date approached, which an upsert
 destroys. Reads go through a gateway with a one-hour freshness window, a single-flight lease so a
 hundred concurrent misses cause one upstream call, and stale-if-error so an upstream outage degrades
 the answer instead of removing it.

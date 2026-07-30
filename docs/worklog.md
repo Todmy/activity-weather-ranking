@@ -305,10 +305,38 @@ grounds that a linear ramp is not hard. The case I wouldn't have thought about i
 guard ran before the upper one and for a degenerate ramp those two rules disagree. No profile uses a
 step yet. Slice 2 will, because a veto is a step.
 
+### The estimate that was wrong, and how it was caught
+
+M3 went out and I read the plan back before starting M4 rather than after. Slice 3 says "terrain and
+marine coverage computed once and written to the location", and slice 4 is where the `locations`
+collection appears. So slice 3 was written against a collection that would not exist for another five
+points. I did not notice this while writing the plan, because at plan-writing time "written to the
+location" reads as a sentence about the data model rather than about ordering.
+
+What made it worth catching before implementation rather than during: the Elevation API meters per
+coordinate, and the grid is 81 coordinates. Without somewhere to cache the answer it is re-sampled on
+every request, so 10,000 ÷ 81 is about 123 requests a day and then the service is out of quota. That
+is not a slow path, it is a deployed URL that dies on the reviewer's second click.
+
+The alternative was to run M5 before M4. I rejected it: skiing and surfing are two of the four
+activities the brief names, they currently return `UnavailableActivity`, and putting a five-point
+milestone in front of the three-point one that fixes them optimises the wrong thing. Also the gateway
+would land before there was any geography to key it on.
+
+So M4 grew from 3 points to 4 and carries `locations`. That is a defensible split rather than a
+convenient one, because `locations` is the immutable collection — no gateway, no lease, no TTL — and
+those three are what makes slice 4 a five. Recorded as decision #40, and the milestone total moved
+from 40 to 41 rather than being reflowed to keep the old number looking right.
+
+The second thing that review turned up is smaller and duller: `docs/probes/` has a city forecast and
+six marine responses and no forecast at a sampled summit, which design.md has needed since it was
+written. Tests may not call the live API, so that fixture has to be captured before the first test of
+slice 3 exists. Ten minutes, and it would have been ten minutes of confusion in the middle of a red
+run instead.
+
 ---
 
 ## To be filled in during implementation
 
 - Anything I built and tore out
-- Where an estimate was wrong and by how much
 - The first thing that broke in deployment

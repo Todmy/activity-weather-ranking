@@ -75,20 +75,37 @@ Pure TDD throughout. Zero I/O, so there is nothing to mock and no excuse.
 **This is the block with no natural stopping point.** The stopping rule is the table going green,
 and nothing beyond it. Further tuning goes in the worklog as a temptation resisted, not into code.
 
-## Slice 3 — Geography — 3 points (M4)
+## Slice 3 — Geography — 4 points (M4)
 
+Carries the `locations` collection, which the plan originally put in slice 4. The dependency was
+found while reviewing the plan against design.md §2 rather than while implementing, and it is not
+optional: `terrain` and `marineCoverage` live on the location document, and without somewhere to
+write them the 81-point grid is re-sampled on every request. The Elevation API meters per coordinate,
+so that is 10,000 ÷ 81 ≈ **123 requests a day before the free tier is gone** — a deployed URL a
+reviewer opens twice would exhaust it. Splitting here is honest rather than expedient: `locations` is
+effectively immutable and needs no gateway, no lease and no TTL, so it is a genuine vertical slice
+and not a borrowed piece of slice 4.
+
+0. **Capture a summit forecast probe** before writing any test. `docs/probes/` has a city forecast and
+   six marine responses; it has no forecast at a sampled high point, and design.md §2 requires a
+   `summit` series alongside `city` and `marine`. Tests may not call the live API, so the fixture has
+   to exist first.
 1. `providers/openmeteo/elevation.ts` — the 11×11 circular 50 km grid, 81 points, pinned constants.
 2. `providers/openmeteo/marine.ts` — all-null daily arrays mean no coverage, per recon.
-3. Terrain and marine coverage computed once and written to the location.
-4. The 300 m cost gate; skiing fetches a second forecast only above it.
-5. Tests from the saved probes: Grenoble, Amsterdam, Vienna, Lisbon, Chicago. No live calls.
+3. The `locations` collection: the document from design.md §2, its `{ lastRequestedAt: -1 }` index,
+   and read-through so a location is sampled once and never again.
+4. Terrain and marine coverage computed once and written to the location.
+5. The 300 m cost gate; skiing fetches a second forecast only above it.
+6. Tests from the saved probes: Grenoble, Amsterdam, Vienna, Lisbon, Chicago. No live calls.
 
 **Done when** Amsterdam returns `notApplicable/noTerrain` for skiing and Vienna returns
-`notApplicable/noMarineCoverage` for surfing, both from fixtures.
+`notApplicable/noMarineCoverage` for surfing, both from fixtures — and a second request for the same
+city performs no elevation call at all.
 
 ## Slice 4 — Persistence and the gateway — 5 points (M5)
 
-1. Three collections with their indexes; the `resolutions` pin.
+1. `forecasts` and `resolutions` with their indexes; the `resolutions` pin. `locations` already
+   exists from slice 3.
 2. Issuance write + prune-beyond-24; `expiresAt` 30 days.
 3. `ForecastGateway.ensureFresh` — the six-branch read path from design §3.
 4. Lease acquire/release. **Test the `expiresAt < now` filter explicitly**, because Mongo's TTL
@@ -135,8 +152,9 @@ The worklog is graded first and is the one artifact that must not read as genera
 
 ## Total
 
-27 points across eight slices. The slack is real but it lives entirely in slices 2 and 6; everything
-else is predictable work whose shape is already settled.
+28 points across eight slices — 27 as first written, plus the one added to slice 3 when the
+`locations` dependency surfaced. The slack is real but it lives entirely in slices 2 and 6;
+everything else is predictable work whose shape is already settled.
 
 ## Learnings
 
