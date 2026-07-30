@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { FORECAST_DAYS, OpenMeteoError, PAST_DAYS } from './forecast.ts'
+import { FORECAST_DAYS, OpenMeteoError, PAST_DAYS, UPSTREAM_TIMEOUT_MS } from './forecast.ts'
 
 /**
  * The wave model, and the coverage question it answers for free.
@@ -116,7 +116,9 @@ export const fetchMarine = async (
   },
   signal?: AbortSignal,
 ): Promise<{ coverage: MarineCoverage; days: MarineDay[] }> => {
-  const response = await fetch(buildMarineUrl(coordinates), { signal: signal ?? null })
+  const response = await fetch(buildMarineUrl(coordinates), {
+    signal: signal ?? AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+  })
 
   if (!response.ok) {
     throw new OpenMeteoError(response.status, await response.text())

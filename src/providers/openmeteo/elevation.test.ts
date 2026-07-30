@@ -8,6 +8,7 @@ import {
   sampleTerrain,
   terrainGrid,
 } from './elevation.ts'
+import { UPSTREAM_TIMEOUT_MS } from './forecast.ts'
 
 const probe = (name: string) =>
   JSON.parse(
@@ -134,6 +135,21 @@ describe('fetchTerrain', () => {
     return spy
   }
 
+  it('caps its own request when the caller gives it no signal', async () => {
+    // The slowest call the service makes, and it sits on the request path
+    // ahead of the gateway, so the gateway's cap never reaches it. Node's
+    // fetch has no default request timeout — undici's is 300 s — which made a
+    // hung geocoder or elevation grid a five-minute held socket.
+    const spy = stubFetch(new Response(JSON.stringify(grenoble.response), { status: 200 }))
+    const timeout = vi.spyOn(AbortSignal, 'timeout')
+
+    await fetchTerrain(grenoble.city.latitude, grenoble.city.longitude)
+
+    expect(timeout).toHaveBeenCalledWith(UPSTREAM_TIMEOUT_MS)
+    expect(spy.mock.calls[0]?.[1]).toEqual({ signal: expect.any(AbortSignal) })
+    timeout.mockRestore()
+  })
+
   it('asks once for all 81 coordinates and returns the sampled terrain', async () => {
     const spy = stubFetch(new Response(JSON.stringify(grenoble.response), { status: 200 }))
 
@@ -143,6 +159,8 @@ describe('fetchTerrain', () => {
     expect(spy).toHaveBeenCalledTimes(1)
     expect(spy).toHaveBeenCalledWith(
       buildElevationUrl(terrainGrid(grenoble.city.latitude, grenoble.city.longitude)),
+      // No caller signal means the client's own cap, not an uncapped socket.
+      { signal: expect.any(AbortSignal) },
     )
   })
 

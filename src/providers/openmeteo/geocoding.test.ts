@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { buildGeocodingUrl, parseGeocoding, searchLocations, toLocations } from './geocoding.ts'
+import { UPSTREAM_TIMEOUT_MS } from './forecast.ts'
 
 const cambridge = JSON.parse(
   readFileSync(new URL('../../../docs/probes/geocoding-cambridge.json', import.meta.url), 'utf8'),
@@ -70,13 +71,31 @@ describe('searchLocations', () => {
     return spy
   }
 
+  it('caps its own request when the caller gives it no signal', async () => {
+    // Geocoding is the first upstream call every query makes, and it sits
+    // ahead of the gateway, so the gateway's 8-second cap never reaches it.
+    // Node's fetch has no default request timeout — undici's is 300 s — so an
+    // endpoint that accepts the connection and stops answering held a socket
+    // and a Mongo connection for five minutes.
+    const spy = stubFetch(new Response(JSON.stringify(cambridge), { status: 200 }))
+    const timeout = vi.spyOn(AbortSignal, 'timeout')
+
+    await searchLocations('Cambridge')
+
+    expect(timeout).toHaveBeenCalledWith(UPSTREAM_TIMEOUT_MS)
+    expect(spy.mock.calls[0]?.[1]).toEqual({ signal: expect.any(AbortSignal) })
+    timeout.mockRestore()
+  })
+
   it('asks for the requested number of candidates and maps them', async () => {
     const spy = stubFetch(new Response(JSON.stringify(cambridge), { status: 200 }))
 
     const locations = await searchLocations('Cambridge', 5)
 
     expect(locations).toHaveLength(5)
-    expect(spy).toHaveBeenCalledWith(buildGeocodingUrl('Cambridge', 5))
+    expect(spy).toHaveBeenCalledWith(buildGeocodingUrl('Cambridge', 5), {
+      signal: expect.any(AbortSignal),
+    })
   })
 
   it('asks for five candidates when nobody says otherwise', async () => {
@@ -84,7 +103,9 @@ describe('searchLocations', () => {
 
     await searchLocations('Cambridge')
 
-    expect(spy).toHaveBeenCalledWith(buildGeocodingUrl('Cambridge', 5))
+    expect(spy).toHaveBeenCalledWith(buildGeocodingUrl('Cambridge', 5), {
+      signal: expect.any(AbortSignal),
+    })
   })
 
   it('returns nothing, rather than throwing, for a query that matched nothing', async () => {

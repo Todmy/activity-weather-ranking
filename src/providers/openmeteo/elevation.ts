@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { OpenMeteoError } from './forecast.ts'
+import { OpenMeteoError, UPSTREAM_TIMEOUT_MS } from './forecast.ts'
 
 /**
  * Terrain sampling. Not weather: this is asked once per location, ever.
@@ -138,9 +138,15 @@ export const sampleTerrain = (
  * metered per coordinate, so 81 of the daily 10,000 — and it is why locations
  * are persisted before this provider is ever wired into the read path.
  */
-export const fetchTerrain = async (latitude: number, longitude: number): Promise<Terrain> => {
+export const fetchTerrain = async (
+  latitude: number,
+  longitude: number,
+  signal?: AbortSignal,
+): Promise<Terrain> => {
   const grid = terrainGrid(latitude, longitude)
-  const response = await fetch(buildElevationUrl(grid))
+  const response = await fetch(buildElevationUrl(grid), {
+    signal: signal ?? AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+  })
 
   if (!response.ok) {
     throw new OpenMeteoError(response.status, await response.text())

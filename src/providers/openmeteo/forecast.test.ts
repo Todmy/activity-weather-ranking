@@ -144,8 +144,9 @@ describe('fetchForecast', () => {
     const result = await fetchForecast({ latitude: 47.26, longitude: 11.39 })
 
     expect(result.timezone).toBe('Europe/Vienna')
+    // No caller signal means the client's own cap, not an uncapped socket.
     expect(spy).toHaveBeenCalledWith(buildForecastUrl({ latitude: 47.26, longitude: 11.39 }), {
-      signal: null,
+      signal: expect.any(AbortSignal),
     })
   })
 

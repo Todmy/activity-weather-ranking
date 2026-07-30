@@ -143,7 +143,7 @@ describe('fetchMarine', () => {
     expect(result.coverage).toBe('present')
     expect(result.days).toHaveLength(10)
     expect(spy).toHaveBeenCalledWith(buildMarineUrl({ latitude: 38.7223, longitude: -9.1393 }), {
-      signal: null,
+      signal: expect.any(AbortSignal),
     })
   })
 

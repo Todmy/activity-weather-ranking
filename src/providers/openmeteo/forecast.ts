@@ -140,15 +140,29 @@ export class OpenMeteoError extends Error {
 }
 
 /**
- * `signal` is how the refresh gateway's 8-second cap reaches the socket. Passing
- * it rather than racing a promise means the request is actually cancelled, so a
- * hung upstream stops holding a connection as well as a lease.
+ * Every upstream call is capped here, at the only layer that can see the socket.
+ *
+ * Node's `fetch` has no default request timeout — undici's header and body
+ * timeouts are 300 s — so a caller that passes no signal used to wait five
+ * minutes on an endpoint that accepts the connection and stops answering. Two
+ * of the four clients are reached before the gateway exists, so a cap that only
+ * the gateway applies is a number in a document rather than a timeout.
+ */
+export const UPSTREAM_TIMEOUT_MS = 8_000
+
+/**
+ * `signal` is how the refresh gateway's cap reaches the socket. Passing it
+ * rather than racing a promise means the request is actually cancelled, so a
+ * hung upstream stops holding a connection as well as a lease. Absent one, the
+ * client caps itself rather than waiting on undici's five minutes.
  */
 export const fetchForecast = async (
   coordinates: Coordinates,
   signal?: AbortSignal,
 ): Promise<ForecastResponse> => {
-  const response = await fetch(buildForecastUrl(coordinates), { signal: signal ?? null })
+  const response = await fetch(buildForecastUrl(coordinates), {
+    signal: signal ?? AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+  })
 
   if (!response.ok) {
     throw new OpenMeteoError(response.status, await response.text())

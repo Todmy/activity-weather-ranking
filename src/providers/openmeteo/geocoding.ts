@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { OpenMeteoError } from './forecast.ts'
+import { OpenMeteoError, UPSTREAM_TIMEOUT_MS } from './forecast.ts'
 
 /**
  * Open-Meteo geocoding: a name in, candidate places out.
@@ -81,8 +81,11 @@ export const toLocations = (response: GeocodingResponse): GeocodedLocation[] =>
 export const searchLocations = async (
   query: string,
   limit = 5,
+  signal?: AbortSignal,
 ): Promise<GeocodedLocation[]> => {
-  const response = await fetch(buildGeocodingUrl(query, limit))
+  const response = await fetch(buildGeocodingUrl(query, limit), {
+    signal: signal ?? AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+  })
 
   if (!response.ok) {
     throw new OpenMeteoError(response.status, await response.text())

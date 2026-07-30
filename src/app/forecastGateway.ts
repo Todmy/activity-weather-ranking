@@ -7,7 +7,7 @@ import type {
   StoredMarineSeries,
   StoredSeries,
 } from '../persistence/forecasts.ts'
-import { toDailyWeather } from '../providers/openmeteo/forecast.ts'
+import { toDailyWeather, UPSTREAM_TIMEOUT_MS } from '../providers/openmeteo/forecast.ts'
 import type { Coordinates, ForecastResponse } from '../providers/openmeteo/forecast.ts'
 import type { MarineCoverage, MarineDay } from '../providers/openmeteo/marine.ts'
 
@@ -31,7 +31,6 @@ export const FRESHNESS_MS = 60 * 60 * 1000
  * recon.md is a lease shorter than the fetch it guards, which silently admits a
  * second fetcher; the margin between these two numbers is the mitigation.
  */
-export const UPSTREAM_TIMEOUT_MS = 8_000
 
 /** Cold start only: 100 polls of 100 ms, so the wait is bounded at 10 seconds. */
 export const COLD_START_POLL_MS = 100
