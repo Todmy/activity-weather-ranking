@@ -203,9 +203,46 @@ cost in `decisions.md` #32 rather than glossing over it.
 
 ---
 
+## Thursday 30 July, the tracer bullet
+
+### The first factor I designed and then deleted
+
+The sanity table says a 31 °C sunny day with UV 9 is FAIR, and it says so because of the UV. So UV
+went into the outdoor profile as a weighted factor, with a curve fitted to the WHO scale: full marks
+below index 6, nothing left at 11.
+
+It broke a different row. A cold, wet, windy day has a UV index of about 1, which that curve scores
+1.0, so the factor was handing a miserable day full marks for not sunburning anybody. Row 3 (8 °C,
+12 mm of rain, 25 km/h wind) came out at 53, which is FAIR, and the table says POOR. Raising the UV
+weight until row 4 fell to FAIR pushed row 3 further up. Lowering it until row 3 was POOR left row 4
+at GOOD. The two rows were fighting over the same weight.
+
+The threshold wasn't the problem, the arithmetic was. A weighted mean can say "this is pleasant". It
+can't say "this is harmful", because a harm factor scores full marks whenever the harm is absent, and
+absent is the normal case. A factor that exists to punish one kind of day spends most of its weight
+rewarding every other kind.
+
+Heat is carried by apparent temperature now, against the UTCI comfort bands, which is where a heat
+penalty belongs anyway: UTCI already folds in radiation and humidity. Row 4 lands at 55 (FAIR) and row
+3 at 37 (POOR). All five outdoor rows pass: 100, 75, 37, 55, 65. Decision #36 records it along with
+the gap it leaves, which is that extreme UV under a cool sky is now penalised by nothing at all.
+
+I expect to meet this again in slice 2. Skiing row 4 is 40 cm of fresh powder with 70 km/h gusts and
+the table says POOR, which is a veto, and an additive model cannot veto anything. That row needs a
+mechanism this profile didn't.
+
+### A test that paid for itself in ten minutes
+
+The three curve primitives are about thirty lines and I nearly wrote them without tests, on the
+grounds that a linear ramp is not hard. The case I wouldn't have thought about is equal bounds:
+`rampUp(5, 5)` means a step, and my first version returned 0 at exactly 5, because the lower-bound
+guard ran before the upper one and for a degenerate ramp those two rules disagree. No profile uses a
+step yet. Slice 2 will, because a veto is a step.
+
+---
+
 ## To be filled in during implementation
 
-- What the sanity table disagreed with once I fitted curves to it
 - Anything I built and tore out
 - Where an estimate was wrong and by how much
 - The first thing that broke in deployment
