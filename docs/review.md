@@ -108,8 +108,7 @@ impossible**, so no amount of running them could have failed on one.
 
 | Finding | Why it is not fixed here |
 |---|---|
-| The API returns a bare integer where the sanity table defines POOR/FAIR/GOOD/EXCELLENT bands | A feature, not a defect. Raised |
-| Terrain is sampled over 50 km, marine at the single city coordinate — so Amsterdam is `noMarineCoverage` with Zandvoort 25 km away. The argument that justifies the Grenoble summit invalidates the marine treatment | Real asymmetry, and no document notices it. It needs an answer written down more than it needs code |
+| **Both were built after all.** The bands are a `Band` enum on `ScoredActivity` and `RankedDay`, and the empty-ranking silence now carries a reason — `67a1c5f` `c8e2e32`. The marine asymmetry got the written answer it needed rather than code: a terrain search returns a place you can stand on, a water search returns a pixel of open sea, and a beach needs a coastline dataset this service does not fetch. The API's own wording was the overclaim — it said "no ocean" where the service knows "no wave model at this coordinate" — and it now says the narrower thing and names the asymmetry. `cut.md`, decision #59 | `4f1e0` |
 | Seven minor code findings: a stale issuance discarded on the degrade path, a `removeListener` that removes nothing, a schedule left running on bind failure, the summit series joined by index without the date check marine has, the refresher planning from an unassessed document, `issuedAt` taken before the fetch rather than after, and `localeCompare` without an explicit locale | Recorded, not fixed. Each is small; none changes an answer today; and the author's instruction was to stop and analyse before adding, not to close every open box before a deadline |
 
 **What the hiring reviewer said, since it is the only outside read of this submission that exists:**

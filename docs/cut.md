@@ -137,3 +137,40 @@ does not need.
 fixed rather than written down: a shutdown that severed the request in flight, a service that could
 not say which commit it was running, and an event stream with nothing on it. The difference is that
 those were defects and these are scope.
+
+## Searching for water the way terrain is searched
+
+**What it would be.** Marine coverage is assessed at the city's own coordinate: one call to the wave
+model, and if it answers with nulls the city is recorded as having no water, forever. Terrain is not
+treated that way — it samples 81 points over a 50 km radius, because decision #41 argues that
+scoring Grenoble's city centre would "answer confidently about a place nobody skis". Sampling water
+over a radius would be the same move.
+
+An independent reviewer raised the inconsistency, and it is real: **Amsterdam reports
+`noMarineCoverage` with Zandvoort beach 25 km away.** The argument that justifies the Grenoble summit
+does invalidate the marine treatment as stated. What follows is the answer, not a defence.
+
+**The two searches do not return the same kind of thing.** The terrain search returns *a place you
+can stand on*: the highest point within 50 km is somewhere a skier actually goes, the service fetches
+a real weather series there, and it reports the distance so the caller can judge it. A water search
+returns *a pixel of sea*. The nearest wave-model cell to Amsterdam is open North Sea, and open sea is
+not where anybody surfs — what a surfer needs is the nearest **beach**, and no dataset this service
+fetches contains one. Picking the nearest wet cell and calling it "surfing near Amsterdam" would be
+exactly the confidently-wrong answer decision #41 exists to prevent, arrived at from the other side.
+
+**Cost is not the reason, which is worth saying because it looks like it should be.** Elevation
+samples 81 coordinates in a single request, and marine coverage is assessed once per city and kept
+forever, so a radius search would be a one-off on both sides. The asymmetry is about what the answer
+would mean, not what it would cost.
+
+**The scope test it fails.** It cannot be built correctly without a coastline dataset — the same
+missing piece as [decision #23](./decisions.md), offshore versus onshore wind. One dataset closes
+both, and it brings its own licensing and refresh story, which is a larger problem than the brief
+poses. Half-building it, by treating any wet pixel as a beach, would make the service *more*
+confident and *less* right.
+
+**What was done instead.** The API's own wording was too broad and is now narrower: the
+`NotApplicableActivity` description said "no ocean" where the service only knows "no wave model at
+this coordinate", and it now says the second thing and names the asymmetry. That is the honest claim
+available today — the service is not asserting that you cannot surf near Amsterdam, only that it
+looked in one place and found no water there.

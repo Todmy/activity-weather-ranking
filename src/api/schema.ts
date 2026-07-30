@@ -141,8 +141,12 @@ const ScoredRef = builder.objectRef<Scored>('ScoredActivity').implement({
 
 const NotApplicableRef = builder.objectRef<NotApplicable>('NotApplicableActivity').implement({
   description:
-    'The question does not arise here: no ocean, or no terrain. Deliberately not a score of ' +
-    'zero — "Vienna has no ocean" and "surfing in Vienna would be poor" are different claims.',
+    'The question does not arise here: no terrain within the sampled radius, or no wave model ' +
+    "at the city's own coordinate. Deliberately not a score of zero — \"Vienna has no ocean\" " +
+    'and "surfing in Vienna would be poor" are different claims. Note the asymmetry, which is ' +
+    'real and documented in `cut.md`: terrain is searched over 50 km and water is not, so a ' +
+    'coastal city whose beach is out of town reads as `noMarineCoverage`. Amsterdam does, with ' +
+    'Zandvoort 25 km away.',
   fields: (t) => ({
     activity: t.exposeString('activity'),
     reason: t.exposeString('reason'),
