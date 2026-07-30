@@ -372,6 +372,38 @@ describe('geography decides what is answerable', () => {
     ).rejects.toThrow(/marine/i)
   })
 
+  it('treats a marine series that came back empty as absent rather than as a merge failure', async () => {
+    // An all-null week from the wave model reaches the gateway as `days: []`,
+    // and `[]` is not nullish, so it used to be merged rather than skipped —
+    // making every score for that city throw for the whole freshness hour. An
+    // empty series is the same thing as a failed one: no waves to score with.
+    const forecast = await getActivityForecast(
+      'Lisbon',
+      deps({
+        geography: async () => ({ marineCoverage: 'present' }),
+        issuance: spyIssuance([]).issuance,
+      }),
+    )
+    const surfing = forecast.days[0]?.activities.find((result) => result.activity === 'surfing')
+
+    // Every surfing factor is a wave measurement, so with no waves there is
+    // nothing to score — the same answer a failed marine fetch already gives,
+    // which is the point: empty and failed are one case.
+    expect(surfing).toEqual({
+      kind: 'unavailable',
+      activity: 'surfing',
+      reason: 'the forecast carried no values this profile scores',
+    })
+    // Contained: the city series is intact, so both sightseeing answers survive
+    // — the empty wave series costs the caller surfing and nothing else.
+    expect(
+      forecast.days[0]?.activities
+        .filter((result) => result.kind === 'scored')
+        .map((result) => result.activity)
+        .sort(),
+    ).toEqual(['indoorSightseeing', 'outdoorSightseeing'])
+  })
+
   it('answers the other two activities when geography sampling failed entirely', async () => {
     const forecast = await getActivityForecast('Grenoble', deps())
     const kinds = Object.fromEntries(

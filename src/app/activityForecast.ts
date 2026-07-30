@@ -235,7 +235,13 @@ export const scoreIssuance = (
   issuance: Pick<IssuanceDocument, 'city' | 'summit' | 'marine'>,
   geography: Geography,
 ): ScoredDay[] => {
-  const marineDays = issuance.marine.status === 'ok' ? (issuance.marine.days ?? null) : null
+  // An empty series is absence, not data. `[]` is not nullish, so it survives
+  // the `??` and reaches `mergeMarine`, where the length check turns "the wave
+  // model had nothing for this coordinate" into a thrown request. Ruled out
+  // here as well as at the gateway, because issuances already stored that way
+  // outlive the fix by up to their pruning depth.
+  const stored = issuance.marine.status === 'ok' ? (issuance.marine.days ?? null) : null
+  const marineDays = stored === null || stored.length === 0 ? null : stored
 
   // Derive across the whole issuance, history included, then score only the
   // days a traveller asked about. The three past days exist to give the first

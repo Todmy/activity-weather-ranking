@@ -134,6 +134,23 @@ describe('ensureFresh', () => {
     expect(issuance?.marine.days?.length).toBeGreaterThan(0)
   })
 
+  it('stores a wave model that answered with nothing as unavailable, never as ok', async () => {
+    // `fetchMarine` returns `days: []` when the week reads all-null, and the
+    // coverage verdict travelling beside it is the only thing that says why.
+    // Wrapping the empty array as `status: 'ok'` stored a series that is
+    // present and empty at once, which is the one shape nothing downstream
+    // expects. The location keeps its coverage — one blank hour is not a
+    // finding about the sea — so this self-heals on the next issuance.
+    const marine = vi.fn(async () => ({ coverage: 'none' as const, days: [] }))
+
+    const result = await ensureFresh(deps({ marine }), plan({ marine: { point: cityPoint } }))
+
+    expect(result.status).toBe('fresh')
+    const issuance = result.status === 'fresh' ? result.issuance : null
+    expect(issuance?.marine.status).toBe('unavailable')
+    expect(issuance?.marine.days).toBeUndefined()
+  })
+
   it('records a skipped series with its reason and pays for no call', async () => {
     const weather = vi.fn(async () => cityForecast)
 

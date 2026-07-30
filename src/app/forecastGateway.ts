@@ -123,7 +123,21 @@ const fetchIssuance = async (
     'point' in plan.marine
       ? deps
           .marine(plan.marine.point, capped())
-          .then(({ days }) => ({ status: 'ok' as const, days }))
+          // The coverage verdict travels beside the days precisely so an empty
+          // week can be told apart from a calm one, and wrapping it as `ok`
+          // threw that away — storing a series that is present and empty at
+          // once, which is the one shape scoring cannot read. The location
+          // keeps its coverage: one blank hour is not a finding about the sea,
+          // so the next issuance recovers on its own.
+          .then(
+            ({ coverage, days }): StoredMarineSeries =>
+              days.length === 0
+                ? {
+                    status: 'unavailable',
+                    reason: `the wave model returned no usable days (coverage: ${coverage})`,
+                  }
+                : { status: 'ok', days },
+          )
           .catch(unavailable)
       : Promise.resolve(plan.marine.skip)
 
