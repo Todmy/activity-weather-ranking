@@ -316,6 +316,14 @@ numbers nobody can challenge. The order is inverted — a human writes the sanit
 are fitted to pass it, and each threshold cites a named source in the profile file. Once the table is
 green the model is done. See `design-questions.md` Q5.
 
+**Resolved on 30 July, and not the way this section expected.** The sanity table was written by hand
+first as planned, but the human-intuition version of it failed and was rebuilt from cited
+conventions, three of which moved once they were actually checked — the story is in
+[`worklog.md`](./worklog.md). The shipped numbers live in
+[`src/domain/profiles/`](../src/domain/profiles/), one `source:` per factor, and all twenty rows of
+[`sanity-table.md`](./sanity-table.md) pass. Every TBD above is a pointer to those files rather than
+an open question.
+
 ### Indoor sightseeing is not the inverse of outdoor
 
 Modelled independently, because it is not monotonic in "bad weather". A high baseline, raised by
@@ -339,6 +347,10 @@ union rather than a nullable score, so the two absences cannot be collapsed by a
 `confidence = horizonDecay(dayIndex) × completeness`, where `completeness` is the fraction of the
 profile's weight whose inputs are actually present. The decay constant is **TBD, pending a cited
 source** — the same discipline as the curve thresholds, for the same reason.
+
+**Resolved.** [`src/domain/confidence.ts`](../src/domain/confidence.ts) interpolates between the
+points NOAA publishes: 0.9 at five days, 0.8 at seven, 0.5 at ten. The day-0 anchor of 0.97 is the
+one number NOAA does not give, and the file says so rather than letting it pass as cited.
 
 ## 5. API
 

@@ -50,15 +50,24 @@ assumption, and is labelled as one.
 Every functional row is now met. FR18 was the last, and it was sequenced last deliberately because it
 is additive: same gateway, same lease, no schema change and no API change.
 
+**The exception in NFR5**, found by the verify stage rather than by design. `ensureLocation` has no
+single-flight: two requests arriving together for a city the service has *never seen* both find no
+terrain and both sample the grid, so that city costs 162 coordinates instead of 81. It is bounded —
+it can only happen on a city's first-ever sighting, and never again — and it was left rather than
+fixed, because a second lease is machinery this service needs nowhere else and the worst case is one
+duplicated sample per city in the whole lifetime of the database. Recorded here because "81
+coordinates once per city, ever" is otherwise an overclaim, and principle 5 applies to our own
+numbers as much as to the forecast's.
+
 ## Non-functional requirements
 
 | # | Requirement | Source | Where it is met | How to check it |
 |---|---|---|---|---|
 | NFR1 | The same stored issuance and model version reproduce the same output exactly | self-imposed (principle 9) | One `scoreIssuance` for the live path and replay; clock injected; explicit tie-break order | [`design.md` §6](./design.md) maps seven sources of non-determinism to where each is closed |
 | NFR2 | No test may call Open-Meteo | self-imposed (constitution) | 17 captured probes in [`probes/`](./probes/) | `pnpm test` runs offline |
-| NFR3 | `domain/` performs no I/O — no clock, no database, no fetch | self-imposed (principle 3) | Pure functions throughout `src/domain/` | No import of `providers/` or `persistence/` in `domain/` |
+| NFR3 | `domain/` performs no I/O — no clock, no database, no fetch | self-imposed (principle 9; it is the boundary that makes determinism checkable) | Pure functions throughout `src/domain/` | No import of `providers/` or `persistence/` in `domain/` |
 | NFR4 | Tests run against a real database, not a fake | self-imposed | `mongodb-memory-server` runs `mongod` 8.2.6 against `mongo:8` in compose | `pnpm test` with no Docker daemon |
-| NFR5 | Cold terrain sampling stays inside the free tier | external (Open-Meteo meters elevation **per coordinate**, 10k/day) | 81 coordinates once per city, ever; `locations` is immutable | ~123 unseen cities/day; steady state is bounded by the cheaper forecast API |
+| NFR5 | Cold terrain sampling stays inside the free tier | external (Open-Meteo meters elevation **per coordinate**, 10k/day) | 81 coordinates once per city, ever — with one exception, below | ~123 unseen cities/day; steady state is bounded by the cheaper forecast API |
 | NFR6 | An upstream call may not outlive the lease that guards it | self-imposed (risk 8, [recon](./recon.md)) | 8 s `AbortSignal` into `fetch` against a 30 s lease ([ADR 0001](./adr/0001-mongodb-over-postgres.md)) | Provider tests assert the signal reaches `fetch` |
 | NFR7 | A cold start never waits unboundedly | assumption ([Q6](./open-questions.md)) | 100 polls × 100 ms, then `NO_DATA_YET` | `forecastGateway.test.ts`, "gives up after a bounded number of polls" |
 | NFR8 | Never lose the last surviving issuance | self-imposed (risk 7, [recon](./recon.md)) | Retention is application-side; TTL is only a 30-day backstop | `forecasts.test.ts` prune tests |

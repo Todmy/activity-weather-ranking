@@ -152,6 +152,13 @@ export type GeographySamplers = {
  * failed once is worse than retrying — a false `notApplicable` is permanent
  * where a false "applicable" costs one request.
  *
+ * There is no single flight here, deliberately. Two requests arriving together
+ * for a city nobody has ever asked about both find no terrain and both sample
+ * the grid, so that city costs 162 coordinates instead of 81. It can happen only
+ * on a city's first-ever sighting and never again, which is a smaller cost than
+ * a second lease mechanism used nowhere else. The claim it qualifies is written
+ * down in requirements.md under NFR5 rather than left as a footnote in the code.
+ *
  * The two samples are also independent rather than one transaction, because
  * their costs are not comparable: terrain is 81 metered coordinates and marine
  * is one request. Discarding a successful grid because the cheap call failed
