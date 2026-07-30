@@ -396,6 +396,23 @@ the machine that tested it was already held by a dev server. Nothing else was ch
 
 ---
 
+## After M8 — hardening, not a milestone
+
+Fifteen commits landed after M8's condition was met, and none of them earns a milestone. Recorded
+here because a tracker that says "all nine done" above a fortnight of later commits is a tracker
+nobody will trust again.
+
+| What | Why it is not a milestone |
+|---|---|
+| The verify and review stages themselves | They are *part of* M8's five points, and their artifacts are [`verify.md`](./verify.md) and [`review.md`](./review.md) |
+| Constitution 4.0.0 | A rule changed, not a capability. Principle 6 now requires a new test to be checked by mutation, because a red run of "module not found" proves the import path and nothing else |
+| One `mongod` for the whole test run | Test infrastructure. It removed the flaky failure recorded twice in the worklog and took the suite from 9.2 s to 7.9 s |
+| Three twelve-factor defects | A shutdown that severed the request in flight, a release nobody could identify, and an event stream with nothing on it. Defects found by [an audit](./twelve-factor.md), not features |
+| Capacity, measured | ["How many clients"](./capacity.md) had no answer. Now it has one with its conditions attached, and the more useful finding that the ceiling is the upstream quota rather than the box |
+
+The rule this file states below still holds: status changes when a condition is met and the commit
+that meets it lands first. None of the above changed a status, which is the point.
+
 ## How this file is maintained
 
 Status changes here when a milestone's **Done when** condition is actually met, and the commit that

@@ -40,6 +40,32 @@ where the repository answers it — or the admission that it does not.
 | **Why is there no linter or formatter?** | It was a deliberate omission that had never been written down — the same failure mode as an undocumented threshold. Now in [`cut.md`](./cut.md) with the reason: a formatter introduced part way through buries the commits this is graded on under whitespace, and `tsc --noEmit` under `strict` catches what a linter would |
 | How much of this was written with AI assistance? | The worklog says plainly, and `CLAUDE.md` is in the repository — see finding R3 |
 
+## After this review — 30 July, later the same day
+
+Eight commits landed after the pipeline closed, and none of them is a milestone. They are here so a
+reader who diffs `main` against this file is not left wondering whether the tracker rotted.
+
+The trigger was a question this review had already recorded as unanswerable — "how far does this
+scale?" — followed by a second one it had not thought to ask: does this hold up as a twelve-factor
+service at all. Auditing that found three things, and the useful distinction is that they were
+**defects rather than scope**:
+
+- **A shutdown that severed the request in flight.** `closeAllConnections()` destroys active
+  connections as well as idle ones, so SIGTERM cut off whatever was being served.
+- **A release nobody could identify.** The process could not say which commit it was running, and a
+  deploy log records what was sent rather than what is answering.
+- **An event stream with nothing on it.** Five `console` calls in the whole service and none per
+  request.
+
+All three are fixed; the four *scope* items the same audit turned up are in
+[`twelve-factor.md`](./twelve-factor.md) and stay undone on purpose. Capacity was then measured rather
+than estimated — [`capacity.md`](./capacity.md) — which turned R1's neighbour, "how far does this
+scale", into a number with conditions attached.
+
+Two figures in this file are from the day it was written and are now behind: the test count was 319
+and is 326. Left as they were, because a stage artifact that quietly updates itself is no longer
+evidence of when it ran.
+
 ## What I would not change
 
 Recorded because a review that only lists problems misrepresents the thing it reviewed.
