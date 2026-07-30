@@ -6,6 +6,12 @@ import { tick } from './app/refresher.ts'
 import { startSchedule } from './app/schedule.ts'
 import { connectDatabase } from './persistence/client.ts'
 
+/**
+ * How long shutdown waits for a request in flight. Inside Docker's ten seconds
+ * between SIGTERM and SIGKILL, so the process ends on its own terms.
+ */
+export const SHUTDOWN_GRACE_MS = 8_000
+
 export type RunningServer = {
   /** The port actually bound, which matters when the caller asked for 0. */
   port: number
@@ -28,12 +34,15 @@ export const startServer = async ({
   mongodbUri,
   mongodbDatabase,
   refreshIntervalMs,
+  shutdownGraceMs = SHUTDOWN_GRACE_MS,
 }: {
   port: number
   mongodbUri: string
   mongodbDatabase: string
   /** Zero runs no background refresher at all. Required, so no caller starts one by accident. */
   refreshIntervalMs: number
+  /** How long a request already in flight has to finish before it is forced. */
+  shutdownGraceMs?: number
 }): Promise<RunningServer> => {
   const store = await connectDatabase({ uri: mongodbUri, database: mongodbDatabase })
   const deps = liveDepsFor(store.db)
@@ -64,10 +73,26 @@ export const startServer = async ({
         port: (server.address() as AddressInfo).port,
         close: async () => {
           await new Promise<void>((done, fail) => {
-            server.close((error) => (error ? fail(error) : done()))
-            // Yoga keeps sockets alive; without this a close() waits for the
-            // keep-alive timeout and a signal looks like a hung process.
-            server.closeAllConnections()
+            let forced: ReturnType<typeof setTimeout> | undefined
+
+            server.close((error) => {
+              if (forced !== undefined) clearTimeout(forced)
+              if (error) fail(error)
+              else done()
+            })
+
+            // Yoga keeps sockets alive, and a close() that waited for the
+            // keep-alive timeout would look like a hung process to whatever sent
+            // the signal. Idle connections therefore go immediately — but only
+            // idle ones: `closeAllConnections()` destroys active connections
+            // too, which severs whatever request is being served at the time.
+            server.closeIdleConnections()
+
+            // A request still in flight gets this long to finish, and is then
+            // forced. Eight seconds sits inside Docker's ten between SIGTERM and
+            // SIGKILL, so the process decides how it dies rather than the
+            // runtime deciding for it.
+            forced = setTimeout(() => server.closeAllConnections(), shutdownGraceMs)
           })
           // Socket first, then the refresher, then the handle it uses. Stopping
           // the refresher waits for the tick in flight: closing the database
