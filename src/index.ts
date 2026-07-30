@@ -1,22 +1,18 @@
-import { createServer } from 'node:http'
 import { config } from './config.ts'
-import { createApp } from './api/yoga.ts'
+import { startServer } from './server.ts'
 
 /**
- * Yoga runs directly on `node:http`. There is one endpoint and no REST routes,
- * so Express would be a layer nothing passes through. See decisions.md #35.
- *
- * The app itself is built in `api/yoga.ts`, which is what the tests exercise —
- * including the error masking, which only exists at this layer.
+ * The process. Everything with behaviour lives in `server.ts`, which a test can
+ * start and stop; what is left here is reading the port and wiring two signals,
+ * because a test that installs a SIGTERM handler in its own process is a test
+ * that shuts down the test runner.
  */
-const server = createServer(createApp())
+const server = await startServer(config.PORT)
 
-server.listen(config.PORT, () => {
-  console.log(`GraphQL ready at http://localhost:${config.PORT}/graphql`)
-})
+console.log(`GraphQL ready at http://localhost:${server.port}/graphql`)
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.on(signal, () => {
-    server.close(() => process.exit(0))
+    void server.close().then(() => process.exit(0))
   })
 }
