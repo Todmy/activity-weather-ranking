@@ -18,6 +18,21 @@ export type Factor = {
   source: string
 }
 
+/**
+ * A veto, expressed as a multiplier rather than as weight.
+ *
+ * A weighted mean can say how good a day is on balance and cannot say "none of
+ * that matters". Held lifts and a travel-disruption storm both need the second
+ * sentence, so gates multiply the finished score: 1.0 is nothing in the way,
+ * and below that everything else is scaled down together. See design.md §4.
+ */
+export type Gate = {
+  name: string
+  input: keyof WeatherInputs
+  curve: Curve
+  source: string
+}
+
 export type Profile = {
   activity: string
   /** Geography the activity needs before a score means anything at all. */
@@ -25,6 +40,13 @@ export type Profile = {
   /** Which weather series to score: the city, or the sampled high point. */
   series: 'city' | 'summit'
   factors: Factor[]
+  /** Multiplicative vetoes. Absent means nothing can veto this activity. */
+  gates?: Gate[]
+  /**
+   * Where the profile's range starts when every factor reads zero, in [0, 1).
+   * Only indoor sightseeing uses it: a museum is open whatever the sky does.
+   */
+  floor?: number
 }
 
 export type FactorContribution = {
@@ -34,16 +56,30 @@ export type FactorContribution = {
   rawValue: number | null
   /** What the curve made of it, in [0, 1]. Null when the input was missing. */
   curveValue: number | null
-  /** Points of the final 0-100 score this factor accounts for. */
+  /**
+   * Points of the weighted mean this factor accounts for. Contributions sum to
+   * `base`, not to `score`: the floor and the gates act on the total afterwards
+   * and report themselves separately.
+   */
   contribution: number
+}
+
+export type GateEffect = {
+  name: string
+  rawValue: number | null
+  /** 1 means open. Below that, the whole score is scaled by it. */
+  multiplier: number
 }
 
 export type ProfileScore = {
   /** Null when not one input was present — no data is not a bad day. */
   score: number | null
+  /** The weighted mean on a 0-100 scale, before the floor and the gates. */
+  base: number | null
   /** Fraction of the profile's weight whose input was actually present. */
   completeness: number
   factors: FactorContribution[]
+  gates: GateEffect[]
 }
 
 export const scoreProfile = (profile: Profile, inputs: WeatherInputs): ProfileScore => {
@@ -74,13 +110,28 @@ export const scoreProfile = (profile: Profile, inputs: WeatherInputs): ProfileSc
         : (100 * factor.weight * curveValue) / presentWeight,
   }))
 
-  const total = factors.reduce((sum, factor) => sum + factor.contribution, 0)
+  const base = factors.reduce((sum, factor) => sum + factor.contribution, 0)
+
+  // A gate whose input is missing stays open. Vetoing on ignorance would turn
+  // "we have no gust figure" into "the lifts are shut".
+  const gates: GateEffect[] = (profile.gates ?? []).map((gate) => {
+    const raw = inputs[gate.input]
+    const rawValue = raw === undefined || raw === null ? null : raw
+
+    return { name: gate.name, rawValue, multiplier: rawValue === null ? 1 : gate.curve(rawValue) }
+  })
+
+  const floor = profile.floor ?? 0
+  const gated = gates.reduce((product, gate) => product * gate.multiplier, 1)
+  const total = (floor * 100 + (1 - floor) * base) * gated
 
   return {
     // Rounded at exactly one point, which is what makes the determinism claim
     // in design.md §6 hold across floating-point arithmetic.
     score: presentWeight === 0 ? null : Math.round(total),
+    base: presentWeight === 0 ? null : base,
     completeness: totalWeight === 0 ? 0 : presentWeight / totalWeight,
     factors,
+    gates,
   }
 }

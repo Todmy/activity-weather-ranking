@@ -90,3 +90,117 @@ describe('scoreProfile', () => {
     expect(result.completeness).toBe(0)
   })
 })
+
+describe('gates', () => {
+  const gated: Profile = {
+    ...twoFactor,
+    gates: [
+      {
+        name: 'liftsHeld',
+        input: 'windGustsMax',
+        curve: rampDown(56, 72),
+        source: 'synthetic, for the engine test only',
+      },
+    ],
+  }
+
+  it('leaves the score alone while the gate is open', () => {
+    const result = scoreProfile(gated, {
+      apparentTemperatureMax: 10,
+      precipitationSum: 5,
+      windGustsMax: 20,
+    })
+
+    expect(result.score).toBe(88)
+    expect(result.gates[0]?.multiplier).toBe(1)
+  })
+
+  it('scales the whole score down as the gate closes', () => {
+    // 0.875 weighted mean, gate at 70 km/h -> 0.125, so 11 rather than 88.
+    const result = scoreProfile(gated, {
+      apparentTemperatureMax: 10,
+      precipitationSum: 5,
+      windGustsMax: 70,
+    })
+
+    expect(result.score).toBe(11)
+    expect(result.gates[0]).toEqual({
+      name: 'liftsHeld',
+      rawValue: 70,
+      multiplier: 0.125,
+    })
+  })
+
+  it('multiplies gates together rather than taking the worst', () => {
+    const twoGates: Profile = {
+      ...twoFactor,
+      gates: [
+        { name: 'a', input: 'windGustsMax', curve: rampDown(0, 100), source: 'synthetic test gate' },
+        { name: 'b', input: 'windSpeedMax', curve: rampDown(0, 100), source: 'synthetic test gate' },
+      ],
+    }
+
+    const result = scoreProfile(twoGates, {
+      apparentTemperatureMax: 10,
+      precipitationSum: 0,
+      windGustsMax: 50,
+      windSpeedMax: 50,
+    })
+
+    // Two half-open gates: 100 x 0.5 x 0.5, not 100 x 0.5.
+    expect(result.score).toBe(25)
+  })
+
+  it('holds the gate open when its input is missing, rather than vetoing on ignorance', () => {
+    const result = scoreProfile(gated, { apparentTemperatureMax: 10, precipitationSum: 5 })
+
+    expect(result.score).toBe(88)
+    expect(result.gates[0]?.multiplier).toBe(1)
+    expect(result.gates[0]?.rawValue).toBeNull()
+  })
+})
+
+describe('floor', () => {
+  const floored: Profile = { ...twoFactor, floor: 0.55 }
+
+  it('lifts a weighted mean of zero to the floor', () => {
+    const result = scoreProfile(floored, { apparentTemperatureMax: 0, precipitationSum: 100 })
+
+    expect(result.score).toBe(55)
+  })
+
+  it('still reaches 100 when everything is ideal', () => {
+    const result = scoreProfile(floored, { apparentTemperatureMax: 10, precipitationSum: 0 })
+
+    expect(result.score).toBe(100)
+  })
+
+  it('compresses the range in between, rather than shifting it', () => {
+    // mean 0.5 -> 0.55 + 0.45 x 0.5
+    const result = scoreProfile(floored, { apparentTemperatureMax: 5, precipitationSum: 5 })
+
+    expect(result.score).toBe(78)
+  })
+
+  it('is closed by a gate even at the floor, because open is not reachable', () => {
+    const flooredAndGated: Profile = {
+      ...floored,
+      gates: [
+        {
+          name: 'travelDisruption',
+          input: 'windGustsMax',
+          curve: rampDown(64, 90),
+          source: 'synthetic, for the engine test only',
+        },
+      ],
+    }
+
+    const result = scoreProfile(flooredAndGated, {
+      apparentTemperatureMax: 0,
+      precipitationSum: 100,
+      windGustsMax: 95,
+    })
+
+    expect(result.score).toBe(0)
+  })
+})
