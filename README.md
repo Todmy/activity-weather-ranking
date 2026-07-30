@@ -6,6 +6,8 @@ than fetched on every request.
 
 Node.js, TypeScript, GraphQL, MongoDB.
 
+[![CI](https://github.com/Todmy/activity-weather-ranking/actions/workflows/ci.yml/badge.svg)](https://github.com/Todmy/activity-weather-ranking/actions/workflows/ci.yml)
+
 ## Live
 
 `http://2.28.24.132:4000/graphql` — open it for GraphiQL, which loads with the example queries below
@@ -142,7 +144,7 @@ only if you need to.
 ### Tests
 
 ```bash
-pnpm check                      # tsc --noEmit, then 294 tests
+pnpm check                      # tsc --noEmit, then 295 tests
 ```
 
 Neither Docker nor a network is needed. The persistence tests start a real `mongod` through
@@ -213,6 +215,7 @@ that commit on.
 | [`docs/cut.md`](docs/cut.md) | What was considered and not built, with the test each item had to pass |
 | [`docs/design.md`](docs/design.md) | Data model, refresh gateway, scoring, determinism |
 | [`docs/sanity-table.md`](docs/sanity-table.md) | Twenty scenarios the scoring model must reproduce, written before any curve exists |
+| [`docs/schema.graphql`](docs/schema.graphql) | The whole API in one file, generated from the code and tested against it — so a removed field is a removed line |
 | [`docs/adr/`](docs/adr/) | Three choices big enough to need the argument in full — MongoDB, code-first GraphQL, two fields over `@oneOf` — each recording what it cost as well as what it bought |
 
 `docs/probes/` holds raw captured Open-Meteo responses. They are the
