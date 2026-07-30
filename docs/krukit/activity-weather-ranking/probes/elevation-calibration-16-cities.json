@@ -1,0 +1,618 @@
+{
+  "radiusKm": 50,
+  "configs": [
+    3,
+    5,
+    9
+  ],
+  "results": [
+    {
+      "name": "Innsbruck",
+      "lat": 47.2692,
+      "lon": 11.4041,
+      "expect": "ski",
+      "byConfig": {
+        "3": {
+          "max": 2989,
+          "at": [
+            46.82,
+            10.7422
+          ],
+          "distKm": 70.8,
+          "spacingKm": 50,
+          "cityElevation": null
+        },
+        "5": {
+          "max": 3286,
+          "at": [
+            46.82,
+            11.0731
+          ],
+          "distKm": 55.9,
+          "spacingKm": 25,
+          "cityElevation": null
+        },
+        "9": {
+          "max": 3286,
+          "at": [
+            46.82,
+            11.0731
+          ],
+          "distKm": 55.9,
+          "spacingKm": 12.5,
+          "cityElevation": null
+        }
+      }
+    },
+    {
+      "name": "Grenoble",
+      "lat": 45.1885,
+      "lon": 5.7245,
+      "expect": "ski",
+      "byConfig": {
+        "3": {
+          "max": 2563,
+          "at": [
+            44.7393,
+            6.3618
+          ],
+          "distKm": 70.8,
+          "spacingKm": 50,
+          "cityElevation": null
+        },
+        "5": {
+          "max": 2563,
+          "at": [
+            44.7393,
+            6.3618
+          ],
+          "distKm": 70.8,
+          "spacingKm": 25,
+          "cityElevation": null
+        },
+        "9": {
+          "max": 3158,
+          "at": [
+            44.8516,
+            6.3618
+          ],
+          "distKm": 62.5,
+          "spacingKm": 12.5,
+          "cityElevation": null
+        }
+      }
+    },
+    {
+      "name": "Sofia",
+      "lat": 42.6977,
+      "lon": 23.3219,
+      "expect": "ski",
+      "byConfig": {
+        "3": {
+          "max": 1365,
+          "at": [
+            42.2485,
+            23.3219
+          ],
+          "distKm": 49.9,
+          "spacingKm": 50,
+          "cityElevation": null
+        },
+        "5": {
+          "max": 1582,
+          "at": [
+            42.2485,
+            23.6275
+          ],
+          "distKm": 55.9,
+          "spacingKm": 25,
+          "cityElevation": null
+        },
+        "9": {
+          "max": 1582,
+          "at": [
+            42.2485,
+            23.6275
+          ],
+          "distKm": 55.9,
+          "spacingKm": 12.5,
+          "cityElevation": null
+        }
+      }
+    },
+    {
+      "name": "Sarajevo",
+      "lat": 43.8563,
+      "lon": 18.4131,
+      "expect": "ski",
+      "byConfig": {
+        "3": {
+          "max": 1592,
+          "at": [
+            43.4071,
+            18.4131
+          ],
+          "distKm": 49.9,
+          "spacingKm": 50,
+          "cityElevation": null
+        },
+        "5": {
+          "max": 1592,
+          "at": [
+            43.4071,
+            18.4131
+          ],
+          "distKm": 49.9,
+          "spacingKm": 25,
+          "cityElevation": null
+        },
+        "9": {
+          "max": 1821,
+          "at": [
+            43.5194,
+            17.9459
+          ],
+          "distKm": 53,
+          "spacingKm": 12.5,
+          "cityElevation": null
+        }
+      }
+    },
+    {
+      "name": "Oslo",
+      "lat": 59.9139,
+      "lon": 10.7522,
+      "expect": "ski",
+      "byConfig": {
+        "3": {
+          "max": 577,
+          "at": [
+            60.3631,
+            10.7522
+          ],
+          "distKm": 49.9,
+          "spacingKm": 50,
+          "cityElevation": null
+        },
+        "5": {
+          "max": 577,
+          "at": [
+            60.3631,
+            10.7522
+          ],
+          "distKm": 49.9,
+          "spacingKm": 25,
+          "cityElevation": null
+        },
+        "9": {
+          "max": 631,
+          "at": [
+            59.9139,
+            10.0802
+          ],
+          "distKm": 37.5,
+          "spacingKm": 12.5,
+          "cityElevation": null
+        }
+      }
+    },
+    {
+      "name": "Denver",
+      "lat": 39.7392,
+      "lon": -104.9903,
+      "expect": "ski",
+      "byConfig": {
+        "3": {
+          "max": 3425,
+          "at": [
+            39.29,
+            -105.5744
+          ],
+          "distKm": 70.7,
+          "spacingKm": 50,
+          "cityElevation": null
+        },
+        "5": {
+          "max": 3425,
+          "at": [
+            39.29,
+            -105.5744
+          ],
+          "distKm": 70.7,
+          "spacingKm": 25,
+          "cityElevation": null
+        },
+        "9": {
+          "max": 3449,
+          "at": [
+            39.29,
+            -105.4284
+          ],
+          "distKm": 62.5,
+          "spacingKm": 12.5,
+          "cityElevation": null
+        }
+      }
+    },
+    {
+      "name": "Vancouver",
+      "lat": 49.2827,
+      "lon": -123.1207,
+      "expect": "ski",
+      "byConfig": {
+        "3": {
+          "max": 1817,
+          "at": [
+            49.7319,
+            -122.4322
+          ],
+          "distKm": 70.5,
+          "spacingKm": 50,
+          "cityElevation": null
+        },
+        "5": {
+          "max": 1817,
+          "at": [
+            49.7319,
+            -122.4322
+          ],
+          "distKm": 70.5,
+          "spacingKm": 25,
+          "cityElevation": null
+        },
+        "9": {
+          "max": 1817,
+          "at": [
+            49.7319,
+            -122.4322
+          ],
+          "distKm": 70.5,
+          "spacingKm": 12.5,
+          "cityElevation": null
+        }
+      }
+    },
+    {
+      "name": "Munich",
+      "lat": 48.1351,
+      "lon": 11.582,
+      "expect": "boundary",
+      "byConfig": {
+        "3": {
+          "max": 863,
+          "at": [
+            47.6859,
+            10.909
+          ],
+          "distKm": 70.8,
+          "spacingKm": 50,
+          "cityElevation": null
+        },
+        "5": {
+          "max": 1014,
+          "at": [
+            47.6859,
+            11.9185
+          ],
+          "distKm": 55.9,
+          "spacingKm": 25,
+          "cityElevation": null
+        },
+        "9": {
+          "max": 1014,
+          "at": [
+            47.6859,
+            11.9185
+          ],
+          "distKm": 55.9,
+          "spacingKm": 12.5,
+          "cityElevation": null
+        }
+      }
+    },
+    {
+      "name": "Edinburgh",
+      "lat": 55.9533,
+      "lon": -3.1883,
+      "expect": "boundary",
+      "byConfig": {
+        "3": {
+          "max": 413,
+          "at": [
+            55.5041,
+            -3.1883
+          ],
+          "distKm": 49.9,
+          "spacingKm": 50,
+          "cityElevation": null
+        },
+        "5": {
+          "max": 490,
+          "at": [
+            55.5041,
+            -3.5894
+          ],
+          "distKm": 55.9,
+          "spacingKm": 25,
+          "cityElevation": null
+        },
+        "9": {
+          "max": 490,
+          "at": [
+            55.5041,
+            -3.5894
+          ],
+          "distKm": 55.9,
+          "spacingKm": 12.5,
+          "cityElevation": null
+        }
+      }
+    },
+    {
+      "name": "Prague",
+      "lat": 50.0755,
+      "lon": 14.4378,
+      "expect": "boundary",
+      "byConfig": {
+        "3": {
+          "max": 670,
+          "at": [
+            49.6263,
+            13.7379
+          ],
+          "distKm": 70.8,
+          "spacingKm": 50,
+          "cityElevation": null
+        },
+        "5": {
+          "max": 670,
+          "at": [
+            49.6263,
+            13.7379
+          ],
+          "distKm": 70.8,
+          "spacingKm": 25,
+          "cityElevation": null
+        },
+        "9": {
+          "max": 738,
+          "at": [
+            49.7386,
+            13.9129
+          ],
+          "distKm": 53.1,
+          "spacingKm": 12.5,
+          "cityElevation": null
+        }
+      }
+    },
+    {
+      "name": "Barcelona",
+      "lat": 41.3874,
+      "lon": 2.1686,
+      "expect": "boundary",
+      "byConfig": {
+        "3": {
+          "max": 1025,
+          "at": [
+            41.8366,
+            2.1686
+          ],
+          "distKm": 49.9,
+          "spacingKm": 50,
+          "cityElevation": null
+        },
+        "5": {
+          "max": 1025,
+          "at": [
+            41.8366,
+            2.1686
+          ],
+          "distKm": 49.9,
+          "spacingKm": 25,
+          "cityElevation": null
+        },
+        "9": {
+          "max": 1025,
+          "at": [
+            41.8366,
+            2.1686
+          ],
+          "distKm": 49.9,
+          "spacingKm": 12.5,
+          "cityElevation": null
+        }
+      }
+    },
+    {
+      "name": "Amsterdam",
+      "lat": 52.3676,
+      "lon": 4.9041,
+      "expect": "no-ski",
+      "byConfig": {
+        "3": {
+          "max": 12,
+          "at": [
+            51.9184,
+            4.1685
+          ],
+          "distKm": 70.8,
+          "spacingKm": 50,
+          "cityElevation": null
+        },
+        "5": {
+          "max": 14,
+          "at": [
+            52.143,
+            5.6397
+          ],
+          "distKm": 56,
+          "spacingKm": 25,
+          "cityElevation": null
+        },
+        "9": {
+          "max": 41,
+          "at": [
+            52.2553,
+            5.6397
+          ],
+          "distKm": 51.5,
+          "spacingKm": 12.5,
+          "cityElevation": null
+        }
+      }
+    },
+    {
+      "name": "London",
+      "lat": 51.5074,
+      "lon": -0.1278,
+      "expect": "no-ski",
+      "byConfig": {
+        "3": {
+          "max": 122,
+          "at": [
+            51.9566,
+            -0.1278
+          ],
+          "distKm": 49.9,
+          "spacingKm": 50,
+          "cityElevation": null
+        },
+        "5": {
+          "max": 168,
+          "at": [
+            51.2828,
+            -0.1278
+          ],
+          "distKm": 25,
+          "spacingKm": 25,
+          "cityElevation": null
+        },
+        "9": {
+          "max": 184,
+          "at": [
+            51.6197,
+            -0.8494
+          ],
+          "distKm": 51.4,
+          "spacingKm": 12.5,
+          "cityElevation": null
+        }
+      }
+    },
+    {
+      "name": "Warsaw",
+      "lat": 52.2297,
+      "lon": 21.0122,
+      "expect": "no-ski",
+      "byConfig": {
+        "3": {
+          "max": 186,
+          "at": [
+            52.2297,
+            21.7455
+          ],
+          "distKm": 49.9,
+          "spacingKm": 50,
+          "cityElevation": null
+        },
+        "5": {
+          "max": 186,
+          "at": [
+            52.2297,
+            21.7455
+          ],
+          "distKm": 49.9,
+          "spacingKm": 25,
+          "cityElevation": null
+        },
+        "9": {
+          "max": 201,
+          "at": [
+            51.8928,
+            20.4622
+          ],
+          "distKm": 53.1,
+          "spacingKm": 12.5,
+          "cityElevation": null
+        }
+      }
+    },
+    {
+      "name": "Copenhagen",
+      "lat": 55.6761,
+      "lon": 12.5683,
+      "expect": "no-ski",
+      "byConfig": {
+        "3": {
+          "max": 124,
+          "at": [
+            55.6761,
+            13.3649
+          ],
+          "distKm": 49.9,
+          "spacingKm": 50,
+          "cityElevation": null
+        },
+        "5": {
+          "max": 124,
+          "at": [
+            55.6761,
+            13.3649
+          ],
+          "distKm": 49.9,
+          "spacingKm": 25,
+          "cityElevation": null
+        },
+        "9": {
+          "max": 124,
+          "at": [
+            55.6761,
+            13.3649
+          ],
+          "distKm": 49.9,
+          "spacingKm": 12.5,
+          "cityElevation": null
+        }
+      }
+    },
+    {
+      "name": "Miami",
+      "lat": 25.7617,
+      "lon": -80.1918,
+      "expect": "no-ski",
+      "byConfig": {
+        "3": {
+          "max": 6,
+          "at": [
+            26.2109,
+            -80.1918
+          ],
+          "distKm": 49.9,
+          "spacingKm": 50,
+          "cityElevation": null
+        },
+        "5": {
+          "max": 6,
+          "at": [
+            26.2109,
+            -80.1918
+          ],
+          "distKm": 49.9,
+          "spacingKm": 25,
+          "cityElevation": null
+        },
+        "9": {
+          "max": 6,
+          "at": [
+            26.2109,
+            -80.1918
+          ],
+          "distKm": 49.9,
+          "spacingKm": 12.5,
+          "cityElevation": null
+        }
+      }
+    }
+  ]
+}
