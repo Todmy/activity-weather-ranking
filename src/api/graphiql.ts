@@ -140,4 +140,18 @@ query HowFreshIsThisAnswer {
     days { date }
   }
 }
+
+# 9. The other answer to an ambiguous name. Query 4 shows activityForecast
+#    picking one Cambridge and naming the rest; this one picks none and hands
+#    back the candidates with the population upstream ranked them by. The
+#    geonameId of any of them goes straight into activityForecastAt.
+query LetMePickTheCambridge {
+  searchLocations(query: "Cambridge", limit: 5) {
+    geonameId
+    name
+    admin1
+    countryCode
+    population
+  }
+}
 `

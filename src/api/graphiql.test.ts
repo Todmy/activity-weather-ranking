@@ -30,6 +30,7 @@ describe('the GraphiQL examples', () => {
       'WhereSkiingWasAssessed',
       'NoMountainNoOcean',
       'HowFreshIsThisAnswer',
+      'LetMePickTheCambridge',
     ])
   })
 
@@ -58,6 +59,13 @@ describe('the GraphiQL examples', () => {
     expect(defaultQuery).toContain('issuedAt')
     expect(defaultQuery).toContain('stale')
     expect(defaultQuery).toContain('staleReason')
+  })
+
+  it('offer the entry point for a caller who wants to choose', () => {
+    // activityForecast picks and says which; searchLocations refuses to pick.
+    // A reviewer has to be able to run both to see that they are two answers to
+    // one ambiguity rather than one answer twice.
+    expect(defaultQuery).toContain('searchLocations(')
   })
 
   it('show measured absence as well as measured presence', () => {

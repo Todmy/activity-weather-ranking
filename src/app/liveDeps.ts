@@ -8,7 +8,7 @@ import { fetchForecast } from '../providers/openmeteo/forecast.ts'
 import { searchLocations } from '../providers/openmeteo/geocoding.ts'
 import { fetchTerrain } from '../providers/openmeteo/elevation.ts'
 import { fetchMarine } from '../providers/openmeteo/marine.ts'
-import type { ActivityForecastDeps } from './activityForecast.ts'
+import type { AppDeps } from './deps.ts'
 import { ensureFresh } from './forecastGateway.ts'
 
 /**
@@ -16,7 +16,7 @@ import { ensureFresh } from './forecastGateway.ts'
  * design.md §1. Everything above this file takes its collaborators as arguments,
  * which is what lets the whole path be exercised on fixtures.
  */
-export const liveDepsFor = (db: Db, instanceId: string = randomUUID()): ActivityForecastDeps => {
+export const liveDepsFor = (db: Db, instanceId: string = randomUUID()): AppDeps => {
   const locations = locationRepository(db)
   const resolutions = resolutionRepository(db)
   const forecasts = forecastRepository(db)
@@ -26,6 +26,18 @@ export const liveDepsFor = (db: Db, instanceId: string = randomUUID()): Activity
   return {
     resolve: async (query, at) =>
       await resolveLocation({ resolutions, locations }, searchLocations, query, at),
+
+    search: searchLocations,
+
+    // Registration, not a request: `activityForecastAt` takes an id and nothing
+    // can geocode an id, so a search that did not write its candidates would
+    // hand out ids that cannot be used. `lastRequestedAt` moves as a side
+    // effect, which is harmless — the background refresher only refreshes
+    // locations that already have an issuance, and a searched-but-never-scored
+    // city has none.
+    register: async (found, at) => {
+      await Promise.all(found.map(async (location) => await locations.upsert(location, at)))
+    },
 
     geography: async (location, at) => {
       const stored = await ensureLocation(

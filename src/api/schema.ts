@@ -3,11 +3,12 @@ import { GraphQLError } from 'graphql'
 import { getActivityForecast, LocationNotFound, NoDataYet } from '../app/activityForecast.ts'
 import type {
   ActivityForecast,
-  ActivityForecastDeps,
   ActivityRanking,
   Assessment,
   ScoredDay,
 } from '../app/activityForecast.ts'
+import type { AppDeps } from '../app/deps.ts'
+import { searchForLocations } from '../app/locationSearch.ts'
 import type { ActivityResult } from '../domain/activityResult.ts'
 import type { RankedDay } from '../domain/rank.ts'
 import type { FactorContribution, GateEffect } from '../domain/score.ts'
@@ -24,7 +25,7 @@ import type { GeocodedLocation } from '../providers/openmeteo/geocoding.ts'
  * would be a way to bypass the very thing the brief asks for. Production wires
  * the real ones in `server.ts`; tests wire fixtures.
  */
-export type GraphQLContext = { deps: ActivityForecastDeps }
+export type GraphQLContext = { deps: AppDeps }
 
 const builder = new SchemaBuilder<{ Context: GraphQLContext }>({})
 
@@ -36,6 +37,10 @@ const LocationRef = builder.objectRef<GeocodedLocation>('Location').implement({
     }),
     name: t.exposeString('name'),
     country: t.exposeString('country', { nullable: true }),
+    countryCode: t.exposeString('countryCode', {
+      nullable: true,
+      description: 'ISO 3166-1 alpha-2, which is the shortest way to tell two Cambridges apart.',
+    }),
     admin1: t.exposeString('admin1', {
       nullable: true,
       description: 'First-level division, which is what tells five Cambridges apart.',
@@ -44,6 +49,10 @@ const LocationRef = builder.objectRef<GeocodedLocation>('Location').implement({
     longitude: t.exposeFloat('longitude'),
     elevation: t.exposeFloat('elevation', { nullable: true }),
     timezone: t.exposeString('timezone'),
+    population: t.exposeInt('population', {
+      nullable: true,
+      description: 'What upstream ranks candidates by, so the ordering can be understood.',
+    }),
   }),
 })
 
@@ -240,6 +249,30 @@ builder.queryType({
     health: t.string({
       description: 'Returns "ok" when the service is running.',
       resolve: () => 'ok',
+    }),
+    searchLocations: t.field({
+      type: [LocationRef],
+      description:
+        'Every place matching an ambiguous name, in upstream order, choosing none of them. ' +
+        'Use this when the caller must pick — activityForecast(query:) picks for them and says ' +
+        'which. The ids returned here are usable with activityForecastAt.',
+      args: {
+        query: t.arg.string({ required: true }),
+        limit: t.arg.int({ defaultValue: 5 }),
+      },
+      resolve: async (_root, args, ctx) => {
+        try {
+          return await searchForLocations(args.query, args.limit ?? 5, ctx.deps)
+        } catch (error) {
+          if (error instanceof OpenMeteoError) {
+            throw new GraphQLError(`Open-Meteo is unavailable: ${error.message}`, {
+              extensions: { code: 'UPSTREAM_UNAVAILABLE', upstreamStatus: error.status },
+            })
+          }
+
+          throw error
+        }
+      },
     }),
     activityForecast: t.field({
       type: ForecastResultRef,

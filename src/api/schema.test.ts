@@ -22,6 +22,8 @@ const innsbruck = parseForecast(fixture('forecast-innsbruck-past3.json'))
 const contextValue: GraphQLContext = {
   deps: {
     resolve: async () => ({ location: cambridge[0]!, alternatives: cambridge.slice(1) }),
+    search: async () => cambridge,
+    register: async () => undefined,
     geography: async () => ({}),
     issuance: async (plan) => freshIssuance(plan, { city: innsbruck }),
     now: () => DEFAULT_ISSUED_AT,

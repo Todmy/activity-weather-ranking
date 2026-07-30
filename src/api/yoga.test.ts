@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createApp } from './yoga.ts'
-import type { ActivityForecastDeps } from '../app/activityForecast.ts'
+import type { AppDeps } from '../app/deps.ts'
 import { OpenMeteoError, parseForecast } from '../providers/openmeteo/forecast.ts'
 import { parseGeocoding, toLocations } from '../providers/openmeteo/geocoding.ts'
 import { DEFAULT_ISSUED_AT, freshIssuance, issuanceFrom } from '../testing/issuance.ts'
@@ -12,8 +12,10 @@ const fixture = (name: string): unknown =>
 const cambridge = toLocations(parseGeocoding(fixture('geocoding-cambridge.json')))
 const innsbruck = parseForecast(fixture('forecast-innsbruck-past3.json'))
 
-const deps = (overrides: Partial<ActivityForecastDeps> = {}): ActivityForecastDeps => ({
+const deps = (overrides: Partial<AppDeps> = {}): AppDeps => ({
   resolve: async () => ({ location: cambridge[0]!, alternatives: cambridge.slice(1) }),
+  search: async () => cambridge,
+  register: async () => undefined,
   geography: async () => ({}),
   issuance: async (plan) => freshIssuance(plan, { city: innsbruck }),
   now: () => DEFAULT_ISSUED_AT,
@@ -143,6 +145,45 @@ describe('the app over HTTP', () => {
 
     // Deliberate: an infrastructure detail is not a caller's business.
     expect(body.errors[0].message).toBe('Unexpected error.')
+  })
+})
+
+describe('searchLocations', () => {
+  it('returns every candidate for an ambiguous name, choosing none', async () => {
+    const body = await post(
+      createApp({ deps: deps() }),
+      '{ searchLocations(query: "Cambridge") { geonameId name countryCode admin1 population } }',
+    )
+
+    expect(body.errors).toBeUndefined()
+    expect(body.data.searchLocations).toHaveLength(5)
+    expect(body.data.searchLocations[0].countryCode).toBe('GB')
+    expect(body.data.searchLocations.map((l: { admin1: string }) => l.admin1)).toContain(
+      'Massachusetts',
+    )
+    // Population is what upstream ranks by, so a caller choosing between five
+    // Cambridges can see the reason the first one is first.
+    expect(body.data.searchLocations[0].population).toBeGreaterThan(0)
+  })
+
+  it('passes the caller\'s limit upstream and defaults it to five', async () => {
+    const search = vi.fn(async (_query: string, _limit: number) => cambridge)
+    const app = createApp({ deps: deps({ search }) })
+
+    await post(app, '{ searchLocations(query: "Cambridge") { geonameId } }')
+    await post(app, '{ searchLocations(query: "Cambridge", limit: 2) { geonameId } }')
+
+    expect(search.mock.calls.map((call) => call[1])).toEqual([5, 2])
+  })
+
+  it('answers an unmatched search with an empty list, not an error', async () => {
+    const body = await post(
+      createApp({ deps: deps({ search: async () => [] }) }),
+      '{ searchLocations(query: "Nowhereinparticular") { geonameId } }',
+    )
+
+    expect(body.errors).toBeUndefined()
+    expect(body.data.searchLocations).toEqual([])
   })
 })
 
