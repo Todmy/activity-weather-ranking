@@ -29,6 +29,16 @@ type Assessment {
   terrain: TerrainAssessment
 }
 
+"""
+The verdict a score falls in, from `docs/sanity-table.md`: POOR 0-39, FAIR 40-59, GOOD 60-79, EXCELLENT 80-100. Every sanity row states one of these, and they were the target the curves were fitted to.
+"""
+enum Band {
+  EXCELLENT
+  FAIR
+  GOOD
+  POOR
+}
+
 type DayForecast {
   """Every activity for this day, best first. One of the two ranking axes."""
   activities: [ActivityResult!]
@@ -177,6 +187,8 @@ type Query {
 }
 
 type RankedDay {
+  """The verdict for this day, on the same scale as `ScoredActivity.band`."""
+  band: Band
   confidence: Float
   date: String
   score: Int
@@ -184,6 +196,11 @@ type RankedDay {
 
 type ScoredActivity {
   activity: String
+
+  """
+  The same number as a verdict. The brief asks how *good* the days will be, and an integer alone makes the caller guess where the lines are — these are the lines the model was calibrated against, rather than a presentation choice made afterwards.
+  """
+  band: Band
 
   """The weighted mean before the floor and the gates, 0 to 100."""
   base: Float

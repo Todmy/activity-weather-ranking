@@ -27,7 +27,7 @@ query BestDaysPerActivity {
     issuedAt
     rankings {
       activity
-      days { date score confidence }
+      days { date score band confidence }
       reason
     }
   }
@@ -40,7 +40,7 @@ query BestActivityPerDay {
     days {
       date
       activities {
-        ... on ScoredActivity { activity score confidence }
+        ... on ScoredActivity { activity score band confidence }
         ... on NotApplicableActivity { activity reason }
         ... on UnavailableActivity { activity reason }
       }
@@ -99,7 +99,7 @@ query WhereSkiingWasAssessed {
     }
     rankings {
       activity
-      days { date score confidence }
+      days { date score band confidence }
       reason
     }
   }
@@ -193,7 +193,7 @@ query HowFridayChanged {
     day {
       date
       activities {
-        ... on ScoredActivity { activity score confidence }
+        ... on ScoredActivity { activity score band confidence }
         ... on NotApplicableActivity { activity reason }
       }
     }

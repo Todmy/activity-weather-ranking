@@ -17,6 +17,7 @@ import { getForecastHistory } from '../app/forecastHistory.ts'
 import type { HistoricalIssuance } from '../app/forecastHistory.ts'
 import { searchForLocations } from '../app/locationSearch.ts'
 import type { ActivityResult } from '../domain/activityResult.ts'
+import { bandFor } from '../domain/band.ts'
 import type { RankedDay } from '../domain/rank.ts'
 import type { FactorContribution, GateEffect } from '../domain/score.ts'
 import { OpenMeteoError } from '../providers/openmeteo/forecast.ts'
@@ -104,10 +105,26 @@ type Scored = Extract<ActivityResult, { kind: 'scored' }>
 type NotApplicable = Extract<ActivityResult, { kind: 'notApplicable' }>
 type Unavailable = Extract<ActivityResult, { kind: 'unavailable' }>
 
+const BandRef = builder.enumType('Band', {
+  description:
+    'The verdict a score falls in, from `docs/sanity-table.md`: POOR 0-39, FAIR 40-59, ' +
+    'GOOD 60-79, EXCELLENT 80-100. Every sanity row states one of these, and they were the ' +
+    'target the curves were fitted to.',
+  values: ['POOR', 'FAIR', 'GOOD', 'EXCELLENT'] as const,
+})
+
 const ScoredRef = builder.objectRef<Scored>('ScoredActivity').implement({
   fields: (t) => ({
     activity: t.exposeString('activity'),
     score: t.exposeInt('score', { description: '0 to 100, after the floor and the gates.' }),
+    band: t.field({
+      type: BandRef,
+      description:
+        'The same number as a verdict. The brief asks how *good* the days will be, and an ' +
+        'integer alone makes the caller guess where the lines are — these are the lines the ' +
+        'model was calibrated against, rather than a presentation choice made afterwards.',
+      resolve: (result) => bandFor(result.score),
+    }),
     base: t.exposeFloat('base', {
       description: 'The weighted mean before the floor and the gates, 0 to 100.',
     }),
@@ -168,6 +185,11 @@ const DayRef = builder.objectRef<ScoredDay>('DayForecast').implement({
 
 const RankedDayRef = builder.objectRef<RankedDay>('RankedDay').implement({
   fields: (t) => ({
+    band: t.field({
+      type: BandRef,
+      description: 'The verdict for this day, on the same scale as `ScoredActivity.band`.',
+      resolve: (day) => bandFor(day.score),
+    }),
     date: t.exposeString('date'),
     score: t.exposeInt('score'),
     confidence: t.exposeFloat('confidence'),

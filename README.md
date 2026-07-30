@@ -29,15 +29,17 @@ own would make you switch to the other axis to find out.
 
 ```bash
 curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
-  -d '{"query":"{ activityForecast(query: \"Innsbruck\") { location { name country admin1 } modelVersion rankings { activity days { date score confidence } reason } } }"}'
+  -d '{"query":"{ activityForecast(query: \"Innsbruck\") { location { name country admin1 } modelVersion rankings { activity days { date score band confidence } reason } } }"}'
 ```
 
 **Rank the activities within each day**, which is the other reading. The three-state union shows up
 here: a day carries `ScoredActivity`, `NotApplicableActivity` and `UnavailableActivity` side by side.
+`band` is the score as a verdict — POOR, FAIR, GOOD or EXCELLENT — on the same four boundaries every
+row of the sanity table was written against, rather than a presentation choice made afterwards.
 
 ```bash
 curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
-  -d '{"query":"{ activityForecast(query: \"Lisbon\") { days { date activities { ... on ScoredActivity { activity score confidence } ... on NotApplicableActivity { activity reason } ... on UnavailableActivity { activity reason } } } } }"}'
+  -d '{"query":"{ activityForecast(query: \"Lisbon\") { days { date activities { ... on ScoredActivity { activity score band confidence } ... on NotApplicableActivity { activity reason } ... on UnavailableActivity { activity reason } } } } }"}'
 ```
 
 **Ask why a day scored what it did.** Every factor reports the forecast value behind it, what the
@@ -101,7 +103,7 @@ model.
 
 ```bash
 curl -s http://2.28.24.132:4000/graphql -H 'content-type: application/json' \
-  -d '{"query":"{ forecastHistory(locationId: \"geoname:4931972\", date: \"2026-08-02\") { issuedAt horizonDays day { date activities { ... on ScoredActivity { activity score confidence } ... on NotApplicableActivity { activity reason } ... on UnavailableActivity { activity reason } } } } }"}'
+  -d '{"query":"{ forecastHistory(locationId: \"geoname:4931972\", date: \"2026-08-02\") { issuedAt horizonDays day { date activities { ... on ScoredActivity { activity score band confidence } ... on NotApplicableActivity { activity reason } ... on UnavailableActivity { activity reason } } } } }"}'
 ```
 
 **Ask for somewhere that does not exist.** The error names the query and carries
