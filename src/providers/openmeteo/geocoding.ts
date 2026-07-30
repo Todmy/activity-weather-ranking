@@ -8,6 +8,10 @@ import { OpenMeteoError } from './forecast.ts'
  * that established what "Cambridge" returns and in what order. Every candidate
  * is kept and returned: a service that quietly picks one Cambridge and answers
  * about the other is worse than one that admits the ambiguity.
+ *
+ * Place data from GeoNames, served through Open-Meteo's geocoding API. Attributed
+ * here and in the README alongside the weather attribution, because they are two
+ * upstream datasets rather than one.
  */
 const ENDPOINT = 'https://geocoding-api.open-meteo.com/v1/search'
 

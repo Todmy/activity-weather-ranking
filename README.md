@@ -158,6 +158,7 @@ that commit on.
 
 | Document | What it holds |
 |---|---|
+| [`docs/requirements.md`](docs/requirements.md) | What was promised, where each promise is met, and the six things deliberately not built — with the source of every row |
 | [`docs/milestones.md`](docs/milestones.md) | The high-level map. Nine milestones, M0 to M8, each with an observable done-condition and a status |
 | [`docs/decisions.md`](docs/decisions.md) | **Start here for the reasoning.** Every decision and assumption, one line each, linking to the full argument |
 | [`docs/worklog.md`](docs/worklog.md) | The sequence as it happened, including two designed mechanisms that died on contact with the real API |
