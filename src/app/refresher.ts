@@ -27,9 +27,14 @@ import type { EnsureFreshResult, FetchPlan } from './forecastGateway.ts'
 export const REFRESH_WINDOW_MS = 24 * 60 * 60 * 1000
 
 /**
- * Per-tick cap. Each location costs up to three upstream calls, so twenty is
+ * Per-tick window. Each location costs up to three upstream calls, so twenty is
  * sixty requests against a 600-a-minute ceiling — enough headroom that the
  * refresher can never be the reason a real request is throttled.
+ *
+ * A window, not a cap on how much of the warm set is ever reached: the queue is
+ * ordered by when the refresher last looked, and every location it looks at is
+ * marked, so consecutive ticks walk the whole set. Twenty every ten minutes is
+ * 120 an hour, which is what the freshness window can actually use.
  */
 export const MAX_PER_TICK = 20
 
@@ -59,6 +64,8 @@ export type RefresherDeps = {
   newestFor: (locationId: string) => Promise<IssuanceDocument | null>
   /** The read path's gateway, unchanged and unbypassed. */
   issuance: (plan: FetchPlan) => Promise<EnsureFreshResult>
+  /** Advances the rotation. Called for every location the tick looks at. */
+  markConsidered: (locationId: string, now: Date) => Promise<void>
   now: () => Date
   log: (event: RefresherEvent) => void
 }
@@ -115,6 +122,11 @@ export const tick = async (deps: RefresherDeps): Promise<TickReport> => {
   // that would compete with the requests this exists to make faster.
   for (const location of due) {
     const { outcome, reason } = await refreshOne(deps, location, now)
+
+    // Before the verdict is even counted, and for every verdict. This is what
+    // moves the location to the back of the queue; skipping it for the ones
+    // that were not refreshed would pin them at the front and starve the rest.
+    await deps.markConsidered(location._id, now)
 
     if (outcome === 'refreshed') report.refreshed += 1
     else if (outcome === 'failed') report.failed += 1

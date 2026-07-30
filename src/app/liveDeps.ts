@@ -111,6 +111,7 @@ export const liveRefresherDepsFor = (db: Db, app: AppDeps): RefresherDeps => {
     due: async (cutoff, limit) => await locations.requestedSince(cutoff, limit),
     newestFor: async (locationId) => await forecasts.newestFor(locationId),
     issuance: app.issuance,
+    markConsidered: async (locationId, now) => await locations.markConsidered(locationId, now),
     now: app.now,
     // Straight to stdout, which is where a container's logs are. M7 is done when
     // a reviewer can watch this happen, so the log is the deliverable rather

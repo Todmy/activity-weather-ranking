@@ -53,9 +53,19 @@ const depsFor = (overrides: Overrides = {}) => {
       (await overrides.issuance?.(plan)) ?? { status: 'fresh', issuance: fresh },
   )
 
+  const markConsidered = vi.fn(async (_locationId: string, _now: Date) => undefined)
+
   return {
     events,
-    deps: { due, newestFor, issuance, now: () => NOW, log: (e: RefresherEvent) => events.push(e) },
+    markConsidered,
+    deps: {
+      due,
+      newestFor,
+      issuance,
+      markConsidered,
+      now: () => NOW,
+      log: (e: RefresherEvent) => events.push(e),
+    },
   }
 }
 
@@ -183,6 +193,48 @@ describe('tick', () => {
       { event: 'location', locationId: 'geoname:1', name: 'city-1', outcome: 'refreshed' },
       { event: 'slept', refreshed: 1, skipped: 0, failed: 0 },
     ])
+  })
+})
+
+describe('the rotation', () => {
+  it('marks every location it considered, whatever it decided about them', async () => {
+    // The per-tick limit is a window over the warm set, not a cap on how much
+    // of it is ever reached, and `lastConsideredAt` is what turns the window.
+    // Marking only the successful refreshes would park a never-scored candidate
+    // or an unreachable city at the head of the queue forever, so the tick
+    // would keep re-considering the same twenty and the twenty-first would
+    // never be refreshed at all. One mark per location, whatever the verdict.
+    const { deps, markConsidered } = depsFor({
+      due: [locationAt(1), locationAt(2), locationAt(3)],
+      newest: (locationId) =>
+        locationId === 'geoname:1' ? null : locationId === 'geoname:2' ? fresh : stale,
+    })
+
+    const report = await tick(deps)
+
+    // neverScored, stillFresh, refreshed — one of each, and all three marked.
+    expect(report).toMatchObject({ considered: 3, refreshed: 1, skipped: 2, failed: 0 })
+    expect(markConsidered.mock.calls.map(([id]) => id)).toEqual([
+      'geoname:1',
+      'geoname:2',
+      'geoname:3',
+    ])
+    expect(markConsidered.mock.calls.every(([, when]) => when === NOW)).toBe(true)
+  })
+
+  it('marks a location whose refresh threw, so one dead city cannot block the queue', async () => {
+    const { deps, markConsidered } = depsFor({
+      due: [locationAt(1)],
+      newest: () => stale,
+      issuance: async () => {
+        throw new Error('upstream is having a day')
+      },
+    })
+
+    const report = await tick(deps)
+
+    expect(report.failed).toBe(1)
+    expect(markConsidered).toHaveBeenCalledWith('geoname:1', NOW)
   })
 })
 

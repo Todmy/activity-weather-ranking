@@ -119,17 +119,26 @@ describe('locationRepository', () => {
       await repo.upsert({ ...grenoble, geonameId, name: `city-${geonameId}` }, at(when))
     }
 
-    it('returns the locations asked for since the cutoff, most recent first', async () => {
+    it('offers the least recently refreshed first, and the never-refreshed before those', async () => {
+      // Ordering by request time starves the tail. `lastRequestedAt` moves on a
+      // request, and a request refreshes the location on the spot — so the
+      // twenty most recently requested are precisely the twenty already fresh,
+      // and with twenty-one warm cities the twenty-first is never reached. It
+      // does not help to invert it either: refreshing does not move
+      // `lastRequestedAt`, so the same oldest twenty would be picked forever.
+      // The queue has to turn on when the REFRESHER last looked.
       const repo = locationRepository(db)
       await seen(repo, 1, '2026-07-30T08:00:00Z')
       await seen(repo, 2, '2026-07-30T11:00:00Z')
       await seen(repo, 3, '2026-07-30T09:00:00Z')
+      await repo.markConsidered('geoname:1', at('2026-07-30T11:30:00Z'))
+      await repo.markConsidered('geoname:2', at('2026-07-30T11:10:00Z'))
 
       const due = await repo.requestedSince(at('2026-07-30T07:00:00Z'), 10)
 
       expect(due.map((location) => location._id)).toEqual([
-        'geoname:2',
         'geoname:3',
+        'geoname:2',
         'geoname:1',
       ])
     })

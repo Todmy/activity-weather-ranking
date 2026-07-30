@@ -41,6 +41,12 @@ export type LocationDocument = {
   terrain?: StoredTerrain
   marineCoverage?: 'present' | 'none'
   lastRequestedAt: Date
+  /**
+   * When the background refresher last looked at this location, whatever it
+   * then decided. Absent until the first tick reaches it, and absent sorts
+   * first — a location nobody has refreshed goes to the head of the queue.
+   */
+  lastConsideredAt?: Date
 }
 
 export const locationIdFor = (geonameId: number): string => `geoname:${geonameId}`
@@ -86,13 +92,37 @@ export const locationRepository = (db: Db) => {
      * quota is spent on places somebody is actually going to. The limit is the
      * per-tick request budget — each location can cost three upstream calls,
      * and 600 a minute is the free tier.
+     *
+     * The order is a rotation, and it has to be: the limit is a *window* over
+     * the warm set, not a cap on how much of it is ever reached. Ordering by
+     * `lastRequestedAt` fails in both directions — descending picks the twenty
+     * the read path just refreshed, and ascending picks the same twenty forever,
+     * because refreshing a location does not move the time it was requested.
+     * `lastConsideredAt` is the only field that advances when the refresher
+     * acts, so it is the only one the queue can turn on. Missing sorts first,
+     * which puts a location the tick has never seen at the head.
+     *
+     * The sort is in memory: the filter and the sort are different fields, so
+     * one index cannot serve both. At a few hundred warm locations that costs
+     * nothing, and the alternative is an index that exists for a scale this
+     * service is quota-bound well below.
      */
     requestedSince: async (cutoff: Date, limit: number): Promise<LocationDocument[]> =>
       await locations
         .find({ lastRequestedAt: { $gte: cutoff } })
-        .sort({ lastRequestedAt: -1 })
+        .sort({ lastConsideredAt: 1 })
         .limit(limit)
         .toArray(),
+
+    /**
+     * Records that the refresher has looked at this location, whatever it
+     * decided. Marking only successful refreshes would leave a never-scored
+     * candidate or an unreachable city parked at the head of the queue,
+     * blocking the rotation it is supposed to advance.
+     */
+    markConsidered: async (locationId: string, now: Date): Promise<void> => {
+      await locations.updateOne({ _id: locationId }, { $set: { lastConsideredAt: now } })
+    },
 
     /**
      * Writes the geocoding fields and moves `lastRequestedAt` forward. Geography
