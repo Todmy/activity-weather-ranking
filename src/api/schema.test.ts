@@ -18,6 +18,8 @@ const contextValue: GraphQLContext = {
   deps: {
     search: async () => toLocations(parseGeocoding(fixture('geocoding-cambridge.json'))),
     weather: async () => parseForecast(fixture('forecast-innsbruck-past3.json')),
+    marine: async () => ({ coverage: 'none', days: [] }),
+    geography: async () => ({}),
     now: () => new Date('2026-07-29T12:00:00.000Z'),
   },
 }
