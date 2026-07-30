@@ -11,6 +11,37 @@ Task: Backend service that takes a city/town and ranks how good the next 7 days 
 - [ ] 6 verify
 - [ ] 7 review
 
+## Stage 5 progress — the eight slices
+
+Stage 5 is one checkbox covering eight slices, which is too coarse to resume against. This table is
+the real resume point: a fresh session reads it, finds the first unticked slice, and starts there.
+Full step lists and done-conditions are in [`plan.md`](./plan.md).
+
+Tick a slice only when its **Done when** condition in plan.md is met, and commit before ticking, so
+the tick and the code that earns it land together.
+
+| | Slice | Est | Status |
+|---|---|---|---|
+| 0 | Repository, skeleton, deployed | 1 h | **partial** — repo created and first commits pushed 2026-07-30 (`github.com/Todmy/activity-weather-ranking`, public). Steps 2-5 remain: Node/TS/Vitest/zod, Yoga + Pothos with `health`, Dockerfile + compose, deploy |
+| 1 | Tracer bullet: one city, one activity, no cache | 2 h | not started |
+| 2 | The rest of the scoring domain | 3 h | not started — **carries the schedule risk** |
+| 3 | Geography: terrain sampling and marine coverage | 2 h | not started |
+| 4 | Persistence and the refresh gateway | 3 h | not started |
+| 5 | The full API surface | 1.5 h | not started |
+| 6 | Background refresher | 2 h | not started — additive, gives way first if the schedule bites |
+| 7 | README and worklog | 2 h | not started |
+
+**Suggested session boundaries.** Each is a clean `/clear` point: the work is committed, the table is
+ticked, and nothing lives only in conversation.
+
+| Session | Slices | Est | Why these together |
+|---|---|---|---|
+| 1 | 0 + 1 | 2.5 h | Both exist to prove the path end to end. Splitting them leaves a skeleton that does nothing |
+| 2 | 2 | 3 h | Alone, deliberately. The sanity table has to stay in context and the calibration is the one thing here with no ground truth |
+| 3 | 3 + 4 | 5 h | The two persistence-shaped slices. Split them if context gets tight; slice 4 is the natural break |
+| 4 | 5 + 6 | 3.5 h | Both additive on a working core, so both are safe to lose |
+| 5 | 7 | 2 h | Documentation reads better written after the code exists than predicted before it |
+
 ## Notes
 
 - 2026-07-29, late: recon reopened briefly to close its own leftovers. The two calibration questions
