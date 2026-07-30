@@ -1,6 +1,6 @@
 # Constitution: activity-weather-ranking
 
-Version: 2.0.0 | Ratified: 2026-07-29 | Last amended: 2026-07-30
+Version: 3.0.0 | Ratified: 2026-07-29 | Last amended: 2026-07-30
 
 The principles every design in this project is checked against before it is built, and re-checked
 against the code afterwards.
@@ -42,11 +42,20 @@ turns out to be the wrong call, that goes in the worklog rather than being quiet
    *A travel decision made on a day-7 number presented like a day-1 number is a product bug, not a
    rounding detail.*
 
-6. **Test-first where the thinking is** — MUST write tests before code for the pure domain layer
-   (curves, profiles, scoring, confidence), including boundary and out-of-range values; other
-   layers get integration tests written alongside the code, weighted by risk.
-   *The scoring model is the part under judgement; the plumbing is not, and a 3-4 day budget should
-   be spent accordingly.*
+6. **Test-first, in every layer, and the red run is part of it** — MUST write a failing test before
+   the code that satisfies it, and MUST run that test and watch it fail for the intended reason
+   before writing the code. This binds every layer, not only the domain: providers are tested
+   against captured fixtures, and the API through the transport a caller actually uses. No test may
+   reach the live upstream.
+   *A test that has never failed is not evidence, it is a claim. The red run is the only thing that
+   proves a test can detect its own subject, and skipping it has cost this project twice in one
+   afternoon. In the domain, where the run was honoured, it caught `rampUp(5, 5)` returning 0 at the
+   threshold — a bug in the first line of the whole scoring vocabulary. Outside the domain, where
+   the old version of this principle allowed "alongside the code, weighted by risk", the API's
+   not-found path passed its schema test while reaching the deployed service as a blank
+   INTERNAL_SERVER_ERROR, and what found it was a curl. The risk weighting was not wrong about where
+   the interesting thinking lives; it was wrong to conclude that the rest could be checked by
+   attention.*
 
 7. **Scope earns its place** — MUST build a feature beyond the literal brief only if it answers a
    question the brief itself poses (how the data is modelled, stored or refreshed) or defends the
@@ -106,4 +115,11 @@ turns out to be the wrong call, that goes in the worklog rather than being quiet
 - 2.0.0 (2026-07-30) — added **One change per commit, sliced vertically** (11) and **Exercisable by
   a human, not only by tests** (12); narrowed principle 10, which had carried commit granularity in a
   clause that enforced nothing; dropped the ten-principle cap in favour of an explicit bar (from
+  feature: activity-weather-ranking)
+- 3.0.0 (2026-07-30) — rewrote principle 6. It used to require test-first in the domain only and let
+  every other layer be tested "alongside the code, weighted by risk"; it now requires test-first
+  everywhere and names the red run as part of the rule rather than as good practice around it. The
+  amendment is a response to evidence from slice 1 rather than a tightening on principle: the domain,
+  where the red run happened, caught a real bug with it; the API layer, where it did not, shipped a
+  masked error that its own green test could not see. Decision #29 is corrected to match (from
   feature: activity-weather-ranking)

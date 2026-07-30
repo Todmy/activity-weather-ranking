@@ -97,7 +97,7 @@ documents in `docs/` are the primary deliverable, not overhead.
 | File | What it holds |
 |---|---|
 | `docs/decisions.md` | **Start here.** All 35 decisions and assumptions, one line each, linking to the full argument |
-| `docs/principles.md` | 12 principles. Every design is checked against them before it is built, and the code afterwards |
+| `docs/principles.md` | 12 principles, v3.0.0. Every design is checked against them before it is built, and the code afterwards |
 | `docs/milestones.md` | M0 to M8, each with a done-condition observable from outside and a story-point size |
 | `docs/design.md` | Data model, gateway read path, scoring, determinism |
 | `docs/plan.md` | Eight vertical slices, what blocks what |
@@ -115,6 +115,10 @@ no signal for a reader. Resume at the first unticked slice in its stage-5 table.
   easiest way to ruin this submission.
 - **Never call Open-Meteo from a test.** Fixtures live in
   `docs/probes/`. They are real captured responses.
+- **Test first in every layer, and run the red** (constitution 6). Write the test, run it, watch it
+  fail for the reason you intended, and only then write the code. This is not domain-only — providers
+  test against fixtures, the API tests through HTTP. A test that has never failed is a claim, not
+  evidence.
 - **Never push to a remote without explicit permission.**
 - **One change per commit, sliced vertically** (constitution 11). A commit must be revertable on its
   own without breaking the build, and its message must name everything it contains. Never commit a
