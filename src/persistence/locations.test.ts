@@ -3,6 +3,7 @@ import { MongoClient } from 'mongodb'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import type { GeocodedLocation } from '../providers/openmeteo/geocoding.ts'
+import type { LocationRepository } from './locations.ts'
 import { ensureLocation, locationRepository } from './locations.ts'
 
 /**
@@ -116,6 +117,50 @@ describe('locationRepository', () => {
     const repo = locationRepository(db)
     await repo.ensureIndexes()
     await expect(repo.ensureIndexes()).resolves.not.toThrow()
+  })
+
+  describe('requestedSince', () => {
+    const seen = async (repo: LocationRepository, geonameId: number, when: string) => {
+      await repo.upsert({ ...grenoble, geonameId, name: `city-${geonameId}` }, at(when))
+    }
+
+    it('returns the locations asked for since the cutoff, most recent first', async () => {
+      const repo = locationRepository(db)
+      await seen(repo, 1, '2026-07-30T08:00:00Z')
+      await seen(repo, 2, '2026-07-30T11:00:00Z')
+      await seen(repo, 3, '2026-07-30T09:00:00Z')
+
+      const due = await repo.requestedSince(at('2026-07-30T07:00:00Z'), 10)
+
+      expect(due.map((location) => location._id)).toEqual([
+        'geoname:2',
+        'geoname:3',
+        'geoname:1',
+      ])
+    })
+
+    it('leaves out anything last asked for before the cutoff', async () => {
+      // A city nobody has wanted for a day stops being refreshed. Without this
+      // the working set only ever grows, and the quota goes with it.
+      const repo = locationRepository(db)
+      await seen(repo, 1, '2026-07-29T08:00:00Z')
+      await seen(repo, 2, '2026-07-30T11:00:00Z')
+
+      const due = await repo.requestedSince(at('2026-07-30T07:00:00Z'), 10)
+
+      expect(due.map((location) => location._id)).toEqual(['geoname:2'])
+    })
+
+    it('never returns more than the limit, because a tick has a request budget', async () => {
+      const repo = locationRepository(db)
+      await seen(repo, 1, '2026-07-30T08:00:00Z')
+      await seen(repo, 2, '2026-07-30T11:00:00Z')
+      await seen(repo, 3, '2026-07-30T09:00:00Z')
+
+      const due = await repo.requestedSince(at('2026-07-30T07:00:00Z'), 2)
+
+      expect(due.map((location) => location._id)).toEqual(['geoname:2', 'geoname:3'])
+    })
   })
 })
 

@@ -78,6 +78,23 @@ export const locationRepository = (db: Db) => {
       await locations.findOne({ _id: id }),
 
     /**
+     * The background refresher's only query, and the reason for the
+     * `{ lastRequestedAt: -1 }` index.
+     *
+     * The cutoff is what stops the warm set growing without bound: a city
+     * nobody has asked about since yesterday stops being refreshed, so the
+     * quota is spent on places somebody is actually going to. The limit is the
+     * per-tick request budget — each location can cost three upstream calls,
+     * and 600 a minute is the free tier.
+     */
+    requestedSince: async (cutoff: Date, limit: number): Promise<LocationDocument[]> =>
+      await locations
+        .find({ lastRequestedAt: { $gte: cutoff } })
+        .sort({ lastRequestedAt: -1 })
+        .limit(limit)
+        .toArray(),
+
+    /**
      * Writes the geocoding fields and moves `lastRequestedAt` forward. Geography
      * is deliberately not in `$set`: a second sighting of a city must not clear
      * an 81-coordinate sample that was already paid for.
