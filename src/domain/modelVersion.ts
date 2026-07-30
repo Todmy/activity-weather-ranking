@@ -20,8 +20,14 @@ import type { Profile } from './score.ts'
  * 1.1.0 adds the terrain gate. Nothing already scored moves, but skiing becomes
  * answerable where it previously could not be, which is a new capability rather
  * than a changed number.
+ *
+ * 2.0.0 adds skiing's snow gate, and it is major by this file's own rule
+ * because existing scores move: a bare 14 °C summit went from 35 to 0. Every
+ * issuance stored under 1.1.0 keeps its version, so `forecastHistory` replaying
+ * a week ago reports the model that actually answered — which is the reason the
+ * version travels with the answer rather than being a constant in a README.
  */
-export const MODEL_VERSION = '1.1.0'
+export const MODEL_VERSION = '2.0.0'
 
 export const PROFILES: readonly Profile[] = [
   skiing,

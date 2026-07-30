@@ -14,7 +14,14 @@ import type { Profile } from '../score.ts'
  * reader can disagree with a weight by disagreeing with the table, and with a
  * threshold by following its link.
  *
- * ## The gate is the point of this profile
+ * ## Two gates, and both of them are the point
+ *
+ * A weighted mean cannot say "none of that matters", and skiing needs that
+ * sentence twice. `snowPresent` is the one this profile shipped without: with
+ * no snow the temperature and fresh-snow factors surrender their own weight
+ * and nothing more, so wind and rain carried a bare 14 °C summit to 35 out of
+ * 100 — and ranked it the best ski day of the week. Sanity rows 6-8 and [S10]
+ * are the correction; decision #56.
  *
  * Sanity row 4 is 40 cm of fresh powder under 70 km/h gusts and the table says
  * POOR, because resorts hold lifts before that. No weighted mean can express
@@ -28,6 +35,20 @@ export const skiing: Profile = {
   requires: 'terrain',
   series: 'summit',
   gates: [
+    {
+      name: 'snowPresent',
+      input: 'snowDepth',
+      // Shut on bare ground, fully open at the depth the literature calls
+      // skiable. Neither anchor is fitted.
+      curve: rampUp(0, 30),
+      source:
+        'The "100-day rule": natural snow reliability requires cover of at least 30 cm on at ' +
+        'least 100 days between 16 December and 15 April, in 7 winters out of 10. Witmer (1984), ' +
+        'developed by Abegg (1996) and Burki (2000), adopted by the OECD as the reference ' +
+        'approach for climate impact on Alpine winter tourism. The lower anchor is not cited ' +
+        'because it needs no citation: zero snow is zero skiing. ' +
+        'https://www.oecd.org/content/dam/oecd/en/publications/reports/2007/01/climate-change-in-the-european-alps_g1gh7c4d/9789264031692-en.pdf',
+    },
     {
       name: 'liftsHeld',
       input: 'windGustsMax',

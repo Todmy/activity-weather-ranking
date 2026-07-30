@@ -70,6 +70,18 @@ exports[`the pinned model > serialises every number that can change a score 1`] 
         {
           "curve": {
             "bounds": [
+              0,
+              30,
+            ],
+            "kind": "rampUp",
+          },
+          "input": "snowDepth",
+          "name": "snowPresent",
+          "source": "The "100-day rule": natural snow reliability requires cover of at least 30 cm on at least 100 days between 16 December and 15 April, in 7 winters out of 10. Witmer (1984), developed by Abegg (1996) and Burki (2000), adopted by the OECD as the reference approach for climate impact on Alpine winter tourism. The lower anchor is not cited because it needs no citation: zero snow is zero skiing. https://www.oecd.org/content/dam/oecd/en/publications/reports/2007/01/climate-change-in-the-european-alps_g1gh7c4d/9789264031692-en.pdf",
+        },
+        {
+          "curve": {
+            "bounds": [
               56,
               72,
             ],
@@ -283,6 +295,6 @@ exports[`the pinned model > serialises every number that can change a score 1`] 
       "series": "city",
     },
   ],
-  "version": "1.1.0",
+  "version": "2.0.0",
 }
 `;
