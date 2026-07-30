@@ -1,6 +1,5 @@
-import type { MongoMemoryServer } from 'mongodb-memory-server'
-import { startMongod } from './testing/mongod.ts'
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
+import { databaseNameFor } from './testing/database.ts'
+import { afterEach, describe, expect, inject, it, vi } from 'vitest'
 import { startServer } from './server.ts'
 
 /**
@@ -10,16 +9,7 @@ import { startServer } from './server.ts'
  * where the README says it is. Port 0 lets the OS pick, so this never collides
  * with a dev server.
  */
-let mongod: MongoMemoryServer
 let running: Awaited<ReturnType<typeof startServer>> | undefined
-
-beforeAll(async () => {
-  mongod = await startMongod()
-}, 120_000)
-
-afterAll(async () => {
-  await mongod.stop()
-})
 
 afterEach(async () => {
   await running?.close()
@@ -29,8 +19,8 @@ afterEach(async () => {
 const start = (refreshIntervalMs = 0) =>
   startServer({
     port: 0,
-    mongodbUri: mongod.getUri(),
-    mongodbDatabase: 'server_test',
+    mongodbUri: inject('mongoUri'),
+    mongodbDatabase: databaseNameFor(import.meta.url),
     refreshIntervalMs,
   })
 

@@ -1,28 +1,26 @@
-import type { MongoMemoryServer } from 'mongodb-memory-server'
-import { startMongod } from '../testing/mongod.ts'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { describe, expect, inject, it } from 'vitest'
+import { databaseNameFor } from '../testing/database.ts'
 import { connectDatabase } from './client.ts'
 
-let mongod: MongoMemoryServer
-
-beforeAll(async () => {
-  mongod = await startMongod()
-}, 120_000)
-
-afterAll(async () => {
-  await mongod.stop()
-})
+/**
+ * This suite is about `connectDatabase` itself, so it takes the shared server's
+ * URI rather than a ready-made handle. The database names are scoped to this
+ * file for the same reason every other suite's is: one mongod now serves the
+ * whole run.
+ */
+const uri = inject('mongoUri')
+const scope = databaseNameFor(import.meta.url)
 
 describe('connectDatabase', () => {
   it('connects, names the database from config, and closes cleanly', async () => {
-    const store = await connectDatabase({ uri: mongod.getUri(), database: 'activity_weather' })
+    const store = await connectDatabase({ uri, database: `${scope}_named` })
 
-    expect(store.db.databaseName).toBe('activity_weather')
+    expect(store.db.databaseName).toBe(`${scope}_named`)
     await expect(store.close()).resolves.not.toThrow()
   })
 
   it('creates the indexes the collections need, so startup never runs unindexed', async () => {
-    const store = await connectDatabase({ uri: mongod.getUri(), database: 'indexed' })
+    const store = await connectDatabase({ uri, database: `${scope}_indexed` })
 
     const keysOf = async (collection: string) =>
       (await store.db.collection(collection).indexes()).map((index) => index.key)

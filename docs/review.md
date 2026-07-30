@@ -11,7 +11,7 @@ outside reader would raise, which is some evidence the pass was not purely self-
 it is not the same thing as a second pair of eyes, and it should not be read as one.
 
 Stage 6's evidence is not repeated here; it is in [`verify.md`](./verify.md). Nothing in this file
-changes it: 316 tests, `tsc --noEmit` clean, CI green, deployed and answering.
+changes it: 319 tests, `tsc --noEmit` clean, CI green, deployed and answering.
 
 ## Findings
 
@@ -36,7 +36,7 @@ where the repository answers it — or the admission that it does not.
 | What happens when Open-Meteo changes its response shape? | The zod parse fails, becomes an `OpenMeteoError`, and stale-if-error serves the last good issuance with `stale: true`. The probes pin the request that was captured, so a changed *request* contract fails a test rather than production |
 | How far does this scale? | Not answered by the architecture, and deliberately: the ceiling is Open-Meteo's free tier — 10,000 calls a day, and ~123 never-before-seen cities a day because terrain sampling meters per coordinate. Named in NFR5 and in `cut.md`, along with the exception the verify stage found |
 | Where is the auth, the rate limiting, the observability? | [`cut.md`](./cut.md), each with the test it had to pass to be built. The service protects the shared quota against its own traffic pattern only |
-| **What is the test coverage?** | **Not measured.** 316 tests and no coverage report — `vitest --coverage` is not wired up. Every source file except five has a sibling test, and the five are types, wiring and the process entry point. A number would still be a fair thing to ask for and there isn't one |
+| **What is the test coverage?** | **Not measured.** 319 tests and no coverage report — `vitest --coverage` is not wired up. Every source file except five has a sibling test, and the five are types, wiring and the process entry point. A number would still be a fair thing to ask for and there isn't one |
 | **Why is there no linter or formatter?** | It was a deliberate omission that had never been written down — the same failure mode as an undocumented threshold. Now in [`cut.md`](./cut.md) with the reason: a formatter introduced part way through buries the commits this is graded on under whitespace, and `tsc --noEmit` under `strict` catches what a linter would |
 | How much of this was written with AI assistance? | The worklog says plainly, and `CLAUDE.md` is in the repository — see finding R3 |
 

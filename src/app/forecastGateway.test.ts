@@ -1,8 +1,6 @@
 import { readFileSync } from 'node:fs'
 import type { Db } from 'mongodb'
-import { MongoClient } from 'mongodb'
-import type { MongoMemoryServer } from 'mongodb-memory-server'
-import { startMongod } from '../testing/mongod.ts'
+import { connectTestDatabase } from '../testing/database.ts'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { forecastRepository } from '../persistence/forecasts.ts'
 import type { NewIssuance } from '../persistence/forecasts.ts'
@@ -22,20 +20,16 @@ import type { FetchPlan, GatewayDeps } from './forecastGateway.ts'
  * reason: the cold-start wait is 10 seconds in production and must be zero
  * here, without the branch under test knowing the difference.
  */
-let mongod: MongoMemoryServer
-let client: MongoClient
+let store: Awaited<ReturnType<typeof connectTestDatabase>>
 let db: Db
 
 beforeAll(async () => {
-  mongod = await startMongod()
-  client = new MongoClient(mongod.getUri())
-  await client.connect()
-  db = client.db('test')
-}, 120_000)
+  store = await connectTestDatabase(import.meta.url)
+  db = store.db
+})
 
 afterAll(async () => {
-  await client.close()
-  await mongod.stop()
+  await store.close()
 })
 
 beforeEach(async () => {

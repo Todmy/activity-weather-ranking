@@ -187,7 +187,7 @@ Configuration is four variables and every one has a working default, so the serv
 ### Tests
 
 ```bash
-pnpm check                      # tsc --noEmit, then 316 tests
+pnpm check                      # tsc --noEmit, then 319 tests
 ```
 
 Neither Docker nor a network is needed. The persistence tests start a real `mongod` through

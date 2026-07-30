@@ -441,10 +441,33 @@ the same commit and passed. So the narrowed claim is: **`mongodb-memory-server`'
 loses a race under load** — that run followed a `docker compose down -v` and a full image build — and
 nothing in the service is implicated.
 
-That is still not a diagnosis. The honest version of it would be a `--reporter=verbose` run captured
-to a file the next time it happens, and a startup timeout raised from the default. What I did instead
-was note that both occurrences were the same shape and move on, which is a judgement about the
-remaining budget rather than about the bug.
+**And then it turned out to be diagnosable after all.** `mongodb-memory-server` gives an instance ten
+seconds to report ready — `MongoInstance.js`, `1000 * 10` — and that is not the 120-second hook
+timeout the suites pass to `beforeAll`. The library's clock fires first, the throw comes from the
+hook, and vitest fails the file and skips every test in it. Which is precisely the shape both
+failures had: a file failed, its tests were skipped, and no test failed.
+
+Seven suites each started their own `mongod`, and vitest runs files in parallel across twelve
+workers. Ten seconds is not much when the same laptop is building a Docker image.
+
+The first fix was to raise the timeout to sixty seconds. It was honest about being a symptom fix and
+said so in the file: the cause is seven `mongod` processes where one would do. An hour later that got
+built too — one server started in a vitest `globalSetup`, and the isolation each suite used to get
+free from having its own server now comes from a database name derived from the suite's own path.
+Suite time went from 9.2 s to 7.9 s as a side effect.
+
+Two things that pass came out of it, and both matter more than the flake:
+
+- **The isolation is load-bearing, and I checked rather than assumed.** Forcing every suite onto one
+  database name breaks five files and six tests. A shared server with hand-picked database names
+  would have worked until somebody copied a suite; deriving the name from the path makes the
+  collision impossible instead of unlikely.
+- **The name function shipped with speculative code and I caught it by mutation.** It had a 63-byte
+  cap with a hash, so that truncating two long paths could not merge two databases — and two tests
+  covering it. Both passed with the cap deleted, because the name is built from the last two path
+  segments: a thirty-deep tree still gives `directory_alpha`, fifteen characters, and the branch was
+  unreachable. Deleted, with the reason left in the test file. That is constitution 4.0.0 working on
+  the same day it was written.
 
 I also made the mistake worth recording alongside it: the command that surfaced this was
 `pnpm vitest run | grep -E "Tests " && git commit && git push`. `&&` tested `grep`'s exit code, not
