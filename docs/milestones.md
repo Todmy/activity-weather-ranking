@@ -19,8 +19,12 @@ Status: **done** · **in progress** · **not started**
 | **M4** | Geography | Terrain and ocean decide applicability | 4 | **done** |
 | **M5** | Persistence and refresh | Weather stored, not re-fetched | 5 | **done** |
 | **M6** | API surface | Both ranking axes, ambiguity handled | 2 | **done** |
-| **M7** | Background refresher | Scheduled pull, visibly running | 3 | not started |
-| **M8** | Submission | README, worklog, verify, review | 5 | not started |
+| **M7** | Background refresher | Scheduled pull, visibly running | 3 | **done** |
+| **M8** | Submission | README, worklog, verify, review | 5 | **done** |
+
+**All nine done, 41 points, 30 July.** Every row's condition was met by something observable from
+outside the code — a URL answering, a log line, a table of twenty rows going green, a clone somebody
+else could run — and the commit that met it landed before the row changed.
 
 **About the points.** Fibonacci, relative to each other rather than to a clock. 1 is trivial, 3 is a
 normal unit of work, 5 carries real uncertainty, and 13 is the two days of design that preceded any
