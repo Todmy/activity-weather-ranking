@@ -10,6 +10,8 @@ import { fetchTerrain } from '../providers/openmeteo/elevation.ts'
 import { fetchMarine } from '../providers/openmeteo/marine.ts'
 import type { AppDeps } from './deps.ts'
 import { ensureFresh } from './forecastGateway.ts'
+import { describeEvent } from './refresher.ts'
+import type { RefresherDeps } from './refresher.ts'
 
 /**
  * The production wiring, in one place a reader can check against the diagram in
@@ -89,5 +91,30 @@ export const liveDepsFor = (db: Db, instanceId: string = randomUUID()): AppDeps 
       ),
 
     now,
+  }
+}
+
+/**
+ * The refresher's wiring, next to the read path's because the whole claim of M7
+ * is that they are the same path.
+ *
+ * `issuance` is not a similar function — it is the same one, handed over from
+ * `AppDeps`. A refresher with its own gateway would be a second way for this
+ * service to be wrong about the weather, and the lease that makes the single
+ * flight work would be guarding only half of it.
+ */
+export const liveRefresherDepsFor = (db: Db, app: AppDeps): RefresherDeps => {
+  const locations = locationRepository(db)
+  const forecasts = forecastRepository(db)
+
+  return {
+    due: async (cutoff, limit) => await locations.requestedSince(cutoff, limit),
+    newestFor: async (locationId) => await forecasts.newestFor(locationId),
+    issuance: app.issuance,
+    now: app.now,
+    // Straight to stdout, which is where a container's logs are. M7 is done when
+    // a reviewer can watch this happen, so the log is the deliverable rather
+    // than a debugging aid.
+    log: (event) => console.log(describeEvent(event)),
   }
 }

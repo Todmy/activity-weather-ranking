@@ -12,6 +12,17 @@ const schema = z.object({
   PORT: z.coerce.number().int().positive().default(4000),
   MONGODB_URI: z.string().min(1).default('mongodb://localhost:27017'),
   MONGODB_DB: z.string().min(1).default('activity_weather'),
+  /**
+   * How often the background refresher wakes. Ten minutes against an hour of
+   * freshness: often enough that a city is rarely more than ten minutes past
+   * its TTL when somebody asks, cheap enough that most ticks find nothing to do
+   * and cost one indexed query.
+   *
+   * Zero turns it off, which is a real deployment rather than an escape hatch —
+   * a second instance behind the same database does not need a second
+   * refresher, and neither does a test.
+   */
+  REFRESH_INTERVAL_MS: z.coerce.number().int().nonnegative().default(600_000),
 })
 
 export type Config = z.infer<typeof schema>

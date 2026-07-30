@@ -15,7 +15,16 @@ describe('parseConfig', () => {
       PORT: 4000,
       MONGODB_URI: 'mongodb://localhost:27017',
       MONGODB_DB: 'activity_weather',
+      REFRESH_INTERVAL_MS: 600_000,
     })
+  })
+
+  it('takes zero as "no background refresher", which is a real deployment', () => {
+    // A second instance behind the same database does not need a second
+    // refresher, and neither does a laptop running the tests.
+    const result = parseConfig({ REFRESH_INTERVAL_MS: '0' })
+
+    expect(result.success && result.config.REFRESH_INTERVAL_MS).toBe(0)
   })
 
   it('coerces PORT out of the string the environment always gives it', () => {
