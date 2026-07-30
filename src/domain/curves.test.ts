@@ -102,3 +102,17 @@ describe('band', () => {
     expect(() => band(0, 26, 9, 32)).toThrow(RangeError)
   })
 })
+
+describe('curve specs', () => {
+  it('report the shape and bounds they were built from', () => {
+    expect(rampUp(10, 20).spec).toEqual({ kind: 'rampUp', bounds: [10, 20] })
+    expect(rampDown(10, 20).spec).toEqual({ kind: 'rampDown', bounds: [10, 20] })
+    expect(band(0, 9, 26, 32).spec).toEqual({ kind: 'band', bounds: [0, 9, 26, 32] })
+  })
+
+  it('exist so a threshold change cannot slip past the model-version snapshot', () => {
+    // A closure cannot be serialised and compared; this is what makes the
+    // pinned model in modelVersion.ts able to see its own numbers.
+    expect(JSON.stringify(band(0, 9, 26, 32).spec)).toContain('26')
+  })
+})

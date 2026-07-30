@@ -13,7 +13,21 @@
  * `rampUp(5, 5)` is 1 from 5 upwards. A profile that wants a hard cutoff should
  * not have to fake one with an epsilon.
  */
-export type Curve = (x: number) => number
+export type CurveSpec = {
+  kind: 'rampUp' | 'rampDown' | 'band'
+  bounds: number[]
+}
+
+/**
+ * A curve carries the numbers it was built from. Closures cannot be compared,
+ * and the model-version snapshot in `modelVersion.ts` has to be able to see a
+ * threshold move — otherwise the version could stay put while the scores did
+ * not, which is the one thing principle 9 promises cannot happen.
+ */
+export type Curve = ((x: number) => number) & { spec: CurveSpec }
+
+const withSpec = (fn: (x: number) => number, spec: CurveSpec): Curve =>
+  Object.assign(fn, { spec })
 
 const ascending = (name: string, bounds: readonly number[]): void => {
   for (let i = 1; i < bounds.length; i++) {
@@ -27,22 +41,28 @@ const ascending = (name: string, bounds: readonly number[]): void => {
 export const rampUp = (a: number, b: number): Curve => {
   ascending('rampUp', [a, b])
 
-  return (x) => {
-    if (x >= b) return 1
-    if (x <= a) return 0
-    return (x - a) / (b - a)
-  }
+  return withSpec(
+    (x) => {
+      if (x >= b) return 1
+      if (x <= a) return 0
+      return (x - a) / (b - a)
+    },
+    { kind: 'rampUp', bounds: [a, b] },
+  )
 }
 
 /** 1 at and below `a`, falling linearly to 0 at `b`, 0 above. */
 export const rampDown = (a: number, b: number): Curve => {
   ascending('rampDown', [a, b])
 
-  return (x) => {
-    if (x >= b) return 0
-    if (x <= a) return 1
-    return (b - x) / (b - a)
-  }
+  return withSpec(
+    (x) => {
+      if (x >= b) return 0
+      if (x <= a) return 1
+      return (b - x) / (b - a)
+    },
+    { kind: 'rampDown', bounds: [a, b] },
+  )
 }
 
 /** 0 at and below `a`, 1 across `[b, c]`, back to 0 at and above `d`. */
@@ -51,5 +71,5 @@ export const band = (a: number, b: number, c: number, d: number): Curve => {
   const up = rampUp(a, b)
   const down = rampDown(c, d)
 
-  return (x) => (x <= b ? up(x) : down(x))
+  return withSpec((x) => (x <= b ? up(x) : down(x)), { kind: 'band', bounds: [a, b, c, d] })
 }

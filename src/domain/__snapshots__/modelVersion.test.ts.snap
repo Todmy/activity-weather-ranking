@@ -1,0 +1,284 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`the pinned model > serialises every number that can change a score 1`] = `
+{
+  "profiles": [
+    {
+      "activity": "skiing",
+      "factors": [
+        {
+          "curve": {
+            "bounds": [
+              -28,
+              -18,
+              -1,
+              3,
+            ],
+            "kind": "band",
+          },
+          "input": "temperatureMax",
+          "name": "temperature",
+          "source": "NWS wind chill chart: frostbite on exposed skin within 30 minutes between roughly -18 °C and -28 °C. Warm edge is the melting point — above freezing the surface goes. https://www.weather.gov/safety/cold-wind-chill-chart",
+          "weight": 7,
+        },
+        {
+          "curve": {
+            "bounds": [
+              2,
+              20,
+            ],
+            "kind": "rampUp",
+          },
+          "input": "snowfall3d",
+          "name": "freshSnow",
+          "source": "Powder Magazine poll of 1,000+ skiers: a powder day starts between 6 and 11 inches (15-28 cm) of new snow. A convention among skiers rather than a physical constant, and cited as one. https://www.powder.com/news/how-much-new-snow-counts-as-a-powder-day-poll",
+          "weight": 6,
+        },
+        {
+          "curve": {
+            "bounds": [
+              29,
+              56,
+            ],
+            "kind": "rampDown",
+          },
+          "input": "windGustsMax",
+          "name": "wind",
+          "source": "Beaufort force 5 begins at 29 km/h, where wind stops being background; the upper bound is where the lift-hold gate takes over. https://www.spc.noaa.gov/faq/tornado/beaufort.html",
+          "weight": 4,
+        },
+        {
+          "curve": {
+            "bounds": [
+              0.5,
+              3,
+            ],
+            "kind": "rampDown",
+          },
+          "input": "rainSum",
+          "name": "rain",
+          "source": "Rain on snow adds heat and load at once and forms an icy crust that later snow slides off: a different surface rather than a degraded one. https://avalanche.org/avalanche-encyclopedia/snowpack/snowpack-observations/signs-of-instability-red-flags/rain-on-snow/",
+          "weight": 3,
+        },
+      ],
+      "floor": 0,
+      "gates": [
+        {
+          "curve": {
+            "bounds": [
+              56,
+              72,
+            ],
+            "kind": "rampDown",
+          },
+          "input": "windGustsMax",
+          "name": "liftsHeld",
+          "source": "Resort operations: lifts slow around 56 km/h (35 mph) and 64 km/h (40 mph) is widely described as the tipping point, depending on lift orientation. https://blog.steamboat.com/navigating-windy-days-at-steamboat-ski-resort-a-qa-with-jake-ingle/",
+        },
+      ],
+      "requires": "terrain",
+      "series": "summit",
+    },
+    {
+      "activity": "surfing",
+      "factors": [
+        {
+          "curve": {
+            "bounds": [
+              8,
+              12,
+            ],
+            "kind": "rampUp",
+          },
+          "input": "wavePeriodMax",
+          "name": "wavePeriod",
+          "source": "Windswell is below 8-9 s and described as poor quality; groundswell begins at 10 s and carries the energy that makes a wave rideable. Full marks stop at 12 s rather than the 14 s "powerful" threshold because more power is not more value for this population. https://www.surfline.com/surf-news/groundswell-vs-windswell/2439",
+          "weight": 1,
+        },
+        {
+          "curve": {
+            "bounds": [
+              0.3,
+              0.6,
+              1.5,
+              2.8,
+            ],
+            "kind": "band",
+          },
+          "input": "waveHeightMax",
+          "name": "waveHeight",
+          "source": "Surf schools put beginners at 1-3 ft and intermediates at 2-4 ft, with overhead waves reserved for experienced surfers. This curve is what decision #33 cashes out into. https://surflearner.com/the-perfect-wave-size-for-beginner-surfers/",
+          "weight": 1,
+        },
+      ],
+      "floor": 0,
+      "gates": [
+        {
+          "curve": {
+            "bounds": [
+              4,
+              8,
+            ],
+            "kind": "rampUp",
+          },
+          "input": "wavePeriodMax",
+          "name": "swellPresent",
+          "source": "Two anchors, one measured and one cited. Measured: the probes put fetch-limited chop at 4.60 s (Chicago, Lake Michigan) and 4.65 s (Canterbury), which is water with no swell in it. Cited: 8-9 s is the windswell ceiling below which quality is described as poor. https://www.surfline.com/surf-news/groundswell-vs-windswell/2439",
+        },
+        {
+          "curve": {
+            "bounds": [
+              18,
+              37,
+            ],
+            "kind": "rampDown",
+          },
+          "input": "windSpeedMax",
+          "name": "blownOut",
+          "source": "Surf forecasting convention: under 10 knots (18 km/h) the surface stays clean, over 20 knots (37 km/h) the surf is blown out. https://surfcaptain.com/blog/1/understanding-wind-condition-forecast",
+        },
+      ],
+      "requires": "marine",
+      "series": "city",
+    },
+    {
+      "activity": "outdoorSightseeing",
+      "factors": [
+        {
+          "curve": {
+            "bounds": [
+              0,
+              9,
+              26,
+              32,
+            ],
+            "kind": "band",
+          },
+          "input": "apparentTemperatureMax",
+          "name": "thermalComfort",
+          "source": "UTCI (Universal Thermal Climate Index) thermal stress categories: 0-9 °C slight cold stress, 9-26 °C no thermal stress, 26-32 °C moderate heat stress, above 32 °C strong heat stress. https://thermofeel.readthedocs.io/en/latest/guide/utci.html",
+          "weight": 9,
+        },
+        {
+          "curve": {
+            "bounds": [
+              1,
+              10,
+            ],
+            "kind": "rampDown",
+          },
+          "input": "precipitationSum",
+          "name": "precipitation",
+          "source": "ETCCDI daily precipitation indices: R1mm counts a wet day at 1 mm or more, R10mm counts a heavy precipitation day at 10 mm or more. https://etccdi.pacificclimate.org/list_27_indices.shtml",
+          "weight": 3,
+        },
+        {
+          "curve": {
+            "bounds": [
+              19,
+              50,
+            ],
+            "kind": "rampDown",
+          },
+          "input": "windSpeedMax",
+          "name": "wind",
+          "source": "Beaufort wind force scale: force 4 (20-28 km/h) raises dust and loose paper, force 6 (39-49 km/h) is where umbrellas are used with difficulty. https://www.spc.noaa.gov/faq/tornado/beaufort.html",
+          "weight": 3,
+        },
+        {
+          "curve": {
+            "bounds": [
+              25,
+              100,
+            ],
+            "kind": "rampDown",
+          },
+          "input": "cloudCoverMean",
+          "name": "sky",
+          "source": "WMO/METAR sky cover in oktas: FEW is 1-2 oktas (up to 25% of the sky), OVC is 8 oktas (100%). https://skybrary.aero/articles/meteorological-aerodrome-report-metar",
+          "weight": 5,
+        },
+      ],
+      "floor": 0,
+      "gates": [],
+      "requires": null,
+      "series": "city",
+    },
+    {
+      "activity": "indoorSightseeing",
+      "factors": [
+        {
+          "curve": {
+            "bounds": [
+              1,
+              10,
+            ],
+            "kind": "rampUp",
+          },
+          "input": "rainSum",
+          "name": "rain",
+          "source": "ETCCDI daily precipitation indices: 1 mm is a wet day, 10 mm a heavy precipitation day. The same two anchors outdoor sightseeing uses, pointed the other way. https://etccdi.pacificclimate.org/list_27_indices.shtml",
+          "weight": 8,
+        },
+        {
+          "curve": {
+            "bounds": [
+              25,
+              75,
+            ],
+            "kind": "rampUp",
+          },
+          "input": "cloudCoverMean",
+          "name": "sky",
+          "source": "WMO/METAR sky cover in oktas: FEW is up to 2 oktas (25%), BKN is 5-7 oktas (63-88%), at which point the sky is closed rather than merely cloudy. https://skybrary.aero/articles/meteorological-aerodrome-report-metar",
+          "weight": 6,
+        },
+        {
+          "curve": {
+            "bounds": [
+              2,
+              14,
+            ],
+            "kind": "rampDown",
+          },
+          "input": "apparentTemperatureMax",
+          "name": "cold",
+          "source": "UTCI puts slight cold stress below 9 °C and no thermal stress from 9 °C up; the ramp spans that boundary rather than sitting on it. https://thermofeel.readthedocs.io/en/latest/guide/utci.html",
+          "weight": 3,
+        },
+        {
+          "curve": {
+            "bounds": [
+              1,
+              10,
+            ],
+            "kind": "rampUp",
+          },
+          "input": "snowfallSum",
+          "name": "snow",
+          "source": "Snowfall depth reported in cm; 1 cm is the point where a day reads as snowy at all and 10 cm is a substantial city snowfall. The travel side of heavy snow is not modelled here — the gate is on wind, and this gap is named rather than implied.",
+          "weight": 3,
+        },
+      ],
+      "floor": 0.55,
+      "gates": [
+        {
+          "curve": {
+            "bounds": [
+              64,
+              90,
+            ],
+            "kind": "rampDown",
+          },
+          "input": "windGustsMax",
+          "name": "travelDisruption",
+          "source": "Met Office yellow wind warnings cite initial travel impacts from gusts of 64-72 km/h (40-45 mph): difficult driving, downed branches, disruption on exposed routes. https://weather.metoffice.gov.uk/guides/warnings",
+        },
+      ],
+      "requires": null,
+      "series": "city",
+    },
+  ],
+  "version": "1.0.0",
+}
+`;
