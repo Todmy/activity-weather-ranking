@@ -12,10 +12,12 @@ always stated where the decision is argued:
 
 - **Measured here** — from a live API probe, with the raw response kept as a fixture in
   `probes/`. The terrain and quota figures are all of this kind.
-- **Cited** — from a published source, linked at the point of use. All scoring thresholds are of
-  this kind; the sources are listed in
-  [`sanity-table.md`](./sanity-table.md).
-- **Judged** — no source decides, so a position was taken and flagged as arguable. Six rows of the
+- **Cited** — from a published source, linked at the point of use. Eighteen of the nineteen scoring
+  sources are of this kind; the nineteenth says `NOT CITED` and explains why. Being cited is not the
+  same as being quoted, and thirteen of the eighteen contain at least one anchor that reads the
+  source rather than repeating it — the count is broken down in
+  [`requirements.md`](./requirements.md), under NFR9.
+- **Judged** — no source decides, so a position was taken and flagged as arguable. Seven rows of the
   sanity table and several product assumptions are of this kind.
 
 Nothing here is of a fourth kind — asserted from memory and left unchecked. Four figures started
