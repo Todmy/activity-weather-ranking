@@ -170,7 +170,7 @@ the durable record, because the brief asks for it by name.
 | 1 | Rank days within an activity, or activities within a day? | Serve both; same computed data |
 | 2 | Does "skiing" describe the city or the region reachable from it? | The region — assessed at a sampled high point, reported with elevation and distance |
 | 3 | Does "surfing" include inland water with wave data? | No special case; wave period handles it |
-| 4 | What freshness contract should the cache promise? | 1 h, matching Open-Meteo's model cadence |
+| 4 | What freshness contract should the cache promise? | 1 h, an upper bound matched to Open-Meteo's *fastest* models. *Corrected: this row first read "matching Open-Meteo's model cadence", and there is no single cadence — the hourly and the 6-hourly models sit behind one auto-selected endpoint* |
 | 5 | Ambiguous city names — resolve silently or let the caller choose? | Both paths, as two distinct fields |
 | 6 | May the service refuse to answer? | Never; confidence and staleness are surfaced instead |
 | 7 | How should terrain be sampled, at what resolution? | 11×11, circular 50 km mask, 81 points, pinned |
