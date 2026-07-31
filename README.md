@@ -307,13 +307,13 @@ In order, and the first two are the ones that matter:
    while adding the snow gate and deliberately not fixed with it: the gate needed no new number and
    this needs the temperature curve re-fitted against sanity rows that do not exist yet. Named rather
    than quietly carried.
-3. **Two instances behind a proxy.** The lease is a database row rather than in-memory state, so
+4. **Two instances behind a proxy.** The lease is a database row rather than in-memory state, so
    horizontal scale should already work — but nothing runs two, so nothing proves it. It is the
    largest unproven claim here, and [`capacity.md`](docs/capacity.md) says so alongside the numbers
    that are measured.
-4. **Structured logging and metrics** at the gateway and provider boundaries. The refresher's log is
+5. **Structured logging and metrics** at the gateway and provider boundaries. The refresher's log is
    readable by a human and by nothing else.
-5. **Per-caller rate limiting.** The free tier is the shared resource this service protects, and it
+6. **Per-caller rate limiting.** The free tier is the shared resource this service protects, and it
    currently protects it against its own traffic pattern only.
 
 Everything deliberately *not* built, with the test each item had to pass, is in
@@ -332,7 +332,7 @@ Everything deliberately *not* built, with the test each item had to pass, is in
 | [`docs/twelve-factor.md`](docs/twelve-factor.md) | The twelve factors audited by command rather than by memory — three things it found and fixed, four left undone on purpose |
 | [`docs/cut.md`](docs/cut.md) | What was considered and not built, with the test each item had to pass |
 | [`docs/design.md`](docs/design.md) | Data model, refresh gateway, scoring, determinism |
-| [`docs/sanity-table.md`](docs/sanity-table.md) | Twenty scenarios the scoring model must reproduce, written before any curve exists |
+| [`docs/sanity-table.md`](docs/sanity-table.md) | Twenty-three scenarios the scoring model must reproduce — the first twenty written before any curve exists, and three added after a review found the gap they close |
 | [`docs/schema.graphql`](docs/schema.graphql) | The whole API in one file, generated from the code and tested against it — so a removed field is a removed line |
 | [`docs/adr/`](docs/adr/) | Three choices big enough to need the argument in full — MongoDB, code-first GraphQL, two fields over `@oneOf` — each recording what it cost as well as what it bought |
 
