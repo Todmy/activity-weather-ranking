@@ -144,8 +144,13 @@ call.
 7. *Mongo TTL could delete the last surviving forecast issuance*, leaving stale-if-error with
    nothing to serve after a long upstream outage. TTL cannot express "keep at least one".
    Discharged in design.md.
-8. *Single-flight lease shorter than the fetch it guards* would admit two fetchers. Lease TTL must
-   exceed the hard request timeout. Discharged in design.md.
+8. *Single-flight lease shorter than the work it guards* would admit two fetchers. Lease TTL must
+   exceed **everything inside the lease**, not only the upstream call. Discharged in design.md — and
+   discharged wrongly at first: this risk originally read "exceed the hard request timeout", which
+   bounded the fetch and silently assumed the four database calls around it were free. They were not.
+   `serverSelectionTimeoutMS` bounds finding a server and nothing after it, so a slow-but-healthy
+   mongod held the lease past its own TTL and a second fetcher walked in. Reproduced with a fail
+   point; closed by `MONGO_TIMEOUT_MS` in `persistence/client.ts` and an ordering test.
 9. *Cold-start lease loser has no stale data to fall back on* — the first ever request for a city
    has nothing cached. Needs a bounded wait rather than an immediate error. Discharged in design.md.
 10. *Geocoding order is not population order.* Cambridge returns GB (145k), Massachusetts (110k),
