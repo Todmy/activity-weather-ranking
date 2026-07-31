@@ -65,6 +65,15 @@ export const getForecastHistory = async (
     return [
       {
         issuedAt: issuance.issuedAt.toISOString(),
+        // Today's model, honestly labelled, because today's model is what
+        // produced these numbers: an issuance stores the weather it fetched,
+        // not the scores it was given at the time, so replay re-scores.
+        //
+        // This field therefore answers "what scored this", not "what would you
+        // have said on Tuesday". The second question needs the profiles of the
+        // day as well as the version, and storing a version without them would
+        // look like an answer to it without being one. modelVersion.ts used to
+        // claim the version travelled with the issuance; nothing ever wrote it.
         modelVersion: MODEL_VERSION,
         horizonDays: index,
         day: scored[index] as ScoredDay,
