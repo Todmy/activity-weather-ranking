@@ -165,7 +165,9 @@ export const ensureFresh = async (
 
   const key = leaseKeyFor(plan.locationId)
 
-  if (await deps.leases.acquire(key, deps.instanceId, now)) {
+  const token = await deps.leases.acquire(key, deps.instanceId, now)
+
+  if (token !== null) {
     try {
       // Read again now the lease is held. Someone may have written and released
       // between the first read and here, and refetching what already arrived
@@ -190,7 +192,7 @@ export const ensureFresh = async (
       // forecast already on disk would reach the caller as a request error
       // with stale-if-error unable to cover for it. The lease expires on its
       // own; a lost answer does not come back.
-      await deps.leases.release(key, deps.instanceId).catch(() => undefined)
+      await deps.leases.release(key, token).catch(() => undefined)
     }
   }
 

@@ -265,13 +265,17 @@ describe('ensureFresh', () => {
 
     await ensureFresh(deps({ weather }), plan())
 
-    expect(await leaseRepository(db).acquire(leaseKeyFor(LOCATION), 'instance-b', noon)).toBe(true)
+    expect(await leaseRepository(db).acquire(leaseKeyFor(LOCATION), 'instance-b', noon)).toEqual(
+      expect.any(String),
+    )
   })
 
   it('releases the lease after a successful fetch', async () => {
     await ensureFresh(deps(), plan({ summit: { skip: { status: 'notApplicable', reason: 'noTerrain' } } }))
 
-    expect(await leaseRepository(db).acquire(leaseKeyFor(LOCATION), 'instance-b', noon)).toBe(true)
+    expect(await leaseRepository(db).acquire(leaseKeyFor(LOCATION), 'instance-b', noon)).toEqual(
+      expect.any(String),
+    )
   })
 
   it('refuses with a named state rather than a 500 when there is nothing at all', async () => {

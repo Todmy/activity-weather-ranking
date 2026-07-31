@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import type { Collection, Db } from 'mongodb'
 
 /**
@@ -24,7 +25,16 @@ const DUPLICATE_KEY = 11000
 
 export type LeaseDocument = {
   _id: string
+  /** Which process holds it. For reading the collection, not for releasing. */
   holder: string
+  /**
+   * Which *acquisition* holds it, fresh on every grant.
+   *
+   * The holder cannot do this job. `instanceId` is one uuid per process, so a
+   * request that overran its lease and the request that took the lease from it
+   * are the same holder, and a delete scoped to the holder frees the successor.
+   */
+  token: string
   acquiredAt: Date
   expiresAt: Date
 }
@@ -45,33 +55,40 @@ export const leaseRepository = (db: Db) => {
       await leases.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 })
     },
 
-    acquire: async (key: string, holder: string, now: Date): Promise<boolean> => {
+    /** The token on success, which `release` needs. Null means someone else has it. */
+    acquire: async (key: string, holder: string, now: Date): Promise<string | null> => {
+      const token = randomUUID()
+
       try {
         await leases.updateOne(
           { _id: key, expiresAt: { $lt: now } },
           {
             $set: {
               holder,
+              token,
               acquiredAt: now,
               expiresAt: new Date(now.getTime() + LEASE_TTL_MS),
             },
           },
           { upsert: true },
         )
-        return true
+        return token
       } catch (error) {
-        if ((error as { code?: number }).code === DUPLICATE_KEY) return false
+        if ((error as { code?: number }).code === DUPLICATE_KEY) return null
         throw error
       }
     },
 
     /**
-     * Scoped to the holder. A fetch that overran its lease must not free the
-     * lease its successor now holds, or two fetchers run with one lease between
-     * them — which is the failure the lease exists to prevent.
+     * Scoped to the acquisition. A fetch that overran its lease must not free
+     * the lease its successor now holds, or two fetchers run with one lease
+     * between them — which is the failure the lease exists to prevent.
+     *
+     * A token the caller cannot forge or reuse is what makes that structural.
+     * Scoping it to the holder read as the same guarantee and was not one.
      */
-    release: async (key: string, holder: string): Promise<void> => {
-      await leases.deleteOne({ _id: key, holder })
+    release: async (key: string, token: string): Promise<void> => {
+      await leases.deleteOne({ _id: key, token })
     },
   }
 }

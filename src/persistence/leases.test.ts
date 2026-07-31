@@ -30,7 +30,7 @@ const noon = at('2026-07-30T12:00:00Z')
 
 describe('leaseRepository', () => {
   it('grants a lease nobody holds', async () => {
-    expect(await leaseRepository(db).acquire(key, 'instance-a', noon)).toBe(true)
+    expect(await leaseRepository(db).acquire(key, 'instance-a', noon)).toEqual(expect.any(String))
   })
 
   it('refuses a lease someone else already holds', async () => {
@@ -38,7 +38,7 @@ describe('leaseRepository', () => {
     const repo = leaseRepository(db)
     await repo.acquire(key, 'instance-a', noon)
 
-    expect(await repo.acquire(key, 'instance-b', at('2026-07-30T12:00:10Z'))).toBe(false)
+    expect(await repo.acquire(key, 'instance-b', at('2026-07-30T12:00:10Z'))).toBeNull()
   })
 
   it('grants a lease that has expired, without waiting for Mongo to delete it', async () => {
@@ -49,7 +49,7 @@ describe('leaseRepository', () => {
     await repo.acquire(key, 'instance-a', noon)
 
     const afterExpiry = new Date(noon.getTime() + LEASE_TTL_MS + 1)
-    expect(await repo.acquire(key, 'instance-b', afterExpiry)).toBe(true)
+    expect(await repo.acquire(key, 'instance-b', afterExpiry)).toEqual(expect.any(String))
     // Still there — nothing deleted it, and the lease was granted anyway.
     expect(await db.collection<LeaseDocument>('leases').countDocuments({ _id: key })).toBe(1)
   })
@@ -69,20 +69,37 @@ describe('leaseRepository', () => {
 
   it('lets the next caller in once the holder releases', async () => {
     const repo = leaseRepository(db)
-    await repo.acquire(key, 'instance-a', noon)
-    await repo.release(key, 'instance-a')
+    const held = await repo.acquire(key, 'instance-a', noon)
+    await repo.release(key, held!)
 
-    expect(await repo.acquire(key, 'instance-b', at('2026-07-30T12:00:01Z'))).toBe(true)
+    expect(await repo.acquire(key, 'instance-b', at('2026-07-30T12:00:01Z'))).toEqual(
+      expect.any(String),
+    )
   })
 
   it('ignores a release from an instance that no longer holds the lease', async () => {
     // A fetch that overran its lease must not free the lease its successor now
     // holds, or two fetchers run with one lease between them.
     const repo = leaseRepository(db)
-    await repo.acquire(key, 'instance-a', noon)
+    const overran = await repo.acquire(key, 'instance-a', noon)
     await repo.acquire(key, 'instance-b', new Date(noon.getTime() + LEASE_TTL_MS + 1))
 
-    await repo.release(key, 'instance-a')
+    await repo.release(key, overran!)
+
+    expect(await db.collection<LeaseDocument>('leases').countDocuments({ _id: key })).toBe(1)
+  })
+
+  it('ignores a release from the same instance whose lease was taken from it', async () => {
+    // The test above uses two instance ids, which is the case this service does
+    // not deploy. `instanceId` is one randomUUID per process, so the request
+    // that overran its lease and the request that took the lease from it carry
+    // the SAME holder — and a delete scoped to the holder cannot tell them
+    // apart. The multi-process case was covered; the one that ships was not.
+    const repo = leaseRepository(db)
+    const overran = await repo.acquire(key, 'instance-a', noon)
+    await repo.acquire(key, 'instance-a', new Date(noon.getTime() + LEASE_TTL_MS + 1))
+
+    await repo.release(key, overran!)
 
     expect(await db.collection<LeaseDocument>('leases').countDocuments({ _id: key })).toBe(1)
   })
