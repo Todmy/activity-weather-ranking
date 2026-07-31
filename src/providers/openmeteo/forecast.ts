@@ -16,7 +16,7 @@ const ENDPOINT = 'https://api.open-meteo.com/v1/forecast'
 
 /**
  * Pinned, in this order, because the fixture is evidence about the live API
- * only while the request still matches. Sixteen variables costs more than one
+ * only while the request still matches. Seventeen variables costs more than one
  * call against the free tier's 10,000 a day (anything over ten counts as more
  * than one), which is affordable precisely because responses are persisted.
  */

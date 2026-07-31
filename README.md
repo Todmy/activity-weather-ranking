@@ -203,7 +203,7 @@ Configuration is five variables and every one has a working default, so the serv
 ### Tests
 
 ```bash
-pnpm check                      # tsc --noEmit, then 348 tests
+pnpm check                      # tsc --noEmit, then the whole suite
 ```
 
 Docker is not needed. A network is, once: the persistence tests start a real `mongod` through
@@ -323,7 +323,7 @@ Everything deliberately *not* built, with the test each item had to pass, is in
 
 | Document | What it holds |
 |---|---|
-| [`docs/requirements.md`](docs/requirements.md) | What was promised, where each promise is met, and the six things deliberately not built — with the source of every row |
+| [`docs/requirements.md`](docs/requirements.md) | What was promised, where each promise is met, and the five things deliberately not built — with the source of every row |
 | [`docs/milestones.md`](docs/milestones.md) | The high-level map. Nine milestones, M0 to M8, each with an observable done-condition and a status |
 | [`docs/decisions.md`](docs/decisions.md) | **Start here for the reasoning.** Every decision and assumption, one line each, linking to the full argument |
 | [`docs/worklog.md`](docs/worklog.md) | The sequence as it happened, including two designed mechanisms that died on contact with the real API |

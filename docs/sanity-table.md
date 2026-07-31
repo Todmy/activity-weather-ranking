@@ -207,7 +207,7 @@ widely in stronger events; impacts include difficult driving, downed branches an
 exposed routes. *The only figure that survived the first draft unchanged.*
 - [Met Office: Weather warnings guide](https://weather.metoffice.gov.uk/guides/warnings)
 
-## The six arguable rows
+## The seven arguable rows
 
 Named rather than hidden, because a table presented as unanimous when it is not is the same
 overconfidence the rest of the design tries to avoid.

@@ -37,8 +37,8 @@ Every claim below was produced by running the command, in this order, on 30 July
 | 4 | Absence is not zero | Three-member union in the domain and in the schema | holds |
 | 5 | Never more confident than the data | `stale`, `staleReason`, `confidence`, the ski assessment point — and finding V2 below, which is this principle applied to our own quota claim | holds after V2 |
 | 6 | Test-first in every layer, red run included | Sampled by mutation rather than trusted: two load-bearing branches flipped, each killed exactly one test (below) | holds on the sample |
-| 7 | Scope earns its place | Six items in `cut.md`, each with the test it had to pass | holds |
-| 8 | Docs carry what code cannot | Rejected alternatives recorded in 53 decision rows and three ADRs, each with what the choice cost | holds |
+| 7 | Scope earns its place | Six items in `cut.md` when this ran, eight today, each with the test it had to pass | holds |
+| 8 | Docs carry what code cannot | Rejected alternatives recorded in 53 decision rows when this ran, 60 today, and three ADRs, each with what the choice cost | holds |
 | 9 | Deterministic by construction | `grep` over `src/domain/`: no `new Date(`, no `fetch(`, no `Math.random`, no import of `providers/` or `persistence/`. One `scoreIssuance` for both the live path and replay | holds |
 | 10 | History is the narrative | Documents committed before the code they motivate; nothing pushed without permission | holds, with #32's deferral recorded |
 | 11 | One change per commit, sliced vertically | M7 landed as six commits, each a slice through the layers it touched; each message names everything in it | holds |
@@ -74,7 +74,8 @@ tests this project has found were all found this way, two of them during M7 itse
 
 Stated so the table above is not read as wider than it is.
 
-- **The scoring model's correctness.** Twenty sanity rows pass, and every threshold cites a source,
+- **The scoring model's correctness.** Twenty sanity rows passed when this ran and twenty-three do
+  today, and every threshold cites a source,
   but nothing here validates the model against days people actually skied or surfed. That is the
   first item under "What I'd do next" in the README and it is a gap in the service, not a finding.
 - **Behaviour under load.** One process, one refresher, no second instance. The lease is a database

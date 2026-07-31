@@ -136,7 +136,8 @@ hypothetical, and everything that follows is widening a path that already runs e
 
 ## M3 — Scoring model
 
-**Status: done, 30 July. 5 points.** All twenty sanity rows pass. What it turned up, in order of how
+**Status: done, 30 July. 5 points.** All twenty sanity rows passed, and the twenty-three the table
+holds today still do. What it turned up, in order of how
 much it changed:
 
 - **A weighted mean cannot veto**, and two rows need one: 40 cm of powder under held lifts, and a
@@ -159,7 +160,8 @@ than as the inverse of outdoor, because it isn't one: a museum is a good answer 
 bad one in a storm that stops you reaching it.
 
 **Done when:** all twenty rows of
-[`sanity-table.md`](./sanity-table.md) land in their expected bands,
+[`sanity-table.md`](./sanity-table.md) as it stood at M3 land in their expected bands — twenty-three
+today, three of them added afterwards and passing too —
 and every constant in every profile cites the source it came from.
 
 **Why here, and why it carries the risk:** scoring calibration has no ground truth. Nothing tells me
@@ -398,9 +400,17 @@ the machine that tested it was already held by a dev server. Nothing else was ch
 
 ## After M8 — hardening, not a milestone
 
-Fifteen commits landed after M8's condition was met, and none of them earns a milestone. Recorded
-here because a tracker that says "all nine done" above a fortnight of later commits is a tracker
-nobody will trust again.
+Commits kept landing after M8's condition was met, and none of them earns a milestone. Recorded here
+because a tracker that says "all nine done" above a fortnight of later commits is a tracker nobody
+will trust again.
+
+The number is deliberately not written down. It said fifteen when it was already thirty-six, which
+is the same tracker failing the same way one level up — so the count now comes from the command that
+cannot be wrong:
+
+```bash
+git rev-list 368eb63..HEAD --count
+```
 
 | What | Why it is not a milestone |
 |---|---|

@@ -34,7 +34,7 @@ where the repository answers it — or the admission that it does not.
 | Question | Where the answer is |
 |---|---|
 | Why MongoDB and not Postgres? | [ADR 0001](./adr/0001-mongodb-over-postgres.md), including what the choice cost |
-| How do I know the scores are any good? | You don't, and the README says so. Twenty sanity rows pass and every threshold cites a source, but nothing validates the model against days people actually skied. It is the first item under "What I'd do next" |
+| How do I know the scores are any good? | You don't, and the README says so. Twenty-three sanity rows pass — twenty when this review ran — and every threshold cites a source, but nothing validates the model against days people actually skied. It is the first item under "What I'd do next" |
 | What happens when Open-Meteo changes its response shape? | The zod parse fails, becomes an `OpenMeteoError`, and stale-if-error serves the last good issuance with `stale: true`. The probes pin the request that was captured, so a changed *request* contract fails a test rather than production |
 | How far does this scale? | Not answered by the architecture, and deliberately: the ceiling is Open-Meteo's free tier — 10,000 calls a day, and ~123 never-before-seen cities a day because terrain sampling meters per coordinate. Named in NFR5 and in `cut.md`, along with the exception the verify stage found |
 | Where is the auth, the rate limiting, the observability? | [`cut.md`](./cut.md), each with the test it had to pass to be built. The service protects the shared quota against its own traffic pattern only |
@@ -65,11 +65,19 @@ than estimated — [`capacity.md`](./capacity.md) — which turned R1's neighbou
 scale", into a number with conditions attached.
 
 Three figures above this line are from the day it was written and are now behind: the test count was
-319 and is 334, the commit count said eight and was already fourteen, and "every source file except
-five has a sibling test" is now six. Left as they were, because a stage artifact that quietly updates
-itself is no longer evidence of when it ran — but named in full, because a staleness note that misses
-a third of what is stale reads as precision it does not have. That omission was itself a finding of
-the audit below.
+319, the commit count said eight and was already fourteen, and "every source file except five has a
+sibling test" is now six. Left as they were, because a stage artifact that quietly updates itself is
+no longer evidence of when it ran — but named in full, because a staleness note that misses a third
+of what is stale reads as precision it does not have. That omission was itself a finding of the audit
+below.
+
+That rule survived a later audit, which found eighteen figures across `docs/` behind the code and
+asked the obvious question: a reader cannot tell frozen-by-intent from simply rotten, and only this
+file carried a note saying which it was. The resolution is one rule applied everywhere rather than
+two files disagreeing. A figure in a dated artifact now states both — "six items when this ran,
+eight today" — so the record of the moment survives *and* the number a reader checks is true. A
+figure in a live document is simply corrected. This paragraph is the one exception, because its
+subject is the staleness itself; the count it originally gave as 334 has moved twice more since.
 
 ## The independent review that was missing — 30 July, evening
 

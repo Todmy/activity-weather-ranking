@@ -13,7 +13,9 @@ const band = (score: number): string => {
 type Row = { row: number; conditions: string; expected: string; inputs: WeatherInputs }
 
 /**
- * The five skiing rows of `docs/sanity-table.md`, written before any curve.
+ * The eight skiing rows of `docs/sanity-table.md`. The first five were written before any curve;
+ * rows 6-8 were added on 30 July, after a review found the model scoring a bare summer mountain at
+ * 35 and ranking it the best ski day of the week.
  *
  * Assessed at the sampled high point rather than at the city, which is what
  * `series: 'summit'` means; slice 3 supplies that series, and until then these

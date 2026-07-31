@@ -64,7 +64,7 @@ numbers as much as to the forecast's.
 | # | Requirement | Source | Where it is met | How to check it |
 |---|---|---|---|---|
 | NFR1 | The same stored issuance and model version reproduce the same output exactly | self-imposed (principle 9) | One `scoreIssuance` for the live path and replay; clock injected; explicit tie-break order | [`design.md` §6](./design.md) maps seven sources of non-determinism to where each is closed |
-| NFR2 | No test may call Open-Meteo | self-imposed (constitution) | 17 captured probes in [`probes/`](./probes/) | `pnpm test` runs offline |
+| NFR2 | No test may call Open-Meteo | self-imposed (constitution) | 18 captured probes in [`probes/`](./probes/), 9 of them loaded by tests and the rest recon evidence | `pnpm test` runs offline |
 | NFR3 | `domain/` performs no I/O — no clock, no database, no fetch | self-imposed (principle 9; it is the boundary that makes determinism checkable) | Pure functions throughout `src/domain/` | No import of `providers/` or `persistence/` in `domain/` |
 | NFR4 | Tests run against a real database, not a fake | self-imposed | `mongodb-memory-server` runs `mongod` 8.2.6 against `mongo:8` in compose | `pnpm test` with no Docker daemon |
 | NFR5b | State how many concurrent callers the service takes, with evidence | self-imposed (a reviewer will ask, and "it depends" is not an answer) | 250–320 warm reads/second on the deployed 2-vCPU box across four runs, saturating at ~100 concurrent callers, zero failures at 200 | [`capacity.md`](./capacity.md), reproducible with `node scripts/loadTest.ts <endpoint> <city>` |
