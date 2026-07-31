@@ -44,6 +44,18 @@ services:
 
   mongo:
     image: mongo:8
+    # Loopback only, and the address half matters more than the port half.
+    # Docker writes its own iptables rules ahead of ufw, so a bare
+    # '27017:27017' would publish an unauthenticated MongoDB to the internet on
+    # the deployed host — past the `ufw default deny incoming` in
+    # infra/cloud-init.yaml, which would never see the packet. Bound to
+    # 127.0.0.1 it reaches the local `pnpm dev` and nothing else.
+    #
+    # Published at all because the README's "Without Docker" path says to run
+    # `docker compose up mongo -d` and then `pnpm dev`, and without this the
+    # default MONGODB_URI cannot reach the container.
+    ports:
+      - '127.0.0.1:27017:27017'
     volumes:
       - mongo-data:/data/db
     healthcheck:
