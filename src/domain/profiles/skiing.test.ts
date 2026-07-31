@@ -127,6 +127,42 @@ describe('skiing, against the sanity table', () => {
     expect(result.gates.find((gate) => gate.name === 'snowPresent')?.multiplier).toBe(0)
   })
 
+  it('says nothing rather than 35 when the depth reading is missing', () => {
+    // The same bare mountain as the row above, with the one input the gate
+    // reads taken away. The gate held open on it and the score came back 35 —
+    // the fixed bug's number exactly, reached by the fix's own blind spot.
+    //
+    // Reachable two ways: any issuance stored before the gate existed, replayed
+    // by forecastHistory, and any day whose six-hourly snow_depth block is all
+    // null. Neither is hypothetical, and neither carried a signal: completeness
+    // counts factors, so it read 1 while the gate had seen nothing.
+    const { snowDepth: _omitted, ...noReading } = {
+      temperatureMax: 14,
+      snowfall3d: 0,
+      windGustsMax: 8,
+      rainSum: 0,
+      snowDepth: 0,
+    } satisfies WeatherInputs
+
+    const result = scoreProfile(skiing, noReading)
+
+    expect(result.score).toBeNull()
+    expect(result.base).toBeNull()
+    expect(result.gates.find((gate) => gate.name === 'snowPresent')?.rawValue).toBeNull()
+  })
+
+  it('says nothing when the depth reading is present but null', () => {
+    const result = scoreProfile(skiing, {
+      temperatureMax: 14,
+      snowfall3d: 0,
+      windGustsMax: 8,
+      rainSum: 0,
+      snowDepth: null,
+    })
+
+    expect(result.score).toBeNull()
+  })
+
   it('needs terrain before a score means anything', () => {
     expect(skiing.requires).toBe('terrain')
     expect(skiing.series).toBe('summit')

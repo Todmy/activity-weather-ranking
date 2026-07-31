@@ -22,12 +22,19 @@ import type { Profile } from './score.ts'
  * than a changed number.
  *
  * 2.0.0 adds skiing's snow gate, and it is major by this file's own rule
- * because existing scores move: a bare 14 °C summit went from 35 to 0. Every
- * issuance stored under 1.1.0 keeps its version, so `forecastHistory` replaying
- * a week ago reports the model that actually answered — which is the reason the
- * version travels with the answer rather than being a constant in a README.
+ * because existing scores move: a bare 14 °C summit went from 35 to 0.
+ *
+ * 3.0.0 stops that gate holding open on a missing depth reading. Major for the
+ * same reason and by the same example: the summit that 2.0.0 took to 0 went
+ * back to 35 whenever the reading was absent, because the gate it was fixed
+ * with could not tell "no snow" from "no reading". It now answers neither.
+ *
+ * The bump was nearly missed. Nothing in the gate's name, input, curve bounds
+ * or source moved, so `serialiseModel` saw an unchanged model and the snapshot
+ * passed. `onMissingInput` is serialised from 3.0.0 onward, which is what makes
+ * the next change of this shape impossible to ship quietly.
  */
-export const MODEL_VERSION = '2.0.0'
+export const MODEL_VERSION = '3.0.0'
 
 export const PROFILES: readonly Profile[] = [
   skiing,
@@ -50,7 +57,18 @@ type SerialisedProfile = {
   series: string
   floor: number
   factors: SerialisedFactor[]
-  gates: { name: string; input: string; curve: CurveSpec; source: string }[]
+  gates: {
+    name: string
+    input: string
+    curve: CurveSpec
+    /**
+     * Not a bound and not a weight, so the profile shape alone missed it — and
+     * it moves scores: flipping this on skiing's snow gate took a bare summit
+     * from 35 to no answer at all, with every number in the model unchanged.
+     */
+    onMissingInput: 'open' | 'unscorable'
+    source: string
+  }[]
 }
 
 export type SerialisedModel = {
@@ -91,6 +109,7 @@ export const serialiseModel = (): SerialisedModel => ({
       name: gate.name,
       input: gate.input,
       curve: gate.curve.spec,
+      onMissingInput: gate.onMissingInput ?? 'open',
       source: gate.source,
     })),
   })),

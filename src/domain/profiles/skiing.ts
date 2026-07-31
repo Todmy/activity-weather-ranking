@@ -41,6 +41,12 @@ export const skiing: Profile = {
       // Shut on bare ground, fully open at the depth the literature calls
       // skiable. Neither anchor is fitted.
       curve: rampUp(0, 30),
+      // The one gate in this service that must not hold open. Snow is the
+      // precondition of skiing, not an obstacle to it, so a missing depth
+      // reading is not "the lifts might be running" — it is no answer at all.
+      // Holding it open scored a bare 14 C summit at 35, which is the bug this
+      // gate was written to fix, reached through the gate itself.
+      onMissingInput: 'unscorable',
       source:
         'The "100-day rule": natural snow reliability requires cover of at least 30 cm on at ' +
         'least 100 days between 16 December and 15 April, in 7 winters out of 10. Witmer (1984), ' +

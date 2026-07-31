@@ -30,6 +30,16 @@ export type Gate = {
   name: string
   input: keyof WeatherInputs
   curve: Curve
+  /**
+   * What a missing input means. `open` is the default and suits a gate whose
+   * input describes an obstacle — no gust figure is not a closed mountain.
+   *
+   * `unscorable` suits a gate whose input is the activity's precondition. A
+   * missing snow depth is neither "snow" nor "no snow", and both a held-open
+   * gate and a veto would state one of them. The profile has nothing to say,
+   * so it says nothing and the caller gets `unavailable`.
+   */
+  onMissingInput?: 'open' | 'unscorable'
   source: string
 }
 
@@ -121,6 +131,13 @@ export const scoreProfile = (profile: Profile, inputs: WeatherInputs): ProfileSc
     return { name: gate.name, rawValue, multiplier: rawValue === null ? 1 : gate.curve(rawValue) }
   })
 
+  // A gate whose input is the activity's precondition cannot be assumed either
+  // way, so its absence removes the score rather than moving it.
+  const unscorable = (profile.gates ?? []).some(
+    (gate, index) =>
+      gate.onMissingInput === 'unscorable' && gates[index]?.rawValue === null,
+  )
+
   const floor = profile.floor ?? 0
   const gated = gates.reduce((product, gate) => product * gate.multiplier, 1)
   const total = (floor * 100 + (1 - floor) * base) * gated
@@ -128,8 +145,8 @@ export const scoreProfile = (profile: Profile, inputs: WeatherInputs): ProfileSc
   return {
     // Rounded at exactly one point, which is what makes the determinism claim
     // in design.md §6 hold across floating-point arithmetic.
-    score: presentWeight === 0 ? null : Math.round(total),
-    base: presentWeight === 0 ? null : base,
+    score: presentWeight === 0 || unscorable ? null : Math.round(total),
+    base: presentWeight === 0 || unscorable ? null : base,
     completeness: totalWeight === 0 ? 0 : presentWeight / totalWeight,
     factors,
     gates,

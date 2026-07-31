@@ -158,6 +158,52 @@ describe('gates', () => {
     expect(result.gates[0]?.multiplier).toBe(1)
     expect(result.gates[0]?.rawValue).toBeNull()
   })
+
+  /**
+   * Holding open is right for a gate whose input describes an obstacle: no gust
+   * figure is not a closed mountain, and the day is still worth scoring.
+   *
+   * It is wrong for a gate whose input is the *precondition* of the activity.
+   * Absence of a snow-depth reading is not evidence of snow, and a gate that
+   * holds open on it scores a bare summit as though it were covered. Vetoing
+   * instead would be the opposite error — "no reading" reported as "no snow".
+   * Neither claim is available, so the profile has nothing to say.
+   */
+  const preconditioned: Profile = {
+    ...twoFactor,
+    gates: [
+      {
+        name: 'snowPresent',
+        input: 'snowDepth',
+        curve: rampUp(0, 30),
+        onMissingInput: 'unscorable',
+        source: 'synthetic, for the engine test only',
+      },
+    ],
+  }
+
+  it('refuses to score when a gate marked unscorable has no input', () => {
+    const result = scoreProfile(preconditioned, {
+      apparentTemperatureMax: 10,
+      precipitationSum: 5,
+    })
+
+    expect(result.score).toBeNull()
+    expect(result.base).toBeNull()
+    expect(result.gates[0]?.rawValue).toBeNull()
+  })
+
+  it('still scores a gate marked unscorable once its input is present', () => {
+    const result = scoreProfile(preconditioned, {
+      apparentTemperatureMax: 10,
+      precipitationSum: 5,
+      snowDepth: 0,
+    })
+
+    // Present and zero is a real answer, and it is the veto: 88 x 0.
+    expect(result.score).toBe(0)
+    expect(result.gates[0]?.multiplier).toBe(0)
+  })
 })
 
 describe('floor', () => {

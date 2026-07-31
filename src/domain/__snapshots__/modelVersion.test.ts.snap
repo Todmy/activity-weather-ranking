@@ -77,6 +77,7 @@ exports[`the pinned model > serialises every number that can change a score 1`] 
           },
           "input": "snowDepth",
           "name": "snowPresent",
+          "onMissingInput": "unscorable",
           "source": "The "100-day rule": natural snow reliability requires cover of at least 30 cm on at least 100 days between 16 December and 15 April, in 7 winters out of 10. Witmer (1984), developed by Abegg (1996) and Burki (2000), adopted by the OECD as the reference approach for climate impact on Alpine winter tourism. The lower anchor is not cited because it needs no citation: zero snow is zero skiing. https://www.oecd.org/content/dam/oecd/en/publications/reports/2007/01/climate-change-in-the-european-alps_g1gh7c4d/9789264031692-en.pdf",
         },
         {
@@ -89,6 +90,7 @@ exports[`the pinned model > serialises every number that can change a score 1`] 
           },
           "input": "windGustsMax",
           "name": "liftsHeld",
+          "onMissingInput": "open",
           "source": "Resort operations: lifts slow around 56 km/h (35 mph) and 64 km/h (40 mph) is widely described as the tipping point, depending on lift orientation. The lower anchor is that 56 verbatim. The upper anchor of 72 is FITTED, not cited: it places the cited 64 exactly at the midpoint, where the gate is half shut — reading "the tipping point" as the gust at which holding becomes as likely as running, rather than as the point of no return. Anchoring the zero at 64 instead scores sanity row 4 at 40 = FAIR, and the table says POOR. https://blog.steamboat.com/navigating-windy-days-at-steamboat-ski-resort-a-qa-with-jake-ingle/",
         },
       ],
@@ -139,6 +141,7 @@ exports[`the pinned model > serialises every number that can change a score 1`] 
           },
           "input": "wavePeriodMax",
           "name": "swellPresent",
+          "onMissingInput": "open",
           "source": "Two anchors, one measured and one cited. Measured: the probes put fetch-limited chop at 4.60 s (Chicago, Lake Michigan) and 4.65 s (Canterbury), which is water with no swell in it. Cited: 8-9 s is the windswell ceiling below which quality is described as poor. https://www.surfline.com/surf-news/groundswell-vs-windswell/2439",
         },
         {
@@ -151,6 +154,7 @@ exports[`the pinned model > serialises every number that can change a score 1`] 
           },
           "input": "windSpeedMax",
           "name": "blownOut",
+          "onMissingInput": "open",
           "source": "Surf forecasting convention: under 10 knots (18 km/h) the surface stays clean, over 20 knots (37 km/h) the surf is blown out. https://surfcaptain.com/blog/1/understanding-wind-condition-forecast",
         },
       ],
@@ -288,6 +292,7 @@ exports[`the pinned model > serialises every number that can change a score 1`] 
           },
           "input": "windGustsMax",
           "name": "travelDisruption",
+          "onMissingInput": "open",
           "source": "Met Office yellow wind warnings cite initial travel impacts from gusts of 64-72 km/h (40-45 mph): difficult driving, downed branches, disruption on exposed routes. https://weather.metoffice.gov.uk/guides/warnings",
         },
       ],
@@ -295,6 +300,6 @@ exports[`the pinned model > serialises every number that can change a score 1`] 
       "series": "city",
     },
   ],
-  "version": "2.0.0",
+  "version": "3.0.0",
 }
 `;

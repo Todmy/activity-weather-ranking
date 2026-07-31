@@ -29,6 +29,20 @@ describe('the pinned model', () => {
     })
   })
 
+  it('records what a gate does with a missing input, which moves scores without moving a bound', () => {
+    // The snowPresent gate went from holding open to refusing to score, which
+    // took a bare summit from 35 to no answer. Nothing in the gate's name,
+    // input, curve or source moved, so the snapshot passed a change it exists
+    // to catch. Serialising the field is what makes the version bump enforced
+    // rather than remembered.
+    const skiing = serialiseModel().profiles.find((profile) => profile.activity === 'skiing')
+
+    expect(skiing?.gates.find((gate) => gate.name === 'snowPresent')?.onMissingInput).toBe(
+      'unscorable',
+    )
+    expect(skiing?.gates.find((gate) => gate.name === 'liftsHeld')?.onMissingInput).toBe('open')
+  })
+
   it('covers all four activities', () => {
     expect(serialiseModel().profiles.map((profile) => profile.activity)).toEqual([
       'skiing',
