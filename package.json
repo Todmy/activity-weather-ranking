@@ -15,7 +15,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "pnpm typecheck && pnpm test"
+    "check": "pnpm typecheck && pnpm test",
+    "examples": "node scripts/writeExamples.ts"
   },
   "dependencies": {
     "@pothos/core": "^4.3.0",
