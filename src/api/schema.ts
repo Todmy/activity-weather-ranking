@@ -15,7 +15,7 @@ import type {
 import type { AppDeps } from '../app/deps.ts'
 import { getForecastHistory } from '../app/forecastHistory.ts'
 import type { HistoricalIssuance } from '../app/forecastHistory.ts'
-import { searchForLocations } from '../app/locationSearch.ts'
+import { InvalidArgument, searchForLocations } from '../app/locationSearch.ts'
 import type { ActivityResult } from '../domain/activityResult.ts'
 import { bandFor } from '../domain/band.ts'
 import type { RankedDay } from '../domain/rank.ts'
@@ -303,6 +303,13 @@ const answering = async <T>(work: () => Promise<T>): Promise<T> => {
     // stored, deserves to be told which.
     if (error instanceof LocationNotFound) {
       throw new GraphQLError(error.message, { extensions: { code: 'LOCATION_NOT_FOUND' } })
+    }
+
+    // The caller asked for something this service will not do, and the caller
+    // can fix it. Masking this one told a caller who passed limit: 0 that the
+    // service had broken, when the service had understood them exactly.
+    if (error instanceof InvalidArgument) {
+      throw new GraphQLError(error.message, { extensions: { code: 'BAD_USER_INPUT' } })
     }
 
     // Cold start, someone else already fetching, and the bounded wait ran out.

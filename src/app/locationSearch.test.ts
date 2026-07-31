@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
-import { searchForLocations } from './locationSearch.ts'
+import { InvalidArgument, searchForLocations } from './locationSearch.ts'
 import type { LocationSearchDeps } from './locationSearch.ts'
 import { parseGeocoding, toLocations } from '../providers/openmeteo/geocoding.ts'
 import type { GeocodedLocation } from '../providers/openmeteo/geocoding.ts'
@@ -55,6 +55,12 @@ describe('searchForLocations', () => {
     // number this service made up.
     const search = vi.fn(async () => cambridges)
 
+    // The class, not just the message. `rejects.toThrow(/limit/i)` passed while
+    // the API masked this as a blank 500, because a bare Error carries the
+    // message and nothing the translation layer can dispatch on.
+    await expect(searchForLocations('Cambridge', 0, deps({ search }))).rejects.toThrow(
+      InvalidArgument,
+    )
     await expect(searchForLocations('Cambridge', 0, deps({ search }))).rejects.toThrow(/limit/i)
     expect(search).not.toHaveBeenCalled()
   })

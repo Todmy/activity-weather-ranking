@@ -116,6 +116,22 @@ describe('the app over HTTP', () => {
     expect(body.errors[0].extensions.code).toBe('LOCATION_NOT_FOUND')
   })
 
+  it('names a bad argument instead of masking it as a 500', async () => {
+    // One line of GraphQL reached the blank INTERNAL_SERVER_ERROR this file's
+    // own header says it exists to prevent. searchForLocations threw a bare
+    // Error for limit < 1, answering() translates three classes and rethrows
+    // the rest, and Yoga masked it. The unit test underneath was green: it
+    // asserted the function throws, which it does.
+    const body = await post(
+      createApp({ deps: deps() }),
+      '{ searchLocations(query: "Cambridge", limit: 0) { name } }',
+    )
+
+    expect(body.errors[0].extensions.code).toBe('BAD_USER_INPUT')
+    expect(body.errors[0].message).toContain('limit')
+    expect(body.errors[0].message).not.toContain('Unexpected error')
+  })
+
   it('says so when Open-Meteo itself is failing, with the status it returned', async () => {
     const body = await post(
       createApp({

@@ -18,6 +18,22 @@ export type LocationSearchDeps = {
   now: () => Date
 }
 
+/**
+ * A caller asked for something this service will not do, and the caller can fix
+ * it. Distinct from the other three named errors, which are all about the world
+ * rather than the request: a place that does not exist, nothing stored yet, and
+ * upstream having a bad five minutes.
+ *
+ * It exists because a bare `Error` here reached the API as a masked 500 — the
+ * failure `yoga.ts` opens by explaining it must prevent.
+ */
+export class InvalidArgument extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'InvalidArgument'
+  }
+}
+
 export const searchForLocations = async (
   query: string,
   limit: number,
@@ -26,7 +42,7 @@ export const searchForLocations = async (
   // Only the lower bound is ours. The upper one belongs to the geocoding API,
   // and letting it answer means a caller asking for too many gets a named
   // upstream error rather than a cap this service invented.
-  if (limit < 1) throw new Error(`limit must be at least 1, got ${limit}`)
+  if (limit < 1) throw new InvalidArgument(`limit must be at least 1, got ${limit}`)
 
   const found = await deps.search(query, limit)
   if (found.length > 0) await deps.register(found, deps.now())
