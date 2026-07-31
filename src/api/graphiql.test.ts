@@ -36,6 +36,27 @@ describe('the GraphiQL examples', () => {
     ])
   })
 
+  it('open with a count that matches the operations below', () => {
+    // The header said "Seven queries" against eleven. Nothing read it, so
+    // nothing failed, and it is the first prose the live URL serves.
+    const spelled = [
+      'zero', 'one', 'two', 'three', 'four', 'five', 'six',
+      'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve',
+    ]
+    const operations = document.definitions.filter(
+      (definition) => definition.kind === 'OperationDefinition',
+    )
+
+    expect(defaultQuery.toLowerCase()).toContain(`${spelled[operations.length]} queries`)
+  })
+
+  it('do not date themselves to a milestone that has since shipped', () => {
+    // The same header went on to say "Storage arrives in M5" — the brief's
+    // headline requirement, reported as unbuilt, four milestones after it
+    // shipped. A reviewer reads that before they read anything else.
+    expect(defaultQuery).not.toMatch(/milestone m\d|arrives in m\d/i)
+  })
+
   it('include the states a reviewer would otherwise never see', () => {
     // Both ranking axes, the per-factor breakdown, the gates, all three members
     // of the union, and a deliberate failure. Without these the happy path is

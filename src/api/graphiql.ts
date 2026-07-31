@@ -8,13 +8,18 @@
  *
  * GraphiQL lists these in its operation picker; pick one and press play.
  */
-export const defaultQuery = `# Seven queries. Pick an operation from the dropdown next to the play button.
+export const defaultQuery = `# Eleven queries. Pick an operation from the dropdown next to the play button.
 #
-# Milestone M4 measures geography, so all four activities now answer for real.
-# Skiing is scored at a sampled high point rather than at the city coordinate —
-# Grenoble is 214 m in town and 3204 m within 45 km — and query 6 shows where.
-# Query 7 shows the other outcome: measured absence, which is notApplicable and
-# deliberately not a score of zero. Storage arrives in M5.
+# All four activities answer for real, because geography is measured rather than
+# looked up. Skiing is scored at a sampled high point rather than at the city
+# coordinate — Grenoble is 214 m in town and 3204 m within 45 km — and query 6
+# shows where. Query 7 shows the other outcome: measured absence, which is
+# notApplicable and deliberately not a score of zero.
+#
+# The weather behind every answer is stored rather than fetched per request.
+# Query 8 shows that from outside: run it twice and issuedAt does not move.
+# Query 11 shows what keeping issuances buys — one date as every stored
+# forecast saw it, with the horizon each was seen at.
 
 # 1. Best days for each activity. One of the two readings of "ranks the next
 #    seven days"; days an activity cannot be scored on are left out, and
