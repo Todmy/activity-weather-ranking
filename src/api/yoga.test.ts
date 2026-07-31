@@ -116,6 +116,48 @@ describe('the app over HTTP', () => {
     expect(body.errors[0].extensions.code).toBe('LOCATION_NOT_FOUND')
   })
 
+  it('refuses a document asking for more root fields than any caller needs', async () => {
+    // Root fields fan out concurrently, and each one on a city this service has
+    // never seen costs 81 metered elevation coordinates. NFR5 puts the ceiling
+    // at ~123 unseen cities a day; a single unauthenticated POST carrying 123
+    // aliases spends the whole allowance, and the lease does not help — it
+    // stops the service racing itself, not a caller racing it deliberately.
+    const roots = Array.from(
+      { length: 20 },
+      (_, index) => `c${index}: activityForecast(query: "City${index}") { issuedAt }`,
+    ).join('\n')
+
+    const body = await post(createApp({ deps: deps() }), `{ ${roots} }`)
+
+    expect(body.errors[0].message).toMatch(/root fields/i)
+  })
+
+  it('still serves the largest example this repository ships', async () => {
+    // NoMountainNoOcean asks for two cities in one document. A cap that broke
+    // the service's own showcase query would be a worse bug than the one it
+    // closes, so the limit is checked against real use, not only against abuse.
+    const body = await post(
+      createApp({ deps: deps() }),
+      '{ amsterdam: activityForecast(query: "Amsterdam") { issuedAt } vienna: activityForecast(query: "Vienna") { issuedAt } release health }',
+    )
+
+    expect(body.errors).toBeUndefined()
+  })
+
+  it('does not reflect an arbitrary origin back, let alone with credentials', async () => {
+    // Yoga's default reflects any Origin and sets allow-credentials. There are
+    // no cookies and no auth here, so nothing leaks — but it lets any web page
+    // drive its visitors' browsers into the quota exhaustion above, from as
+    // many residential addresses as it has readers.
+    const response = await createApp({ deps: deps() }).fetch('http://localhost/graphql', {
+      method: 'OPTIONS',
+      headers: { origin: 'https://evil.example', 'access-control-request-method': 'POST' },
+    })
+
+    expect(response.headers.get('access-control-allow-origin')).not.toBe('https://evil.example')
+    expect(response.headers.get('access-control-allow-credentials')).toBeNull()
+  })
+
   it('names a bad argument instead of masking it as a 500', async () => {
     // One line of GraphQL reached the blank INTERNAL_SERVER_ERROR this file's
     // own header says it exists to prevent. searchForLocations threw a bare

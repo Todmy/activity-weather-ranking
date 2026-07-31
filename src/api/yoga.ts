@@ -1,5 +1,7 @@
+import type { ValidationRule } from 'graphql'
 import { createYoga } from 'graphql-yoga'
 import { defaultQuery } from './graphiql.ts'
+import { limitRootFields } from './rootFields.ts'
 import { schema } from './schema.ts'
 import type { GraphQLContext } from './schema.ts'
 
@@ -76,9 +78,22 @@ export const createApp = ({ deps, release = 'unknown', log = console.log }: AppO
     schema,
     graphqlEndpoint: '/graphql',
     graphiql: { title: 'Activity weather ranking', defaultQuery },
+    // Off, not permissive. Yoga's default reflects whatever Origin arrives and
+    // adds allow-credentials, which with no cookies and no auth leaks nothing —
+    // but it lets any page drive its readers' browsers at this endpoint from as
+    // many addresses as it has readers. Nothing legitimate needs it: GraphiQL
+    // is served from this origin, and curl has never heard of CORS.
+    cors: false,
     context: () => ({ deps, release }),
     plugins: [
       {
+        onValidate({
+          addValidationRule,
+        }: {
+          addValidationRule: (rule: ValidationRule) => void
+        }) {
+          addValidationRule(limitRootFields)
+        },
         onRequest({ request }) {
           startedAt.set(request, performance.now())
         },
