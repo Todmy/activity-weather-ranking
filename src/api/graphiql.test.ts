@@ -1,63 +1,55 @@
 import { describe, expect, it } from 'vitest'
 import { parse, validate } from 'graphql'
-import { defaultQuery } from './graphiql.ts'
+import { EXAMPLES } from './examples.ts'
+import { defaultQuery, defaultTabs } from './graphiql.ts'
 import { schema } from './schema.ts'
 
 /**
- * The preloaded examples are a deliverable, not decoration: principle 12 says a
- * capability a person cannot run is not delivered. An example that no longer
- * matches the schema is worse than no example, because the first thing a
- * reviewer does is press play.
+ * What GraphiQL is handed, as opposed to what the examples say — that is
+ * `examples.test.ts`. This file only checks the two derivations, because the
+ * one part of this module nothing could falsify was the part that rotted.
  */
-describe('the GraphiQL examples', () => {
+describe('what GraphiQL loads with', () => {
   const document = parse(defaultQuery)
 
-  it('are all valid against the schema', () => {
+  it('is valid against the schema as one document', () => {
     expect(validate(schema, document).map((error) => error.message)).toEqual([])
   })
 
-  it('are named, so GraphiQL can list them in its operation picker', () => {
-    const names = document.definitions.map((definition) =>
-      definition.kind === 'OperationDefinition' ? definition.name?.value : undefined,
+  it('carries every example as a named operation, in the order the README lists them', () => {
+    const names = document.definitions.flatMap((definition) =>
+      definition.kind === 'OperationDefinition' ? [definition.name?.value] : [],
     )
 
-    expect(names).toEqual([
-      'BestDaysPerActivity',
-      'BestActivityPerDay',
-      'WhyThatScore',
-      'FiveCambridges',
-      'NoSuchPlace',
-      'WhereSkiingWasAssessed',
-      'NoMountainNoOcean',
-      'HowFreshIsThisAnswer',
-      'LetMePickTheCambridge',
-      'ForecastThatExactCambridge',
-      'HowFridayChanged',
-    ])
+    expect(names).toEqual(EXAMPLES.map((example) => example.name))
   })
 
-  it('open with a count that matches the operations below', () => {
+  it('gives each example its own tab', () => {
+    // A visitor with empty storage sees twelve named tabs rather than one
+    // document to scroll. The operation picker still works for everyone else.
+    expect(defaultTabs).toHaveLength(EXAMPLES.length)
+    expect(defaultTabs.map((tab) => tab.query)).toEqual(EXAMPLES.map((example) => example.query))
+  })
+
+  it('opens with a count that matches the operations below', () => {
     // The header said "Seven queries" against eleven. Nothing read it, so
     // nothing failed, and it is the first prose the live URL serves.
     const spelled = [
       'zero', 'one', 'two', 'three', 'four', 'five', 'six',
-      'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve',
+      'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen',
     ]
-    const operations = document.definitions.filter(
-      (definition) => definition.kind === 'OperationDefinition',
-    )
 
-    expect(defaultQuery.toLowerCase()).toContain(`${spelled[operations.length]} queries`)
+    expect(defaultQuery.toLowerCase()).toContain(`${spelled[EXAMPLES.length]} queries`)
   })
 
-  it('do not date themselves to a milestone that has since shipped', () => {
+  it('does not date itself to a milestone that has since shipped', () => {
     // The same header went on to say "Storage arrives in M5" — the brief's
     // headline requirement, reported as unbuilt, four milestones after it
     // shipped. A reviewer reads that before they read anything else.
     expect(defaultQuery).not.toMatch(/milestone m\d|arrives in m\d/i)
   })
 
-  it('include the states a reviewer would otherwise never see', () => {
+  it('includes the states a reviewer would otherwise never see', () => {
     // Both ranking axes, the per-factor breakdown, the gates, all three members
     // of the union, and a deliberate failure. Without these the happy path is
     // the only thing anyone runs.
@@ -66,37 +58,7 @@ describe('the GraphiQL examples', () => {
     expect(defaultQuery).toContain('... on NotApplicableActivity')
     expect(defaultQuery).toContain('... on UnavailableActivity')
     expect(defaultQuery).toContain('Nowhereinparticular')
-  })
-
-  it('show where a ski score was assessed, not just the number', () => {
-    // The modelling point most easily missed: "Grenoble 78" is a claim about a
-    // point 3204 m up and 44 km away, and a reviewer has to be able to see that
-    // without reading the source.
     expect(defaultQuery).toContain('terrain { elevation distanceKm gridVersion latitude longitude }')
-  })
-
-  it('show how old the answer is and whether a refresh failed', () => {
-    // The milestone the brief names by title. A reviewer must be able to see
-    // that a forecast is stored rather than fetched — and that a stale one says
-    // so — without reading the source.
-    expect(defaultQuery).toContain('issuedAt')
-    expect(defaultQuery).toContain('stale')
     expect(defaultQuery).toContain('staleReason')
-  })
-
-  it('offer the entry point for a caller who wants to choose', () => {
-    // activityForecast picks and says which; searchLocations refuses to pick.
-    // A reviewer has to be able to run both to see that they are two answers to
-    // one ambiguity rather than one answer twice.
-    expect(defaultQuery).toContain('searchLocations(')
-    expect(defaultQuery).toContain('activityForecastAt(')
-    expect(defaultQuery).toContain('forecastHistory(')
-  })
-
-  it('show measured absence as well as measured presence', () => {
-    // notApplicable next to a real score in the same response, for two cities
-    // that fail for two different reasons.
-    expect(defaultQuery).toContain('Amsterdam')
-    expect(defaultQuery).toContain('Vienna')
   })
 })

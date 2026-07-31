@@ -1,6 +1,6 @@
 import type { ValidationRule } from 'graphql'
 import { createYoga } from 'graphql-yoga'
-import { defaultQuery } from './graphiql.ts'
+import { defaultQuery, defaultTabs } from './graphiql.ts'
 import { limitRootFields } from './rootFields.ts'
 import { schema } from './schema.ts'
 import type { GraphQLContext } from './schema.ts'
@@ -77,7 +77,7 @@ export const createApp = ({ deps, release = 'unknown', log = console.log }: AppO
   return createYoga({
     schema,
     graphqlEndpoint: '/graphql',
-    graphiql: { title: 'Activity weather ranking', defaultQuery },
+    graphiql: { title: 'Activity weather ranking', defaultQuery, defaultTabs },
     // Off, not permissive. Yoga's default reflects whatever Origin arrives and
     // adds allow-credentials, which with no cookies and no auth leaks nothing —
     // but it lets any page drive its readers' browsers at this endpoint from as
