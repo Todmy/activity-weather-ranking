@@ -72,8 +72,8 @@ problem than the one the brief poses, and it would double the ingestion surface 
 graded question is how *one* upstream source is modelled, stored and refreshed.
 
 **What is done instead.** The response names what it actually measured — elevation and distance from
-the city — so "Grenoble, skiing, 78" reads as a claim about a point 45 km away at 2750 m, not about
-Grenoble. The model describes *conditions where skiing would plausibly happen*, and says so.
+the city — so "Grenoble, skiing, 78" reads as a claim about a point 44.7 km away at 3354 m, not
+about Grenoble. The model describes *conditions where skiing would plausibly happen*, and says so.
 
 ## Multi-request terrain grids
 

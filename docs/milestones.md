@@ -182,7 +182,7 @@ gets recorded with the reason.
 **Delivers:** applicability decided by measurement, for any city, with no list of cities anywhere.
 
 Terrain is sampled around each city (81 coordinates over a circular 50 km mask, paid once per
-location, ever) so that Grenoble at 214 m is correctly skiable and Amsterdam at 11 m is not. Ocean
+location, ever) so that Grenoble at 214 m is correctly skiable and Amsterdam at 38 m is not. Ocean
 coverage comes from the marine model returning data or nulls at that coordinate.
 
 **Done when:** Grenoble returns a ski score attached to the high point it was assessed at, with

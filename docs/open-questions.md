@@ -21,7 +21,7 @@ computed data and costs one extra resolver, so guessing wrong carries no penalty
 
 ## 2. Does "skiing" describe the city, or the region reachable from it? — RESOLVED
 
-**Question.** Grenoble sits at 214 m with 2185 m of terrain within ~40 km. Scoring the city
+**Question.** Grenoble sits at 214 m with terrain above 3000 m within 45 km. Scoring the city
 coordinate says Grenoble cannot ski, which is plainly wrong. Vancouver (4 m, Whistler nearby) fails
 the same way.
 
@@ -34,13 +34,13 @@ the same way.
 **Assumption taken.** Both applicability and conditions come from the highest sampled point near the
 city. Open-Meteo's Elevation API accepts a batched coordinate list, so a grid around the city costs
 one request and, since locations are immutable, is paid once ever. Where terrain exists, a second
-forecast is fetched at that high point; where it does not (Amsterdam's grid maxes at 11 m), skiing
+forecast is fetched at that high point; where it does not (Amsterdam's grid maxes at 38 m), skiing
 is `notApplicable` and no second fetch happens.
 
 **Consequence that must not be hidden.** The response carries the point the ski assessment was made
 at — elevation and distance from the city centre. A score of 78 for Grenoble means nothing unless
-the caller knows it describes 2185 m, 18 km away. Reporting it as if it described the city would be
-the kind of quiet dishonesty principle 5 exists to prevent.
+the caller knows it describes 3354 m, 44.7 km away. Reporting it as if it described the city would
+be the kind of quiet dishonesty principle 5 exists to prevent.
 
 **Still unresolved underneath.** A high point is not a ski resort. It has no lifts, no piste, no
 avalanche assessment. This models *conditions where skiing would plausibly happen*, not *a skiable

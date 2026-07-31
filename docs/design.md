@@ -62,6 +62,17 @@ over from the coarser grids recon used to choose it
 read 11 m on recon's 3×3 sample and 51 m here; the verdict is unchanged because the cost gate is at
 300 m, but the number a reader can check had to be the one from the shipped grid.
 
+**A third figure exists, and it is not an error in either of the first two.** The deployed service
+reports Amsterdam at 38 m and Grenoble's high point at 3354 m, where the committed probes for the
+same `gridVersion` and the same coordinates read 51 m and 3204 m. Terrain is sampled once per city
+and kept forever, so a fixture reports what the Elevation API said on the day it was captured and the
+box reports what it said on the day it first asked — and Open-Meteo revises its elevation dataset
+between those days. `gridVersion` versions *our* sampling parameters and cannot version theirs, which
+is the limit of what it was ever able to promise. Nothing downstream moves: Amsterdam is below the
+300 m gate on all three readings, and Grenoble is far above it on all three. This is named because
+a reader who runs the curl and then opens a probe will find two different numbers, and a document
+that leaves that unexplained reads as a document nobody checked.
+
 The one real limit is quota, and it applies only to cities the service has never seen. Elevation is
 metered per coordinate, so 10,000/day ÷ 81 caps cold-start terrain sampling at roughly **123 new
 cities per day**. Locations are immutable and cached permanently, so a city pays that cost once in the
@@ -436,7 +447,7 @@ against principles that did not exist when it was written would be a claim nobod
 - **The sanity table disagrees with itself.** Human intuition is not guaranteed to be internally
   consistent across 12 scenarios, and no curve can satisfy contradictory targets. If it happens, the
   contradiction is the interesting finding and goes in the worklog.
-- **Summit weather is right and useless.** Real snow at 2750 m says nothing about whether anything
+- **Summit weather is right and useless.** Real snow at 3354 m says nothing about whether anything
   there is skiable. Known, named in `cut.md`, and the reason the response reports the point.
 - **The refresher outlives its budget.** Mitigated by sequencing it last, not by estimating better.
 - **The 1 h TTL never actually fires during review.** A reviewer running this for ten minutes sees
